@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0b0f;
+  --color-bg-panel: #111318;
+  --color-bg-card: #161920;
+  --color-bg-hover: #1c1f28;
+  --color-bg-input: #0d0e13;
+  --color-border-base: #252833;
+  --color-border-active: #3d4158;
+  --color-text-base: #c8cad4;
+  --color-text-muted: #6b6f82;
+  --color-text-dim: #454860;
+  --color-accent: #7c6aef;
+  --color-accent-soft: #5a4bc7;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-base);
+    antialiased: true;
+    overflow: hidden;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-base);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-border-active);
+}
+
+/* Glassmorphism and glow utilities */
+.glass {
+  background-color: rgba(10, 11, 15, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+.accent-glow {
+  box-shadow: 0 0 15px rgba(124, 106, 239, 0.1);
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-base) var(--color-bg);
+}

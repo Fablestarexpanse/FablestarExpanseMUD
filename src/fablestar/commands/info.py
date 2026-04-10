@@ -1,0 +1,72 @@
+from fablestar.commands.registry import command
+from fablestar.network.session import Session
+from fablestar.llm.observation import generate_room_observation
+from fablestar.llm.validation import validator
+
+@command("look", aliases=["l"])
+async def look(session: Session, args: list[str]):
+    """Look at the current room or an object."""
+    from fablestar.app import app_instance
+
+    player_id = session.player_id or "test_player"
+    room_id = await app_instance.redis.get_player_location(player_id)
+    if not room_id:
+        room_id = "test_zone:entrance"
+
+    room = app_instance.content_loader.get_room(room_id)
+    if room:
+        await session.send(f"\r\n[ {room.id} ]")
+
+        # 1. Generate Observations (Facts)
+        observation_block = generate_room_observation(room, {"time_of_day": "Eternal Night"})
+
+        # 2. Render Prompt
+        prompt = app_instance.prompt_manager.render(
+            "room_description",
+            observation_block=observation_block
+        )
+
+        # 3. Call LLM
+        narration = await app_instance.llm_client.generate(prompt)
+
+        # 4. Validate & Sanitize
+        clean_narration = validator.sanitize(narration)
+        await session.send(clean_narration)
+
+        if room.exits:
+            exits_str = ", ".join(room.exits.keys())
+            await session.send(f"Exits: {exits_str}")
+
+        # 5. Show live entities (deterministic — no LLM)
+        entity_ids = await app_instance.redis.get_room_entities(room_id)
+        alive = []
+        for eid in entity_ids:
+            state = await app_instance.redis.get_entity_state(eid)
+            if state and state.get("alive", True):
+                alive.append(state["name"])
+        if alive:
+            await session.send(f"Entities: {', '.join(alive)}")
+
+        # 6. Show floor items (deterministic)
+        item_ids = await app_instance.redis.get_room_items(room_id)
+        floor_items = []
+        for iid in item_ids:
+            state = await app_instance.redis.get_item_state(iid)
+            if state:
+                floor_items.append(state["name"])
+        if floor_items:
+            await session.send(f"Items on floor: {', '.join(floor_items)}")
+    else:
+        await session.send("You are in the void.")
+
+@command("help", aliases=["h", "?"])
+async def help_cmd(session: Session, args: list[str]):
+    """Display available commands."""
+    from fablestar.commands.registry import registry
+    
+    await session.send("--- Available Commands ---")
+    cmds = sorted(registry._commands.keys())
+    for cmd_name in cmds:
+        cmd = registry.get(cmd_name)
+        doc = cmd.handler.__doc__ or "No description."
+        await session.send(f"{cmd_name.ljust(10)} - {doc.splitlines()[0]}")

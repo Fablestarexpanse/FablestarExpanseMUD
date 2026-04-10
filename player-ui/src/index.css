@@ -1,0 +1,17 @@
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Fill the browser tab; dvh avoids mobile URL bar leaving a gap */
+#root {
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,225 @@
+import asyncio
+import json
+import logging
+import time
+from typing import Any, Dict, List, Optional, Tuple
+
+import httpx
+from openai import AsyncOpenAI
+
+from fablestar.core.config import LLMConfig
+from fablestar.llm.openai_util import normalize_openai_compatible_base
+
+logger = logging.getLogger(__name__)
+
+
+def infer_detected_chat_model(
+    models: List[Dict[str, Any]],
+    configured_id: str,
+    backend: str,
+    connected: bool,
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Best-effort id of the model the OpenAI-compatible server is exposing.
+
+    LM Studio's /v1/models list is typically the loaded model(s). Ollama lists
+    all pulled models, so we only infer when the configured id is present or
+    exactly one model is listed.
+    """
+    if not connected or not models:
+        return None, None
+    ids = [str(m["id"]) for m in models if m.get("id")]
+    if not ids:
+        return None, None
+    cfg = (configured_id or "").strip()
+    b = (backend or "lm_studio").lower().strip()
+
+    if b == "lm_studio":
+        if len(ids) == 1:
+            return ids[0], "loaded"
+        if cfg and cfg in ids:
+            return cfg, "listed"
+        return ids[0], "listed"
+
+    if cfg and cfg in ids:
+        return cfg, "listed"
+    if len(ids) == 1:
+        return ids[0], "listed"
+    return None, None
+
+
+class LLMClient:
+    """
+    Client for interacting with LLM backends.
+    Primary focus: LM Studio and Ollama (OpenAI-compatible /v1 API).
+    """
+
+    #: How long to reuse GET /v1/models probe results (reduces LM Studio log spam / load).
+    _probe_cache_ttl_s: float = 60.0
+
+    def __init__(self, config: LLMConfig):
+        self.config = config
+        self.client = self._build_openai_client()
+        self.timeout = config.timeout_seconds
+        self._probe_lock = asyncio.Lock()
+        self._status_cache: Optional[Dict[str, Any]] = None
+        self._status_cache_at: float = 0.0
+
+    def _openai_base_url(self) -> str:
+        backend = (self.config.primary_backend or "lm_studio").lower().strip()
+        if backend == "ollama":
+            return normalize_openai_compatible_base(self.config.ollama_url)
+        return normalize_openai_compatible_base(self.config.lm_studio_url)
+
+    def _api_key(self) -> str:
+        return self.config.lm_studio_key or "not-needed"
+
+    def _build_openai_client(self) -> AsyncOpenAI:
+        return AsyncOpenAI(
+            base_url=self._openai_base_url(),
+            api_key=self._api_key(),
+        )
+
+    def reconfigure(self, config: LLMConfig) -> None:
+        """Apply new LLM settings (same instance, new HTTP client)."""
+        self.config = config
+        self.client = self._build_openai_client()
+        self.timeout = config.timeout_seconds
+        self._status_cache = None
+        self._status_cache_at = 0.0
+        logger.info("LLM client reconfigured: backend=%s base=%s model=%s", config.primary_backend, self._openai_base_url(), config.chat_model)
+
+    async def probe_connection(self, list_timeout: float = 3.0) -> Tuple[bool, Optional[float], Optional[str], List[Dict[str, Any]], Optional[str]]:
+        """
+        Ping the OpenAI-compatible server (models list).
+        Uses an explicit GET {base}/models via httpx so the URL is always /v1/models
+        (LM Studio logs "GET /models" when the HTTP path is wrong: /models at server root).
+        Returns: ok, latency_ms, error_message, models[{id}], server_version_hint
+        """
+        root = self._openai_base_url().rstrip("/")
+        list_url = f"{root}/models"
+        t0 = time.perf_counter()
+        headers: Dict[str, str] = {}
+        key = self._api_key()
+        if key and key.strip() and key != "not-needed":
+            headers["Authorization"] = f"Bearer {key.strip()}"
+
+        try:
+            async with httpx.AsyncClient(timeout=list_timeout) as http:
+                resp = await http.get(list_url, headers=headers)
+            latency_ms = (time.perf_counter() - t0) * 1000.0
+            if resp.status_code >= 400:
+                return (
+                    False,
+                    latency_ms,
+                    f"HTTP {resp.status_code} from {list_url}: {resp.text[:200]}",
+                    [],
+                    None,
+                )
+            payload = resp.json()
+            models: List[Dict[str, Any]] = []
+            data = payload.get("data") if isinstance(payload, dict) else None
+            if not isinstance(data, list):
+                return False, latency_ms, "Unexpected /models JSON (missing data[])", [], None
+            for m in data:
+                if not isinstance(m, dict):
+                    continue
+                mid = m.get("id")
+                if mid:
+                    models.append({"id": mid})
+            return True, latency_ms, None, models, None
+        except httpx.TimeoutException:
+            return False, None, f"Timed out after {list_timeout}s (is the server running?)", [], None
+        except httpx.RequestError as e:
+            logger.warning("LLM probe failed: %s", e)
+            return False, None, str(e), [], None
+        except json.JSONDecodeError as e:
+            return False, None, f"Invalid JSON from {list_url}: {e}", [], None
+
+    async def _build_status_dict(self, list_timeout: float) -> Dict[str, Any]:
+        ok, latency_ms, err, models, hint = await self.probe_connection(list_timeout=list_timeout)
+        active = self.config.chat_model
+        matched = next((m for m in models if m["id"] == active), None)
+        detected_id, detected_src = infer_detected_chat_model(
+            models, active, self.config.primary_backend, ok
+        )
+        models_align = (
+            bool(detected_id and active and detected_id == active)
+            if ok and detected_id
+            else None
+        )
+        return {
+            "connected": ok,
+            "latency_ms": round(latency_ms, 2) if latency_ms is not None else None,
+            "error": err,
+            "primary_backend": self.config.primary_backend,
+            "base_url": self._openai_base_url(),
+            "chat_model": active,
+            "detected_model": detected_id,
+            "detected_model_source": detected_src,
+            "models_align": models_align,
+            "model_known": matched is not None if models else None,
+            "temperature": self.config.temperature,
+            "timeout_seconds": self.config.timeout_seconds,
+            "models": models[:80],
+            "model_count": len(models),
+            "server_hint": hint,
+            "cached": False,
+        }
+
+    async def status_dict(self, list_timeout: float = 3.0, *, bypass_cache: bool = False) -> Dict[str, Any]:
+        """
+        Return reachability + model list. Probes GET /v1/models unless a fresh cache exists
+        (default TTL 60s) to avoid hammering LM Studio when many admin endpoints poll.
+        """
+        async with self._probe_lock:
+            now = time.monotonic()
+            if (
+                not bypass_cache
+                and self._status_cache is not None
+                and (now - self._status_cache_at) < self._probe_cache_ttl_s
+            ):
+                out = dict(self._status_cache)
+                out["cached"] = True
+                return out
+            fresh = await self._build_status_dict(list_timeout)
+            self._status_cache = fresh
+            self._status_cache_at = now
+            return dict(fresh)
+
+    async def generate(
+        self,
+        prompt: str,
+        system_prompt: str = "You are a master storyteller for a dark sci-fi MUD.",
+        max_tokens: int = 250,
+    ) -> str:
+        """
+        Generate text from the LLM.
+        Returns a fallback string if the request fails or times out.
+        """
+        model = self.config.chat_model or "local-model"
+        try:
+            logger.info("LLM request model=%s base=%s", model, self._openai_base_url())
+
+            response = await asyncio.wait_for(
+                self.client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=self.config.temperature,
+                    max_tokens=max_tokens,
+                ),
+                timeout=self.timeout,
+            )
+
+            result = response.choices[0].message.content
+            return result.strip() if result else "[The narration fades into static...]"
+
+        except asyncio.TimeoutError:
+            logger.warning("LLM request timed out.")
+            return "[The engine hums, but silence follows...]"
+        except Exception as e:
+            logger.error("LLM Error: %s", e)
+            return "[Description unavailable: Connection to the Forge lost.]"

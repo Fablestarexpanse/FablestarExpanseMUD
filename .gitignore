@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+.env.*
+
+# Node (UIs)
+node_modules/
+**/node_modules/
+
+# Tools / caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+*.log
+
+# Local LLM data (docker-compose volume)
+ollama_data/
+
+# Local assistant / IDE
+.claude/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/

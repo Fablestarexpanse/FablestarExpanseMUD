@@ -1,0 +1,60 @@
+from typing import Dict, List, Optional, Set
+from pydantic import BaseModel, Field
+
+class ExitModel(BaseModel):
+    destination: str
+    description: str
+
+class FeatureModel(BaseModel):
+    id: str
+    name: str
+    keywords: List[str]
+    description: str
+    interaction: Optional[str] = "examine"
+
+class EntitySpawnModel(BaseModel):
+    template: str
+    chance: float = 1.0
+    max_count: int = 1
+
+class HazardModel(BaseModel):
+    id: str
+    type: str
+    severity: int
+    description: str
+
+class RoomModel(BaseModel):
+    id: str
+    zone: str
+    type: str
+    depth: int = 1
+    description: Dict[str, str] = Field(default_factory=lambda: {"base": "A featureless room."})
+    exits: Dict[str, ExitModel] = Field(default_factory=dict)
+    features: List[FeatureModel] = Field(default_factory=list)
+    entity_spawns: List[EntitySpawnModel] = Field(default_factory=list)
+    hazards: List[HazardModel] = Field(default_factory=list)
+    tags: Set[str] = Field(default_factory=set)
+
+class ZoneModel(BaseModel):
+    id: str
+    name: str
+    description: str
+    depth_range: List[int] = Field(default_factory=lambda: [1, 3])
+
+class EntityTemplate(BaseModel):
+    id: str
+    name: str
+    type: str = "creature"
+    description: Dict[str, str] = Field(default_factory=lambda: {"short": "A creature.", "long": "A creature lurks here."})
+    stats: Dict[str, int] = Field(default_factory=lambda: {"hp": 10, "max_hp": 10, "attack": 3, "defense": 1})
+    tags: Set[str] = Field(default_factory=set)
+    loot: List[str] = Field(default_factory=list)  # item template IDs it may drop
+
+class ItemTemplate(BaseModel):
+    id: str
+    name: str
+    type: str = "misc"
+    description: str = ""
+    value: int = 0
+    weight: float = 0.0
+    tags: Set[str] = Field(default_factory=set)
