@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
+import WorldBuilderPage from "./builder/WorldBuilderPage.jsx";
 
 // ═══════════════════════════════════════════════════════════════
 // FABLESTAR MUD — WORLD ADMINISTRATION CONSOLE v2
@@ -37,6 +38,29 @@ const COLORS = {
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4001";
 const WS_BASE = import.meta.env.VITE_WS_BASE ?? "ws://localhost:4001";
+const LS_ADMIN_TOKEN = "fablestar_admin_token";
+
+/** Tool ids enforced by Nexus (see fablestar.admin.admin_security.NAV_TOOL_IDS). */
+const ALL_ADMIN_TOOLS = [
+  "dashboard", "forge", "operations", "players", "world", "entities",
+  "items", "glyphs", "locations", "builder", "server", "content", "settings",
+];
+
+function adminWsBase() {
+  return WS_BASE.replace(/\/?$/, "");
+}
+
+function adminPresenceWsUrl() {
+  const t = localStorage.getItem(LS_ADMIN_TOKEN);
+  const q = t ? `?token=${encodeURIComponent(t)}` : "";
+  return `${adminWsBase()}/ws/admin${q}`;
+}
+
+function adminLogsWsUrl() {
+  const t = localStorage.getItem(LS_ADMIN_TOKEN);
+  const q = t ? `?token=${encodeURIComponent(t)}` : "";
+  return `${adminWsBase()}/ws/logs${q}`;
+}
 
 function parseLeadingInt(val) {
   if (val == null || val === "") return 1;
@@ -1520,7 +1544,7 @@ const DashboardPage = () => {
   }, []);
 
   useEffect(() => {
-    const ws = new WebSocket(`${WS_BASE}/ws/logs`);
+    const ws = new WebSocket(adminLogsWsUrl());
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -1771,8 +1795,23 @@ const WorldPage = () => {
                 <div key={s.label}><div style={{ fontSize: 18, fontWeight: 700, color: COLORS.text, fontFamily: "'Space Grotesk', sans-serif" }}>{s.value}</div><div style={{ fontSize: 10, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</div></div>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+            <div style={{ display: "flex", gap: 6, marginTop: 4, flexWrap: "wrap" }}>
               <ActionButton small variant="ghost" icon={<Icons.Eye />} onClick={() => window.alert(`Zone path: content/world/zones/${zone.id}/`)}>View</ActionButton>
+              <ActionButton
+                small
+                variant="primary"
+                icon={<Icons.Map />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.dispatchEvent(
+                    new CustomEvent("fs-admin-nav", {
+                      detail: { page: "builder", zoneId: zone.id, zoneLabel: zone.name },
+                    })
+                  );
+                }}
+              >
+                World Builder
+              </ActionButton>
               <ActionButton small variant="forge" icon={<Icons.Sparkles />} onClick={() => window.alert("Open AI Forge → Room and set Target Zone to match this zone id.")}>AI Expand</ActionButton>
             </div>
           </div>
@@ -1978,6 +2017,19 @@ const LocationsPage = () => {
             {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
           </select>
           <ActionButton variant="primary" icon={<Icons.Plus />} onClick={() => window.alert("Use AI Forge → Room, then Accept & Deploy, or add a .yaml under this zone's rooms/ folder.")}>Add Room</ActionButton>
+          <ActionButton
+            variant="primary"
+            icon={<Icons.Map />}
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent("fs-admin-nav", {
+                  detail: { page: "builder", zoneId: selectedZone, zoneLabel: zone?.name },
+                })
+              );
+            }}
+          >
+            Open in World Builder
+          </ActionButton>
           <ActionButton variant="forge" icon={<Icons.Sparkles />} onClick={() => window.alert("Open AI Forge → Room.")}>AI Generate Rooms</ActionButton>
         </div>
       </div>
@@ -2381,6 +2433,193 @@ const OperationsPage = () => {
 
 
 // ═══════════════════════════════════════════════════════════════
+// ADMIN AUTH, PRESENCE & TEAM (staff / head admin)
+// ═══════════════════════════════════════════════════════════════
+
+const LoginScreen = ({ onLoggedIn }) => {
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setErr("");
+    setBusy(true);
+    try {
+      const { data } = await axios.post(`${API_BASE}/admin/auth/login`, {
+        username: user.trim(),
+        password: pass,
+      });
+      localStorage.setItem(LS_ADMIN_TOKEN, data.access_token);
+      onLoggedIn(data.staff);
+    } catch (ex) {
+      setErr(ex.response?.data?.detail || ex.message || "Login failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const inp = {
+    width: "100%",
+    maxWidth: 320,
+    padding: "10px 12px",
+    background: COLORS.bgInput,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: 8,
+    color: COLORS.text,
+    fontSize: 14,
+  };
+  return (
+    <div style={{
+      minHeight: "100vh", background: COLORS.bg, display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'DM Sans', sans-serif",
+    }}>
+      <form onSubmit={submit} style={{
+        background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 32, width: "min(400px, 92vw)",
+      }}>
+        <h1 style={{ margin: "0 0 8px", fontSize: 20, color: COLORS.accent, fontFamily: "'Space Grotesk', sans-serif" }}>Fablestar Admin</h1>
+        <p style={{ margin: "0 0 20px", fontSize: 13, color: COLORS.textMuted }}>Sign in with a staff account. Ask a head admin for credentials.</p>
+        <label style={{ display: "block", fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>Username</label>
+        <input autoComplete="username" value={user} onChange={(e) => setUser(e.target.value)} style={{ ...inp, marginBottom: 14 }} />
+        <label style={{ display: "block", fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>Password</label>
+        <input type="password" autoComplete="current-password" value={pass} onChange={(e) => setPass(e.target.value)} style={{ ...inp, marginBottom: 16 }} />
+        {err && <div style={{ color: COLORS.danger, fontSize: 12, marginBottom: 12 }}>{typeof err === "string" ? err : JSON.stringify(err)}</div>}
+        <button type="submit" disabled={busy} style={{
+          width: "100%", padding: "12px", background: COLORS.accent, color: "#fff", border: "none", borderRadius: 8, fontWeight: 600, cursor: busy ? "wait" : "pointer",
+        }}>{busy ? "Signing in…" : "Sign in"}</button>
+      </form>
+    </div>
+  );
+};
+
+const PresenceStrip = ({ online }) => (
+  <div style={{
+    fontSize: 11, color: COLORS.textMuted, fontFamily: "'JetBrains Mono', monospace",
+    padding: "8px 12px", background: COLORS.bgInput, borderRadius: 8, border: `1px solid ${COLORS.border}`,
+    marginBottom: 12, lineHeight: 1.5,
+  }}>
+    <strong style={{ color: COLORS.textDim }}>Team online</strong>
+    {" · "}
+    {!online?.length ? "—" : online.map((p) => `${p.display_name || p.username} (${p.role})`).join(" · ")}
+  </div>
+);
+
+const StaffTeamPage = () => {
+  const [rows, setRows] = useState([]);
+  const [loadErr, setLoadErr] = useState("");
+  const [form, setForm] = useState({
+    username: "", password: "", display_name: "", role: "gm", tools: ["dashboard", "players"], zones: "*",
+  });
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoadErr("");
+    try {
+      const { data } = await axios.get(`${API_BASE}/admin/staff`);
+      setRows(data);
+    } catch (e) {
+      setLoadErr(e.response?.data?.detail || e.message);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const toggleTool = (id) => {
+    setForm((f) => {
+      const s = new Set(f.tools);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return { ...f, tools: [...s] };
+    });
+  };
+
+  const createStaff = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const zonesRaw = (form.zones || "").trim();
+      const zones = zonesRaw === "*" || zonesRaw === "" ? ["*"] : zonesRaw.split(",").map((z) => z.trim()).filter(Boolean);
+      await axios.post(`${API_BASE}/admin/staff`, {
+        username: form.username.trim(),
+        password: form.password,
+        display_name: form.display_name.trim() || form.username.trim(),
+        role: form.role,
+        permissions: { tools: form.tools, zones },
+      });
+      setForm({ username: "", password: "", display_name: "", role: "gm", tools: ["dashboard", "players"], zones: "*" });
+      await load();
+    } catch (ex) {
+      window.alert(ex.response?.data?.detail || ex.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const patchStaff = async (id, patch) => {
+    try {
+      await axios.patch(`${API_BASE}/admin/staff/${id}`, patch);
+      await load();
+    } catch (ex) {
+      window.alert(ex.response?.data?.detail || ex.message);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 960 }}>
+      <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: COLORS.text, fontFamily: "'Space Grotesk', sans-serif" }}>Team &amp; access</h2>
+      <p style={{ margin: "0 0 16px", fontSize: 13, color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif" }}>
+        Head admins can add staff, assign roles (admin / GM), and restrict <strong>tools</strong> (sidebar areas) and <strong>zones</strong> (world regions for room edits / forge inject / live spawns).
+        Use zones <code style={{ color: COLORS.textDim }}>*</code> for all zones, or comma-separated ids e.g. <code style={{ color: COLORS.textDim }}>test_zone</code>.
+      </p>
+      {loadErr && <div style={{ color: COLORS.danger, marginBottom: 12 }}>{loadErr}</div>}
+
+      <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 18, marginBottom: 20 }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 14, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: "0.06em" }}>Add staff</h3>
+        <form onSubmit={createStaff} style={{ display: "grid", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+            <input placeholder="username" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} style={{ padding: 8, background: COLORS.bgInput, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.text }} />
+            <input type="password" placeholder="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} style={{ padding: 8, background: COLORS.bgInput, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.text }} />
+            <input placeholder="display name" value={form.display_name} onChange={(e) => setForm((f) => ({ ...f, display_name: e.target.value }))} style={{ padding: 8, background: COLORS.bgInput, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.text }} />
+            <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} style={{ padding: 8, background: COLORS.bgInput, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.text }}>
+              <option value="gm">GM</option>
+              <option value="admin">Admin</option>
+              <option value="head_admin">Head admin</option>
+            </select>
+          </div>
+          <input placeholder="Zones (* or zone_id, zone_id2)" value={form.zones} onChange={(e) => setForm((f) => ({ ...f, zones: e.target.value }))} style={{ padding: 8, background: COLORS.bgInput, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.text }} />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {ALL_ADMIN_TOOLS.map((tid) => (
+              <label key={tid} style={{ fontSize: 11, color: COLORS.textMuted, display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }}>
+                <input type="checkbox" checked={form.tools.includes(tid)} onChange={() => toggleTool(tid)} />
+                {tid}
+              </label>
+            ))}
+          </div>
+          <button type="submit" disabled={busy} style={{ alignSelf: "start", padding: "8px 16px", background: COLORS.accent, color: "#fff", border: "none", borderRadius: 6, fontWeight: 600, cursor: "pointer" }}>Create</button>
+        </form>
+      </div>
+
+      <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, overflow: "hidden" }}>
+        <DataTable
+          columns={[
+            { label: "User", render: (r) => <span style={{ fontWeight: 600 }}>{r.display_name}</span> },
+            { label: "Login", key: "username", mono: true },
+            { label: "Role", key: "role", mono: true },
+            { label: "Active", render: (r) => <Badge color={r.is_active ? COLORS.success : COLORS.danger}>{r.is_active ? "yes" : "no"}</Badge> },
+            { label: "Tools", render: (r) => <span style={{ fontSize: 10, color: COLORS.textDim }}>{(r.permissions?.tools || []).join(", ") || "—"}</span> },
+            { label: "Zones", render: (r) => <span style={{ fontSize: 10, color: COLORS.textDim }}>{(r.permissions?.zones || []).join(", ") || "*"}</span> },
+            { label: "", render: (r) => (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <ActionButton small variant="ghost" onClick={() => patchStaff(r.id, { is_active: !r.is_active })}>{r.is_active ? "Deactivate" : "Activate"}</ActionButton>
+              </div>
+            ) },
+          ]}
+          rows={rows}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
 // NAVIGATION & MAIN APP
 // ═══════════════════════════════════════════════════════════════
 
@@ -2394,9 +2633,11 @@ const NAV_ITEMS = [
   { id: "items", label: "Items", icon: <Icons.Items /> },
   { id: "glyphs", label: "Glyphs", icon: <Icons.Glyphs /> },
   { id: "locations", label: "Locations", icon: <Icons.Locations /> },
+  { id: "builder", label: "World Builder", icon: <Icons.Map /> },
   { id: "server", label: "Server", icon: <Icons.Server /> },
   { id: "content", label: "Content Tools", icon: <Icons.Content /> },
   { id: "settings", label: "Settings", icon: <Icons.Settings /> },
+  { id: "team", label: "Team & access", icon: <Icons.Players />, headOnly: true },
 ];
 
 const PAGES = {
@@ -2409,15 +2650,171 @@ const PAGES = {
   items: ItemsPage,
   glyphs: GlyphsPage,
   locations: LocationsPage,
+  builder: WorldBuilderPage,
   server: ServerPage,
   content: ContentPage,
   settings: () => <div style={{ color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif", padding: 40, textAlign: "center" }}>Settings panel — configure server, LLM, permissions, and theme preferences.</div>,
+  team: StaffTeamPage,
 };
 
 export default function App() {
   const [activePage, setActivePage] = useState("dashboard");
   const [sidebarHovered, setSidebarHovered] = useState(null);
-  const PageComponent = PAGES[activePage];
+  const [serverInfo, setServerInfo] = useState(null);
+  const [staffProfile, setStaffProfile] = useState(null);
+  const [booting, setBooting] = useState(true);
+  const [presenceOnline, setPresenceOnline] = useState([]);
+
+  useEffect(() => {
+    const id = axios.interceptors.request.use((cfg) => {
+      const t = localStorage.getItem(LS_ADMIN_TOKEN);
+      if (t) cfg.headers.Authorization = `Bearer ${t}`;
+      return cfg;
+    });
+    return () => axios.interceptors.request.eject(id);
+  }, []);
+
+  const refreshMe = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/admin/me`);
+      setStaffProfile(data);
+      return data;
+    } catch {
+      setStaffProfile(null);
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE}/server/info`);
+        setServerInfo(data);
+      } catch {
+        setServerInfo({ admin_auth_required: false });
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!serverInfo) return;
+    let cancelled = false;
+    (async () => {
+      const need = !!serverInfo.admin_auth_required;
+      const t = localStorage.getItem(LS_ADMIN_TOKEN);
+      if (need && !t) {
+        if (!cancelled) {
+          setStaffProfile(null);
+          setBooting(false);
+        }
+        return;
+      }
+      try {
+        await refreshMe();
+      } finally {
+        if (!cancelled) setBooting(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [serverInfo, refreshMe]);
+
+  useEffect(() => {
+    if (!serverInfo) return;
+    if (serverInfo.admin_auth_required && !localStorage.getItem(LS_ADMIN_TOKEN)) return;
+    let ws;
+    try {
+      ws = new WebSocket(adminPresenceWsUrl());
+      ws.onmessage = (ev) => {
+        try {
+          const j = JSON.parse(ev.data);
+          if (j.type === "presence" && Array.isArray(j.online)) setPresenceOnline(j.online);
+        } catch { /* ignore */ }
+      };
+    } catch { /* ignore */ }
+    return () => { try { ws?.close(); } catch { /* ignore */ } };
+  }, [serverInfo, staffProfile?.staff_id]);
+
+  useEffect(() => {
+    const onNav = (ev) => {
+      const d = ev.detail || {};
+      if (d.page === "forge") {
+        setActivePage("forge");
+        return;
+      }
+      if (d.page !== "builder") return;
+      if (d.zoneId) {
+        sessionStorage.setItem(
+          "fs_builder_initial",
+          JSON.stringify({ scale: "zone", id: d.zoneId, label: d.zoneLabel || d.zoneId })
+        );
+      } else if (d.shipId) {
+        sessionStorage.setItem(
+          "fs_builder_initial",
+          JSON.stringify({ scale: "ship", id: d.shipId, label: d.shipLabel || d.shipId })
+        );
+      }
+      setActivePage("builder");
+    };
+    window.addEventListener("fs-admin-nav", onNav);
+    return () => window.removeEventListener("fs-admin-nav", onNav);
+  }, []);
+
+  useEffect(() => {
+    if (booting || !serverInfo) return;
+    try {
+      const u = new URL(window.location.href);
+      const zone = u.searchParams.get("zone");
+      const ship = u.searchParams.get("ship");
+      if (u.searchParams.get("page") === "builder" || u.searchParams.get("builder") === "1") {
+        if (zone) {
+          sessionStorage.setItem("fs_builder_initial", JSON.stringify({ scale: "zone", id: zone, label: zone }));
+        } else if (ship) {
+          sessionStorage.setItem("fs_builder_initial", JSON.stringify({ scale: "ship", id: ship, label: ship }));
+        }
+        setActivePage("builder");
+        u.searchParams.delete("page");
+        u.searchParams.delete("zone");
+        u.searchParams.delete("ship");
+        u.searchParams.delete("builder");
+        const qs = u.searchParams.toString();
+        window.history.replaceState({}, "", `${u.pathname}${qs ? `?${qs}` : ""}${u.hash}`);
+      }
+    } catch { /* ignore */ }
+  }, [booting, serverInfo]);
+
+  const allowedSet = useMemo(() => {
+    if (staffProfile?.tools_effective == null) return new Set(ALL_ADMIN_TOOLS);
+    return new Set(staffProfile.tools_effective);
+  }, [staffProfile]);
+
+  const navFiltered = useMemo(() => NAV_ITEMS.filter((item) => {
+    if (item.headOnly) return staffProfile?.role === "head_admin";
+    return allowedSet.has(item.id);
+  }), [staffProfile, allowedSet]);
+
+  const resolvedPage = navFiltered.some((n) => n.id === activePage)
+    ? activePage
+    : (navFiltered[0]?.id ?? "dashboard");
+
+  const PageComponent = PAGES[resolvedPage] || PAGES.dashboard;
+
+  const logout = () => {
+    localStorage.removeItem(LS_ADMIN_TOKEN);
+    setStaffProfile(null);
+    window.location.reload();
+  };
+
+  if (!serverInfo || booting) {
+    return (
+      <div style={{ display: "flex", height: "100vh", alignItems: "center", justifyContent: "center", background: COLORS.bg, color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif" }}>
+        Loading…
+      </div>
+    );
+  }
+
+  if (serverInfo.admin_auth_required && !localStorage.getItem(LS_ADMIN_TOKEN)) {
+    return <LoginScreen onLoggedIn={(s) => { setStaffProfile(s); setBooting(false); }} />;
+  }
 
   return (
     <div style={{ display: "flex", height: "100vh", background: COLORS.bg, color: COLORS.text, fontFamily: "'DM Sans', sans-serif", overflow: "hidden" }}>
@@ -2447,8 +2844,8 @@ export default function App() {
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2, padding: "0 8px" }}>
-          {NAV_ITEMS.map(item => {
-            const isActive = activePage === item.id;
+          {navFiltered.map(item => {
+            const isActive = resolvedPage === item.id;
             const isHovered = sidebarHovered === item.id;
             const isForge = item.highlight;
             return (
@@ -2471,15 +2868,24 @@ export default function App() {
           })}
         </div>
 
-        <div style={{ padding: "16px 20px", borderTop: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ padding: "16px 20px", borderTop: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column", gap: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 6, background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", fontFamily: "'Space Grotesk', sans-serif" }}>R</div>
-            <div><div style={{ fontSize: 12, fontWeight: 600, color: COLORS.text }}>Ronan</div><div style={{ fontSize: 10, color: COLORS.textDim, fontFamily: "'JetBrains Mono', monospace" }}>admin</div></div>
+            <div style={{ width: 28, height: 28, borderRadius: 6, background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", fontFamily: "'Space Grotesk', sans-serif" }}>
+              {(staffProfile?.display_name || "?").slice(0, 1).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{staffProfile?.display_name || "Staff"}</div>
+              <div style={{ fontSize: 10, color: COLORS.textDim, fontFamily: "'JetBrains Mono', monospace" }}>{staffProfile?.role || "—"}</div>
+            </div>
           </div>
+          {(serverInfo?.admin_auth_required || localStorage.getItem(LS_ADMIN_TOKEN)) && (
+            <button type="button" onClick={logout} style={{ fontSize: 11, padding: "6px 10px", background: COLORS.bgHover, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.textMuted, cursor: "pointer" }}>Sign out</button>
+          )}
         </div>
       </nav>
 
       <main style={{ flex: 1, overflow: "auto", padding: 28 }}>
+        <PresenceStrip online={presenceOnline} />
         <PageComponent />
       </main>
     </div>

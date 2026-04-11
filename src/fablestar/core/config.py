@@ -12,6 +12,10 @@ class ServerConfig(BaseModel):
     max_connections: int = 100
     tick_rate: float = 0.25  # 4 ticks per second
     dev_mode: bool = False
+    # When True, Nexus admin/content/forge/llm routes require a staff JWT (see /admin/auth/login).
+    admin_auth_required: bool = False
+    # HS256 secret; prefer env FABLESTAR_ADMIN_JWT_SECRET in production.
+    admin_jwt_secret: Optional[str] = None
 
 class DatabaseConfig(BaseModel):
     host: str = "localhost"

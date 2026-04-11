@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON
+from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from fablestar.state.postgres import Base
 
@@ -46,3 +46,23 @@ class Character(Base):
 
     # Relationships
     account: Mapped["Account"] = relationship(back_populates="characters")
+
+
+class AdminStaff(Base):
+    """Console staff (head admin, admin, GM) with optional tool/zone restrictions."""
+
+    __tablename__ = "admin_staff"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    display_name: Mapped[str] = mapped_column(String(120), default="")
+    # head_admin | admin | gm
+    role: Mapped[str] = mapped_column(String(32), default="gm")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # {"tools": ["dashboard", "players", ...], "zones": ["*"] | ["zone_id", ...]}
+    permissions: Mapped[dict[str, Any]] = mapped_column(JSON, default=lambda: {})
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )

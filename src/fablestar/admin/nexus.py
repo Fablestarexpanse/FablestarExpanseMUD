@@ -1,22 +1,58 @@
 import asyncio
 import logging
+import re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
 import uvicorn
 import yaml
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import Depends, FastAPI, Query, Request, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 
-from fablestar.admin import content_browser
+from fablestar.admin import content_browser, staff_service
+from fablestar.admin.admin_security import (
+    AdminContext,
+    NexusAdminAuthMiddleware,
+    decode_staff_token,
+    issue_staff_token,
+    load_admin_context_from_id,
+    new_presence_connection_id,
+)
 from fablestar.admin.host_metrics import get_host_snapshot
 from fablestar.admin.world_live import build_world_live_snapshot
 from fablestar.network.websocket_protocol import WebSocketProtocol
 
 logger = logging.getLogger(__name__)
+
+
+def get_admin_ctx(request: Request) -> AdminContext:
+    ctx = getattr(request.state, "admin_ctx", None)
+    if ctx is None:
+        raise HTTPException(status_code=500, detail="admin_context_missing")
+    return ctx
+
+
+def require_tool(tool_id: str):
+    def _dep(request: Request) -> AdminContext:
+        ctx = get_admin_ctx(request)
+        if not ctx.may_use_tool(tool_id):
+            raise HTTPException(status_code=403, detail=f"tool_denied:{tool_id}")
+        return ctx
+
+    return _dep
+
+
+def require_any_tool(*tool_ids: str):
+    def _dep(request: Request) -> AdminContext:
+        ctx = get_admin_ctx(request)
+        if not any(ctx.may_use_tool(t) for t in tool_ids):
+            raise HTTPException(status_code=403, detail="tool_denied")
+        return ctx
+
+    return _dep
 
 class ServerStatus(BaseModel):
     is_running: bool
@@ -67,6 +103,67 @@ class LLMSettingsBody(BaseModel):
     cache_ttl: Optional[int] = None
 
 
+class StaffLoginBody(BaseModel):
+    username: str
+    password: str
+
+
+class StaffCreateBody(BaseModel):
+    username: str
+    password: str
+    display_name: str = ""
+    role: str = "gm"
+    permissions: Dict[str, Any] = Field(default_factory=dict)
+
+
+class StaffPatchBody(BaseModel):
+    display_name: Optional[str] = None
+    role: Optional[str] = None
+    permissions: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+    password: Optional[str] = None
+
+
+class RoomJsonBody(BaseModel):
+    """Full or partial room document merged into existing YAML."""
+
+    room: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CreateRoomBody(BaseModel):
+    slug: str
+    room: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ZonePositionsBody(BaseModel):
+    positions: Dict[str, Dict[str, float]] = Field(default_factory=dict)
+
+
+class CreateSystemBody(BaseModel):
+    id: str
+    name: str = ""
+    x: float = 0
+    y: float = 0
+    z: float = 0
+    faction: str = "neutral"
+    security: str = "low"
+    star_type: str = "G2V"
+    star_name: str = ""
+    add_to_galaxy: bool = True
+
+
+class SystemDocumentBody(BaseModel):
+    """Full YAML root, e.g. {\"system\": {...}}."""
+
+    document: Dict[str, Any]
+
+
+class CreateShipBody(BaseModel):
+    id: str
+    name: str = ""
+    size: str = "small"
+
+
 def _llm_public_config(cfg) -> Dict[str, Any]:
     llm = cfg.llm
     key = llm.lm_studio_key or ""
@@ -90,9 +187,12 @@ class NexusApp:
     def __init__(self, server: "FablestarServer"):
         self.server = server
         self.app = FastAPI(title="Fablestar Nexus API")
+        self._active_sockets: List[WebSocket] = []
+        self._admin_ws_sockets: List[WebSocket] = []
+        self._admin_presence: Dict[str, Dict[str, Any]] = {}
+        self._presence_lock = asyncio.Lock()
         self._setup_routes()
         self._setup_middleware()
-        self._active_sockets: List[WebSocket] = []
 
     def _setup_middleware(self):
         self.app.add_middleware(
@@ -102,8 +202,91 @@ class NexusApp:
             allow_methods=["*"],
             allow_headers=["*"],
         )
+        self.app.add_middleware(NexusAdminAuthMiddleware, server=self.server)
+
+    async def _admin_ws_auth(self, websocket: WebSocket) -> Optional[AdminContext]:
+        cfg = self.server.config.server
+        if not cfg.admin_auth_required:
+            return AdminContext.bypass()
+        token = (websocket.query_params.get("token") or "").strip()
+        if not token:
+            return None
+        try:
+            sid = decode_staff_token(self.server, token)
+        except ValueError:
+            return None
+        return await load_admin_context_from_id(self.server, sid)
+
+    async def _presence_snapshot_dict(self) -> Dict[str, Any]:
+        async with self._presence_lock:
+            online = list(self._admin_presence.values())
+        online.sort(key=lambda x: (x.get("display_name") or "").lower())
+        return {"type": "presence", "online": online}
+
+    async def broadcast_admin_presence(self) -> None:
+        payload = await self._presence_snapshot_dict()
+        dead: List[WebSocket] = []
+        for ws in self._admin_ws_sockets:
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            if ws in self._admin_ws_sockets:
+                self._admin_ws_sockets.remove(ws)
 
     def _setup_routes(self):
+        @self.app.post("/admin/auth/login")
+        async def admin_auth_login(body: StaffLoginBody):
+            row = await staff_service.authenticate_staff(self.server, body.username, body.password)
+            token = issue_staff_token(self.server, row.id)
+            ctx = AdminContext.from_staff(row)
+            return {"access_token": token, "token_type": "bearer", "staff": ctx.public_dict()}
+
+        @self.app.get("/admin/me")
+        async def admin_me(request: Request):
+            return get_admin_ctx(request).public_dict()
+
+        @self.app.get("/admin/presence")
+        async def admin_presence_http(request: Request):
+            get_admin_ctx(request)
+            async with self._presence_lock:
+                online = list(self._admin_presence.values())
+            online.sort(key=lambda x: (x.get("display_name") or "").lower())
+            return {"online": online}
+
+        @self.app.get("/admin/staff")
+        async def admin_staff_list(request: Request):
+            ctx = get_admin_ctx(request)
+            if not ctx.is_head_admin():
+                raise HTTPException(status_code=403, detail="head_admin_only")
+            rows = await staff_service.list_staff(self.server)
+            return [staff_service.staff_public(r) for r in rows]
+
+        @self.app.post("/admin/staff")
+        async def admin_staff_create(request: Request, body: StaffCreateBody):
+            ctx = get_admin_ctx(request)
+            if not ctx.is_head_admin():
+                raise HTTPException(status_code=403, detail="head_admin_only")
+            row = await staff_service.create_staff(
+                self.server,
+                username=body.username,
+                password=body.password,
+                display_name=body.display_name,
+                role=body.role,
+                permissions=body.permissions,
+            )
+            return staff_service.staff_public(row)
+
+        @self.app.patch("/admin/staff/{staff_id}")
+        async def admin_staff_patch(request: Request, staff_id: int, body: StaffPatchBody):
+            ctx = get_admin_ctx(request)
+            if not ctx.is_head_admin():
+                raise HTTPException(status_code=403, detail="head_admin_only")
+            patch = body.model_dump(exclude_unset=True)
+            row = await staff_service.apply_staff_patch(self.server, staff_id, patch)
+            return staff_service.staff_public(row)
+
         @self.app.get("/status", response_model=ServerStatus)
         async def get_status():
             return ServerStatus(
@@ -129,7 +312,9 @@ class NexusApp:
             return await self.server.play_register(body.username, body.password)
 
         @self.app.get("/players")
-        async def get_players():
+        async def get_players(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("players", "operations"))],
+        ):
             players = []
             redis = self.server.redis
             for sid, session in self.server.session_manager.sessions.items():
@@ -151,14 +336,20 @@ class NexusApp:
             return players
 
         @self.app.post("/admin/sessions/{session_id}/disconnect")
-        async def admin_disconnect_session(session_id: str):
+        async def admin_disconnect_session(
+            session_id: str,
+            _ctx: Annotated[AdminContext, Depends(require_tool("operations"))],
+        ):
             if session_id not in self.server.session_manager.sessions:
                 raise HTTPException(status_code=404, detail="Session not found")
             await self.server.session_manager.destroy_session(session_id)
             return {"status": "ok", "session_id": session_id}
 
         @self.app.post("/admin/broadcast")
-        async def admin_broadcast(body: AdminBroadcastBody):
+        async def admin_broadcast(
+            body: AdminBroadcastBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("operations"))],
+        ):
             msg = (body.message or "").strip()
             if not msg:
                 raise HTTPException(status_code=400, detail="message is required")
@@ -166,13 +357,17 @@ class NexusApp:
             return {"status": "ok", "delivered_hint": "playing sessions"}
 
         @self.app.get("/world/live")
-        async def world_live():
+        async def world_live(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("operations", "world"))],
+        ):
             if not self.server.redis.client:
                 return await build_world_live_snapshot(None)
             return await build_world_live_snapshot(self.server.redis.client)
 
         @self.app.get("/admin/metrics")
-        async def admin_metrics():
+        async def admin_metrics(
+            _ctx: Annotated[AdminContext, Depends(require_tool("operations"))],
+        ):
             """Lightweight process snapshot; command/tick histograms deferred."""
             tm = self.server.tick_manager
             cfg = self.server.config.server
@@ -189,48 +384,73 @@ class NexusApp:
             }
 
         @self.app.get("/content/overview")
-        async def content_overview():
+        async def content_overview(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("world", "content", "dashboard"))],
+        ):
             return content_browser.content_overview()
 
         @self.app.get("/content/zones")
-        async def content_zones():
+        async def content_zones(
+            _ctx: Annotated[AdminContext, Depends(require_tool("world"))],
+        ):
             return content_browser.list_zones()
 
         @self.app.get("/content/zones/{zone_id}/rooms")
-        async def content_zone_rooms(zone_id: str):
+        async def content_zone_rooms(
+            zone_id: str,
+            ctx: Annotated[AdminContext, Depends(require_tool("world"))],
+        ):
+            if not ctx.may_read_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
             rows = content_browser.list_rooms(zone_id)
             if not rows and zone_id not in content_browser.list_zone_ids():
                 raise HTTPException(status_code=404, detail="Zone not found")
             return rows
 
         @self.app.get("/content/entities/spawns")
-        async def content_entity_spawns():
+        async def content_entity_spawns(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "entities", "world"))],
+        ):
             return content_browser.aggregate_entity_spawns()
 
         @self.app.get("/content/items")
-        async def content_items():
+        async def content_items(
+            _ctx: Annotated[AdminContext, Depends(require_tool("items"))],
+        ):
             return content_browser.list_items()
 
         @self.app.get("/content/glyphs")
-        async def content_glyphs():
+        async def content_glyphs(
+            _ctx: Annotated[AdminContext, Depends(require_tool("glyphs"))],
+        ):
             return content_browser.list_glyphs()
 
         @self.app.get("/content/room/{zone_id}/{room_slug}/yaml")
-        async def content_room_yaml(zone_id: str, room_slug: str):
+        async def content_room_yaml(
+            zone_id: str,
+            room_slug: str,
+            ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "locations"))],
+        ):
+            if not ctx.may_read_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
             raw = content_browser.get_room_yaml(zone_id, room_slug)
             if raw is None:
                 raise HTTPException(status_code=404, detail="Room not found")
             return {"yaml": raw}
 
         @self.app.post("/content/cache/reload")
-        async def content_cache_reload():
+        async def content_cache_reload(
+            _ctx: Annotated[AdminContext, Depends(require_tool("server"))],
+        ):
             self.server.content_loader.clear_cache()
             self.server.prompt_manager.reload()
             self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
             return {"status": "ok", "message": "Content and prompt caches cleared."}
 
         @self.app.get("/server/info")
-        async def server_info():
+        async def server_info(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("dashboard", "server"))],
+        ):
             cfg = self.server.config
             redis_ok = False
             try:
@@ -254,6 +474,7 @@ class NexusApp:
                 "player_transport": "websocket",
                 "max_connections": cfg.server.max_connections,
                 "dev_mode": cfg.server.dev_mode,
+                "admin_auth_required": cfg.server.admin_auth_required,
                 "llm_backend": cfg.llm.primary_backend,
                 "llm_url": llm_probe["base_url"],
                 "llm_model": cfg.llm.chat_model,
@@ -270,7 +491,9 @@ class NexusApp:
             }
 
         @self.app.get("/llm/config")
-        async def llm_config():
+        async def llm_config(
+            _ctx: Annotated[AdminContext, Depends(require_tool("server"))],
+        ):
             return _llm_public_config(self.server.config)
 
         async def _compose_llm_status(*, refresh: bool) -> Dict[str, Any]:
@@ -294,11 +517,18 @@ class NexusApp:
             return snap
 
         @self.app.get("/llm/status")
-        async def llm_status(refresh: bool = Query(default=False)):
+        async def llm_status(
+            _ctx: Annotated[AdminContext, Depends(require_tool("server"))],
+            refresh: bool = Query(default=False),
+        ):
             return await _compose_llm_status(refresh=refresh)
 
         @self.app.patch("/llm/settings")
-        async def llm_settings_patch(body: LLMSettingsBody, persist: bool = Query(default=True)):
+        async def llm_settings_patch(
+            body: LLMSettingsBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("server"))],
+            persist: bool = Query(default=True),
+        ):
             patch = body.model_dump(exclude_none=True)
             try:
                 self.server.update_llm_settings(patch, persist=persist)
@@ -307,7 +537,9 @@ class NexusApp:
             return await _compose_llm_status(refresh=True)
 
         @self.app.post("/llm/test-completion")
-        async def llm_test_completion():
+        async def llm_test_completion(
+            _ctx: Annotated[AdminContext, Depends(require_tool("server"))],
+        ):
             """Minimal chat completion to verify the pipeline (Forge / look use the same client)."""
             text = await self.server.llm_client.generate(
                 'Reply with exactly one word: "pong"',
@@ -317,7 +549,10 @@ class NexusApp:
             return {"reply": text.strip(), "model": self.server.config.llm.chat_model}
 
         @self.app.post("/forge/generate")
-        async def forge_generate(req: ForgeRequest):
+        async def forge_generate(
+            req: ForgeRequest,
+            _ctx: Annotated[AdminContext, Depends(require_tool("forge"))],
+        ):
             # 1. Render Prompt
             prompt = self.server.prompt_manager.render(
                 "forge_room",
@@ -340,7 +575,10 @@ class NexusApp:
                 raise HTTPException(status_code=500, detail="LLM generated invalid YAML. Please retry.")
 
         @self.app.post("/forge/generate-content")
-        async def forge_generate_content(req: ForgeGenericRequest):
+        async def forge_generate_content(
+            req: ForgeGenericRequest,
+            _ctx: Annotated[AdminContext, Depends(require_tool("forge"))],
+        ):
             cat = (req.category or "misc").lower().strip().replace(" ", "_")
             if not cat.replace("_", "").isalnum():
                 raise HTTPException(status_code=400, detail="Invalid category")
@@ -364,10 +602,15 @@ class NexusApp:
             return {"yaml": raw_yaml, "data": parsed, "category": cat}
 
         @self.app.post("/forge/inject")
-        async def forge_inject(injection: ForgeInjection):
+        async def forge_inject(
+            injection: ForgeInjection,
+            ctx: Annotated[AdminContext, Depends(require_tool("forge"))],
+        ):
             # 1. Validate the path
             try:
                 zone_id, room_filename = injection.id.split(":", 1)
+                if not ctx.may_write_zone(zone_id):
+                    raise HTTPException(status_code=403, detail="zone_denied")
                 zone_dir = Path("content/world/zones") / zone_id / "rooms"
                 zone_dir.mkdir(parents=True, exist_ok=True)
                 
@@ -387,13 +630,18 @@ class NexusApp:
         # ---- Entity Template Management ----------------------------------------
 
         @self.app.get("/content/entities")
-        async def list_entity_templates():
+        async def list_entity_templates(
+            _ctx: Annotated[AdminContext, Depends(require_tool("entities"))],
+        ):
             """List all entity templates defined on disk."""
             templates = self.server.content_loader.list_entity_templates()
             return [t.model_dump() for t in templates]
 
         @self.app.get("/content/entities/{entity_id}/yaml")
-        async def get_entity_yaml(entity_id: str):
+        async def get_entity_yaml(
+            entity_id: str,
+            _ctx: Annotated[AdminContext, Depends(require_tool("entities"))],
+        ):
             """Return raw YAML for an entity template."""
             if not entity_id.replace("_", "").isalnum():
                 raise HTTPException(status_code=400, detail="Invalid entity id")
@@ -403,7 +651,11 @@ class NexusApp:
             return {"yaml": path.read_text(encoding="utf-8")}
 
         @self.app.put("/content/entities/{entity_id}/yaml")
-        async def save_entity_yaml(entity_id: str, body: ContentInjectBody):
+        async def save_entity_yaml(
+            entity_id: str,
+            body: ContentInjectBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("entities"))],
+        ):
             """Write/overwrite an entity template YAML file."""
             if not entity_id.replace("_", "").isalnum():
                 raise HTTPException(status_code=400, detail="Invalid entity id")
@@ -414,7 +666,10 @@ class NexusApp:
             return {"status": "saved", "path": str(path)}
 
         @self.app.post("/content/entities/inject")
-        async def inject_entity(body: ContentInjectBody):
+        async def inject_entity(
+            body: ContentInjectBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("entities"))],
+        ):
             """Save a new entity template to disk (path = 'entities/<id>')."""
             slug = body.path.lstrip("/").removeprefix("entities/").replace("/", "_")
             if not slug.replace("_", "").isalnum():
@@ -428,7 +683,10 @@ class NexusApp:
         # ---- Item Template Management ------------------------------------------
 
         @self.app.get("/content/items/{item_id}/yaml")
-        async def get_item_yaml(item_id: str):
+        async def get_item_yaml(
+            item_id: str,
+            _ctx: Annotated[AdminContext, Depends(require_tool("items"))],
+        ):
             """Return raw YAML for an item template."""
             if not item_id.replace("_", "").isalnum():
                 raise HTTPException(status_code=400, detail="Invalid item id")
@@ -438,7 +696,11 @@ class NexusApp:
             return {"yaml": path.read_text(encoding="utf-8")}
 
         @self.app.put("/content/items/{item_id}/yaml")
-        async def save_item_yaml(item_id: str, body: ContentInjectBody):
+        async def save_item_yaml(
+            item_id: str,
+            body: ContentInjectBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("items"))],
+        ):
             """Write/overwrite an item template YAML file."""
             if not item_id.replace("_", "").isalnum():
                 raise HTTPException(status_code=400, detail="Invalid item id")
@@ -449,7 +711,10 @@ class NexusApp:
             return {"status": "saved", "path": str(path)}
 
         @self.app.post("/content/items/inject")
-        async def inject_item(body: ContentInjectBody):
+        async def inject_item(
+            body: ContentInjectBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("items"))],
+        ):
             """Save a new item template to disk (path = 'items/<id>')."""
             slug = body.path.lstrip("/").removeprefix("items/").replace("/", "_")
             if not slug.replace("_", "").isalnum():
@@ -463,9 +728,16 @@ class NexusApp:
         # ---- Room YAML editing -------------------------------------------------
 
         @self.app.put("/content/room/{zone_id}/{room_slug}/yaml")
-        async def save_room_yaml(zone_id: str, room_slug: str, body: ContentInjectBody):
+        async def save_room_yaml(
+            zone_id: str,
+            room_slug: str,
+            body: ContentInjectBody,
+            ctx: Annotated[AdminContext, Depends(require_tool("locations"))],
+        ):
             """Write/overwrite a room YAML file and invalidate cache."""
             from re import match
+            if not ctx.may_write_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
             if not match(r'^[a-zA-Z0-9_-]+$', zone_id) or not match(r'^[a-zA-Z0-9_-]+$', room_slug):
                 raise HTTPException(status_code=400, detail="Invalid zone or room slug")
             path = Path("content/world/zones") / zone_id / "rooms" / f"{room_slug}.yaml"
@@ -474,11 +746,220 @@ class NexusApp:
             self.server.content_loader.invalidate(path)
             return {"status": "saved", "path": str(path)}
 
+        # ---- World builder (zone graph, positions, structured room CRUD) -----
+
+        @self.app.get("/content/zones/{zone_id}/graph")
+        async def content_zone_graph(
+            zone_id: str,
+            ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "locations", "world"))],
+        ):
+            if not ctx.may_read_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
+            if zone_id not in content_browser.list_zone_ids():
+                raise HTTPException(status_code=404, detail="Zone not found")
+            return content_browser.zone_graph(zone_id)
+
+        @self.app.put("/content/zones/{zone_id}/positions")
+        async def content_zone_positions(
+            zone_id: str,
+            body: ZonePositionsBody,
+            ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "locations"))],
+        ):
+            if not ctx.may_write_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
+            try:
+                path = content_browser.save_zone_positions(zone_id, body.positions)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            return {"status": "ok", "path": path}
+
+        @self.app.put("/content/zones/{zone_id}/rooms/{room_slug}")
+        async def content_save_room_json(
+            zone_id: str,
+            room_slug: str,
+            body: RoomJsonBody,
+            ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "locations"))],
+        ):
+            if not ctx.may_write_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
+            try:
+                path = content_browser.save_room_dict(zone_id, room_slug, body.room)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.invalidate(path)
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "saved", "path": str(path)}
+
+        @self.app.post("/content/zones/{zone_id}/rooms")
+        async def content_create_room(
+            zone_id: str,
+            body: CreateRoomBody,
+            ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "locations"))],
+        ):
+            if not ctx.may_write_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
+            slug = (body.slug or "").strip()
+            if not re.match(r"^[a-zA-Z0-9_-]+$", slug):
+                raise HTTPException(status_code=400, detail="invalid_slug")
+            try:
+                path = content_browser.create_room(zone_id, slug, body.room or None)
+            except FileExistsError:
+                raise HTTPException(status_code=409, detail="room_exists") from None
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.invalidate(path)
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "created", "path": str(path), "slug": slug}
+
+        @self.app.delete("/content/zones/{zone_id}/rooms/{room_slug}")
+        async def content_delete_room(
+            zone_id: str,
+            room_slug: str,
+            ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "locations"))],
+        ):
+            if not ctx.may_write_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
+            try:
+                content_browser.delete_room(zone_id, room_slug)
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail="Room not found") from None
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            path = Path("content/world/zones") / zone_id / "rooms" / f"{room_slug}.yaml"
+            self.server.content_loader.invalidate(path)
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "deleted", "slug": room_slug}
+
+        @self.app.get("/content/galaxy")
+        async def content_galaxy(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            return content_browser.galaxy_overview()
+
+        @self.app.get("/content/systems/{system_id}")
+        async def content_system(
+            system_id: str,
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            data = content_browser.system_detail(system_id)
+            if data is None:
+                raise HTTPException(status_code=404, detail="System not found")
+            return data
+
+        @self.app.get("/content/builder/search")
+        async def content_builder_search(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world", "locations"))],
+            q: str = "",
+            limit: int = 30,
+        ):
+            cap = max(5, min(int(limit), 80))
+            return content_browser.builder_search(q, cap)
+
+        @self.app.post("/content/systems")
+        async def content_create_system(
+            body: CreateSystemBody,
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            sid = (body.id or "").strip()
+            if not re.match(r"^[a-zA-Z0-9_-]+$", sid):
+                raise HTTPException(status_code=400, detail="invalid_system_id")
+            try:
+                path = content_browser.create_system(
+                    sid,
+                    name=body.name,
+                    x=body.x,
+                    y=body.y,
+                    z=body.z,
+                    faction=body.faction,
+                    security=body.security,
+                    star_type=body.star_type,
+                    star_name=body.star_name,
+                    add_to_galaxy=body.add_to_galaxy,
+                )
+            except FileExistsError:
+                raise HTTPException(status_code=409, detail="system_exists") from None
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.clear_cache()
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "created", "path": str(path), "id": sid}
+
+        @self.app.put("/content/systems/{system_id}")
+        async def content_put_system(
+            system_id: str,
+            body: SystemDocumentBody,
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            if not re.match(r"^[a-zA-Z0-9_-]+$", system_id):
+                raise HTTPException(status_code=400, detail="invalid_system_id")
+            try:
+                path = content_browser.save_system_document(system_id, body.document)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.invalidate(path)
+            self.server.content_loader.invalidate(content_browser.GALAXY_FILE)
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "saved", "path": str(path)}
+
+        @self.app.post("/content/ships/create")
+        async def content_create_ship(
+            body: CreateShipBody,
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            sid = (body.id or "").strip()
+            if not re.match(r"^[a-zA-Z0-9_-]+$", sid):
+                raise HTTPException(status_code=400, detail="invalid_ship_id")
+            try:
+                path = content_browser.create_ship_template(sid, body.name, body.size)
+            except FileExistsError:
+                raise HTTPException(status_code=409, detail="ship_exists") from None
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.clear_cache()
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "created", "path": str(path), "id": sid}
+
+        @self.app.get("/content/ships")
+        async def content_ships_list(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world", "entities"))],
+        ):
+            return {"ships": content_browser.list_ship_templates()}
+
+        @self.app.get("/content/ships/{ship_id}/graph")
+        async def content_ship_graph(
+            ship_id: str,
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            return content_browser.ship_graph(ship_id)
+
+        @self.app.put("/content/ships/{ship_id}/rooms/{room_local_id}")
+        async def content_save_ship_room(
+            ship_id: str,
+            room_local_id: str,
+            body: RoomJsonBody,
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            try:
+                path = content_browser.save_ship_room(ship_id, room_local_id, body.room)
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail="Ship not found") from None
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.clear_cache()
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "saved", "path": str(path)}
+
         # ---- Live World State --------------------------------------------------
 
         @self.app.get("/world/rooms/{zone_id}/{room_slug}/state")
-        async def room_live_state(zone_id: str, room_slug: str):
+        async def room_live_state(
+            zone_id: str,
+            room_slug: str,
+            ctx: Annotated[AdminContext, Depends(require_tool("world"))],
+        ):
             """Return the live state of a room: players, entities, floor items."""
+            if not ctx.may_read_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
             room_id = f"{zone_id}:{room_slug}"
             players = list(await self.server.redis.get_room_players(room_id))
             entity_ids = list(await self.server.redis.get_room_entities(room_id))
@@ -504,8 +985,15 @@ class NexusApp:
             }
 
         @self.app.post("/world/rooms/{zone_id}/{room_slug}/spawn")
-        async def manual_spawn(zone_id: str, room_slug: str, body: SpawnRequest):
+        async def manual_spawn(
+            zone_id: str,
+            room_slug: str,
+            body: SpawnRequest,
+            ctx: Annotated[AdminContext, Depends(require_tool("world"))],
+        ):
             """Manually spawn an entity into a room."""
+            if not ctx.may_write_zone(zone_id):
+                raise HTTPException(status_code=403, detail="zone_denied")
             room_id = f"{zone_id}:{room_slug}"
             entity_id = await self.server.spawner.spawn_entity(room_id, body.template)
             if not entity_id:
@@ -514,17 +1002,26 @@ class NexusApp:
             return {"status": "spawned", "entity_id": entity_id, "state": state}
 
         @self.app.delete("/world/entities/{entity_id}")
-        async def despawn_entity(entity_id: str):
+        async def despawn_entity(
+            entity_id: str,
+            ctx: Annotated[AdminContext, Depends(require_tool("world"))],
+        ):
             """Remove a live entity from the world."""
             state = await self.server.redis.get_entity_state(entity_id)
             if not state:
                 raise HTTPException(status_code=404, detail="Entity not found")
             room_id = state.get("room_id", "")
+            if room_id and ":" in room_id:
+                z = room_id.split(":", 1)[0]
+                if not ctx.may_write_zone(z):
+                    raise HTTPException(status_code=403, detail="zone_denied")
             await self.server.spawner.despawn_entity(entity_id, room_id)
             return {"status": "despawned", "entity_id": entity_id}
 
         @self.app.get("/world/entities")
-        async def list_live_entities():
+        async def list_live_entities(
+            _ctx: Annotated[AdminContext, Depends(require_tool("world"))],
+        ):
             """List all live entities currently in the world (scans occupied rooms)."""
             results = []
             seen_rooms: set[str] = set()
@@ -541,6 +1038,38 @@ class NexusApp:
 
         # ---- Websockets --------------------------------------------------------
 
+        @self.app.websocket("/ws/admin")
+        async def websocket_admin(websocket: WebSocket):
+            ctx = await self._admin_ws_auth(websocket)
+            if ctx is None:
+                await websocket.close(code=4401)
+                return
+            await websocket.accept()
+            conn_id = new_presence_connection_id()
+            entry = {
+                "connection_id": conn_id,
+                "staff_id": ctx.staff_id,
+                "username": ctx.username,
+                "display_name": ctx.display_name,
+                "role": ctx.role,
+                "since": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            }
+            async with self._presence_lock:
+                self._admin_presence[conn_id] = entry
+            self._admin_ws_sockets.append(websocket)
+            await self.broadcast_admin_presence()
+            try:
+                while True:
+                    await websocket.receive_text()
+            except WebSocketDisconnect:
+                pass
+            finally:
+                async with self._presence_lock:
+                    self._admin_presence.pop(conn_id, None)
+                if websocket in self._admin_ws_sockets:
+                    self._admin_ws_sockets.remove(websocket)
+                await self.broadcast_admin_presence()
+
         @self.app.websocket("/ws/play")
         async def websocket_play(websocket: WebSocket):
             """Dedicated WebSocket for the MUD game client."""
@@ -553,13 +1082,20 @@ class NexusApp:
 
         @self.app.websocket("/ws/logs")
         async def websocket_logs(websocket: WebSocket):
+            ctx = await self._admin_ws_auth(websocket)
+            if ctx is None:
+                await websocket.close(code=4401)
+                return
             await websocket.accept()
             self._active_sockets.append(websocket)
             try:
                 while True:
-                    await websocket.receive_text() # Keep connection alive
+                    await websocket.receive_text()  # Keep connection alive
             except WebSocketDisconnect:
-                self._active_sockets.remove(websocket)
+                pass
+            finally:
+                if websocket in self._active_sockets:
+                    self._active_sockets.remove(websocket)
 
     async def broadcast_log(self, message: str):
         """Send a log message to all connected admin consoles."""

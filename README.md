@@ -10,7 +10,7 @@ A next-generation MUD engine built with Python, focused on rapid iteration (“v
 
 - **Deterministic engine** — Game logic in Python; narration can be augmented by an LLM.
 - **Sub-second hot reload** — Edit YAML under `content/` or Python commands with minimal downtime.
-- **Admin console** — React admin app with **AI Forge** and world tooling.
+- **Admin console** — React admin app with **AI Forge** and world tooling; optional **multi-staff** logins, live **team presence**, and **head-admin** control over tools and world zones.
 - **Player client** — React player UI over WebSocket (`/play` on Nexus).
 - **Local LLMs** — LM Studio or Ollama (optional `config/llm.toml` or admin UI settings).
 
@@ -53,12 +53,28 @@ cd player-ui && npm install && cd ..
 
 TOML files in `config/` are merged at startup (see `src/fablestar/core/config.py`). This repo includes:
 
-- `config/server.toml` — Nexus HTTP/WebSocket port, tick rate, dev flags.
+- `config/server.toml` — Nexus HTTP/WebSocket port, tick rate, dev flags, and `admin_auth_required` (see below).
 - `config/database.toml` — PostgreSQL connection (aligned with `docker-compose.yml`).
 
 You can add more files in `config/` (for example `redis.toml`, `llm.toml`) to override Redis and LLM defaults from code.
 
 Environment overrides use the prefix `FABLESTAR_`, e.g. `FABLESTAR_SERVER__WEBSOCKET_PORT=8001`.
+
+Set a strong JWT secret when using staff auth: `FABLESTAR_ADMIN_JWT_SECRET` (or `admin_jwt_secret` in `server.toml`).
+
+### Admin staff (optional)
+
+When `admin_auth_required = true` in `config/server.toml`, the Nexus admin/content/forge/LLM HTTP routes require a **Bearer** token from `POST /admin/auth/login`. Player routes (`/play/*`, `/ws/play`) are unchanged.
+
+1. Run migrations: `python -m alembic upgrade head`
+2. Create the first **head admin**:  
+   `python scripts/bootstrap_admin.py --username youradmin --password 'a-strong-password'`
+3. Set `admin_auth_required = true` in `config/server.toml` and restart Nexus.
+4. Sign in via the admin UI. **Head admins** use **Team & access** to add **admin** or **GM** accounts, assign allowed **tools** (sidebar areas), and **zones** (`*` for all, or comma-separated zone ids such as `test_zone`).
+
+Live **team presence** uses WebSocket `GET /ws/admin?token=<jwt>` (the admin UI connects automatically). `GET /admin/presence` returns the same snapshot over HTTP.
+
+With `admin_auth_required = false` (default), Nexus keeps the previous behaviour: a synthetic full-access **Developer** context for local development.
 
 ## Running locally
 
@@ -135,7 +151,7 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Nexus admin API (security)
 
-The HTTP/WebSocket **Nexus** exposes the admin REST API and powers the admin UI. **There is no authentication on these routes today.** Treat it as **development / trusted-LAN only**: bind to localhost or a private network, or put a reverse proxy with auth in front before any public exposure.
+The HTTP/WebSocket **Nexus** exposes the admin REST API and powers the admin UI. With **`admin_auth_required = false`**, admin routes are still open aside from the optional staff system above — treat that mode as **development / trusted-LAN only**. With **`admin_auth_required = true`**, staff must authenticate; head admins manage roles and restrictions in the UI.
 
 Operator-oriented endpoints used by the **Operations** console include:
 

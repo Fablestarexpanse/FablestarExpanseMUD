@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
+
 from pydantic import BaseModel, Field
 
 class ExitModel(BaseModel):
@@ -58,3 +59,25 @@ class ItemTemplate(BaseModel):
     value: int = 0
     weight: float = 0.0
     tags: Set[str] = Field(default_factory=set)
+
+
+class StarSystemModel(BaseModel):
+    """On-disk star system YAML under content/world/systems/ (flexible bodies/connections)."""
+
+    id: str
+    name: str
+    coordinates: Dict[str, float] = Field(default_factory=lambda: {"x": 0.0, "y": 0.0, "z": 0.0})
+    star: Dict[str, str] = Field(default_factory=dict)
+    faction: str = "neutral"
+    security: str = "low"
+    connections: List[Dict[str, Any]] = Field(default_factory=list)
+    bodies: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class ShipTemplate(BaseModel):
+    """Ship interior graph source (content/world/ships/)."""
+
+    id: str
+    name: str
+    size: str = "small"
+    rooms: List[Dict[str, Any]] = Field(default_factory=list)

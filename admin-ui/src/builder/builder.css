@@ -1,0 +1,38 @@
+/* @xyflow/react dark theme aligned with Fablestar admin */
+.world-builder-flow .react-flow__background {
+  background: #0a0b0f !important;
+}
+
+.world-builder-flow .react-flow__node {
+  color: #c8cad4;
+}
+
+.world-builder-flow .react-flow__edge-path {
+  stroke: #3d4158;
+  stroke-width: 2;
+}
+
+.world-builder-flow .react-flow__edge.selected .react-flow__edge-path {
+  stroke: #7c6aef;
+}
+
+.world-builder-flow .react-flow__minimap {
+  background: #111318 !important;
+  border: 1px solid #252833;
+  border-radius: 8px;
+}
+
+.world-builder-flow .react-flow__controls-button {
+  background: #161920 !important;
+  border-color: #252833 !important;
+  color: #c8cad4 !important;
+  border-bottom: 1px solid #252833;
+}
+
+.world-builder-flow .react-flow__controls-button:hover {
+  background: #1c1f28 !important;
+}
+
+.world-builder-flow .react-flow__attribution {
+  opacity: 0.35;
+}
