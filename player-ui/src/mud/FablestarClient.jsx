@@ -58,6 +58,9 @@ export default function FablestarClient({
   narrativeLines,
   onSendCommand,
   wsConnected,
+  /** Absolute URL for current room scene art (from room YAML area_image_url + Nexus base). */
+  sceneImageUrl,
+  sceneRoomLabel,
 }) {
   const [layout, setLayout] = useState("standard");
   const [collapsed, setCollapsed] = useState({});
@@ -93,7 +96,9 @@ export default function FablestarClient({
         <CommandInput onSubmitCommand={sendCommand} />
       </div>
     ) },
-    { id: "scene", title: "Scene", icon: "🎨", accent: T.glyph.violet, minW: 240, minH: 180, content: <ScenePanel/> },
+    { id: "scene", title: "Scene", icon: "🎨", accent: T.glyph.violet, minW: 240, minH: 180, content: (
+      <ScenePanel imageUrl={sceneImageUrl} roomLabel={sceneRoomLabel} />
+    ) },
     { id: "character", title: "Conduit", icon: "◈", accent: T.glyph.violet, minW: 200, minH: 240, content: <CharacterPanel displayName={session?.characterName} /> },
     { id: "map", title: "Map — Sector 7", icon: "🗺", accent: T.glyph.cyan, minW: 220, minH: 160, content: <MiniMap/> },
     { id: "glyphs", title: "Glyph Loadout", icon: "✦", accent: T.glyph.violet, minW: 320, minH: 70, content: <GlyphBar/> },
@@ -106,7 +111,7 @@ export default function FablestarClient({
     { id: "keybinds", title: "Keybinds", icon: "⌨", accent: T.text.muted, minW: 240, minH: 280, content: <KeybindManager/> },
     { id: "triggers", title: "Triggers", icon: "⚡", accent: T.glyph.amber, minW: 260, minH: 260, content: <TriggerBuilder/> },
     { id: "quickactions", title: "Quick Actions", icon: "▶", accent: T.glyph.cyan, minW: 200, minH: 60, content: <QuickActions/> },
-  ], [narrativeLines, openCtx, sendCommand, notifications, session?.characterName]);
+  ], [narrativeLines, openCtx, sendCommand, notifications, session?.characterName, sceneImageUrl, sceneRoomLabel]);
 
   return (
     <GameCmdContext.Provider value={{ sendCommand }}>

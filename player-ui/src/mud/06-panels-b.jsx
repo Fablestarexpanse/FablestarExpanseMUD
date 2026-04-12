@@ -177,13 +177,31 @@ export function SocialPanel({ unreadCounts }) {
   );
 }
 
-export function ScenePanel() {
+export function ScenePanel({ imageUrl, roomLabel }) {
   const [state, setState] = useState("loaded");
   const [opacity, setOpacity] = useState(85);
+  const hasImage = Boolean(imageUrl && String(imageUrl).trim());
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", position: "relative" }}>
       <div style={{ flex: 1, position: "relative", overflow: "hidden", background: `radial-gradient(ellipse at 40% 30%,${T.glyph.violetDim},${T.bg.deep})` }}>
-        {state === "loaded" && (
+        {hasImage ? (
+          <div style={{ position: "absolute", inset: 0, opacity: opacity / 100 }}>
+            <img
+              src={imageUrl}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: `linear-gradient(180deg, transparent 55%, ${T.bg.void}e6)`,
+                pointerEvents: "none",
+              }}
+            />
+          </div>
+        ) : null}
+        {state === "loaded" && !hasImage && (
           <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 30% 20%,${T.glyph.violet}12,transparent 50%),linear-gradient(180deg,${T.bg.void},${T.bg.deep})`, opacity: opacity/100 }}>
             <svg style={{ position: "absolute", inset: 0, opacity: 0.15 }} viewBox="0 0 400 300">
               <rect x="170" y="180" width="60" height="80" rx="3" fill={T.glyph.violet+"08"} stroke={T.glyph.violet+"30"} strokeWidth="0.5"/>
@@ -195,7 +213,7 @@ export function ScenePanel() {
         </div>
       </div>
       <div style={{ padding: "4px 8px", borderTop: `1px solid ${T.border.subtle}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontFamily: T.font.display, fontSize: 11, color: T.text.accent }}>Glyph Chamber Alpha</span>
+        <span style={{ fontFamily: T.font.display, fontSize: 11, color: T.text.accent }}>{roomLabel || "Scene"}</span>
         <div style={{ display: "flex", gap: 3 }}>
           {["loading","loaded","empty"].map(s => <button key={s} type="button" onClick={()=>setState(s)} style={{ padding: "1px 5px", borderRadius: T.radius.sm, border: "none", background: state===s?T.glyph.violetDim:T.bg.surface, color: state===s?T.text.accent:T.text.muted, fontFamily: T.font.mono, fontSize: 7, cursor: "pointer", textTransform: "uppercase" }}>{s}</button>)}
         </div>

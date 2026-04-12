@@ -1,0 +1,23 @@
+# ComfyUI: player portraits (optional) + room area art for WorldForge (optional).
+#
+# Area workflow: config/comfyui_area_workflow.json (Z-Image / LoRA stack + post chain). Prompt is injected
+# into node 34 (positive CLIPTextEncode); SaveImage is node 31. Custom nodes required (SeedVR2, rgthree, etc.).
+# Zone bundles: each generate adds zones/<z>/rooms/art/<room>/gen_<id>.png (older flat art/<room>.png still served).
+#
+# For CheckpointLoaderSimple-only templates, set checkpoint_name to a filename in ComfyUI/models/checkpoints/.
+# checkpoint_name = "your-model.safetensors"
+
+enabled = true
+base_url = "http://127.0.0.1:8188"
+workflow_path = "config/comfyui_portrait_workflow.example.json"
+positive_prompt_node_id = "6"
+output_node_id = "9"
+
+# Must NOT be *_example.json unless you set checkpoint_name (example uses model.safetensors on node 4).
+area_workflow_path = "config/comfyui_area_workflow.json"
+area_positive_prompt_node_id = "34"
+area_output_node_id = "31"
+
+# Heavy graphs may need several minutes.
+timeout_seconds = 600.0
+poll_interval_seconds = 0.75

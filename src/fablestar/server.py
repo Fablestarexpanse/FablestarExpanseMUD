@@ -1,10 +1,14 @@
 import asyncio
 import json
 import logging
+import re
+import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import bcrypt
+import httpx
 from sqlalchemy import select
 
 from fablestar.admin.llm_persist import save_llm_toml
@@ -25,9 +29,63 @@ from fablestar.commands.registry import registry
 from fablestar.llm.client import LLMClient
 from fablestar.llm.prompts import PromptManager
 from fablestar import app
-from pathlib import Path
+from fablestar.integration.comfyui_client import generate_portrait_png
 
 logger = logging.getLogger(__name__)
+
+MAX_CHARACTERS_PER_ACCOUNT = 8
+
+
+async def _ping_comfyui_http(base_url: str) -> tuple[bool, str]:
+    """Return (reachable, error_message). Tries /system_stats then /queue (ComfyUI versions differ)."""
+    base = (base_url or "").strip().rstrip("/")
+    if not base:
+        return False, "empty base_url"
+    timeout = httpx.Timeout(4.0, connect=3.0)
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.get(f"{base}/system_stats")
+            if r.status_code == 200:
+                return True, ""
+            if r.status_code == 404:
+                r2 = await client.get(f"{base}/queue")
+                if r2.status_code == 200:
+                    return True, ""
+                return False, f"ComfyUI /queue HTTP {r2.status_code}"
+            return False, f"ComfyUI /system_stats HTTP {r.status_code}"
+    except httpx.ConnectError as e:
+        return False, f"cannot connect (is ComfyUI running?): {e}"
+    except httpx.TimeoutException:
+        return False, "connection timed out"
+    except Exception as e:
+        return False, str(e)[:400]
+
+
+def _workflow_has_checkpoint_simple_node(workflow_path: Path) -> bool:
+    """True if API workflow JSON includes CheckpointLoaderSimple (needs comfyui.toml checkpoint_name)."""
+    if not workflow_path.is_file():
+        return False
+    try:
+        data = json.loads(workflow_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return False
+    for v in data.values():
+        if isinstance(v, dict) and v.get("class_type") == "CheckpointLoaderSimple":
+            return True
+    return False
+
+
+CHAR_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9 _-]{1,49}$")
+
+
+def _character_play_dict(character: Character) -> Dict[str, Any]:
+    return {
+        "id": character.id,
+        "name": character.name,
+        "room_id": character.room_id,
+        "portrait_url": character.portrait_url,
+        "portrait_prompt": character.portrait_prompt,
+    }
 
 
 def _snapshot_from_orm(character: Any) -> Any:
@@ -195,13 +253,9 @@ class FablestarServer:
             characters = list(result.scalars().all())
             character: Optional[Character] = None
             if not characters:
-                character = Character(
-                    account_id=account.id,
-                    name=username,
-                    room_id="test_zone:entrance",
-                )
-                db_session.add(character)
-            elif char_id is not None:
+                await session.send(json.dumps({"ok": False, "error": "no_character"}) + "\r\n")
+                return None
+            if char_id is not None:
                 character = next((c for c in characters if c.id == char_id), None)
                 if character is None:
                     await session.send(json.dumps({"ok": False, "error": "character_not_found"}) + "\r\n")
@@ -237,9 +291,7 @@ class FablestarServer:
             )
             characters = list(result.scalars().all())
             account.last_login = datetime.utcnow()
-            chars_payload = [
-                {"id": c.id, "name": c.name, "room_id": c.room_id} for c in characters
-            ]
+            chars_payload = [_character_play_dict(c) for c in characters]
             aid = account.id
             uname = account.username
             await db_session.commit()
@@ -251,7 +303,7 @@ class FablestarServer:
         }
 
     async def play_register(self, username: str, password: str) -> Dict[str, Any]:
-        """REST: create account + default character."""
+        """REST: create account (characters are added via character creation UI)."""
         username = (username or "").strip()
         if len(username) < 2:
             return {"ok": False, "error": "username_too_short"}
@@ -270,23 +322,250 @@ class FablestarServer:
                 last_login=datetime.utcnow(),
             )
             db_session.add(account)
-            await db_session.flush()
-            character = Character(
-                account_id=account.id,
-                name=username,
-                room_id="test_zone:entrance",
-            )
-            db_session.add(character)
             await db_session.commit()
-            await db_session.refresh(character)
+            await db_session.refresh(account)
             aid = account.id
-            cid, cname, room_id = character.id, character.name, character.room_id
         return {
             "ok": True,
             "username": username,
             "account_id": aid,
-            "characters": [{"id": cid, "name": cname, "room_id": room_id}],
+            "characters": [],
         }
+
+    async def play_comfyui_status(self) -> Dict[str, Any]:
+        c = self.config.comfyui
+        wf = Path(c.workflow_path).is_file()
+        ready = bool(c.enabled and wf)
+        area_wp = (c.area_workflow_path or "").strip() or c.workflow_path
+        area_wf = Path(area_wp).is_file()
+        area_ready = bool(c.enabled and area_wf)
+        ckpt_set = bool((c.checkpoint_name or "").strip())
+        area_path = Path(area_wp)
+        area_uses_ckpt_loader = _workflow_has_checkpoint_simple_node(area_path)
+        suggest_checkpoint_name_in_toml = bool(
+            c.enabled and area_wf and area_uses_ckpt_loader and not ckpt_set
+        )
+        comfy_reachable = False
+        comfy_ping_error = ""
+        if c.enabled:
+            comfy_reachable, comfy_ping_error = await _ping_comfyui_http(c.base_url)
+        return {
+            "ok": True,
+            "enabled": c.enabled,
+            "base_url": c.base_url,
+            "workflow_present": wf,
+            "ready": ready,
+            "area_workflow_present": area_wf,
+            "area_ready": area_ready,
+            "area_workflow_path": area_wp,
+            "area_workflow_uses_checkpoint_loader": area_uses_ckpt_loader,
+            "checkpoint_name_set": ckpt_set,
+            "suggest_checkpoint_name_in_toml": suggest_checkpoint_name_in_toml,
+            "comfy_reachable": comfy_reachable,
+            "comfy_ping_error": comfy_ping_error,
+        }
+
+    async def forge_suggest_area_image_prompt(
+        self,
+        room_name: str,
+        room_type: str,
+        depth: int,
+        description_base: str,
+    ) -> Dict[str, Any]:
+        """LM Studio / OpenAI-compatible: short ComfyUI prompt from room fields."""
+        prompt = self.prompt_manager.render(
+            "forge_area_image_prompt",
+            room_name=room_name or "?",
+            room_type=room_type or "chamber",
+            room_depth=int(depth or 1),
+            description_base=(description_base or "").strip(),
+        )
+        raw = await self.llm_client.generate(
+            prompt,
+            system_prompt="You output only a single image-generation prompt for Stable Diffusion or ComfyUI. No quotes, markdown, labels, or preamble.",
+            max_tokens=400,
+        )
+        text = (raw or "").strip().strip('"').strip("'")
+        text = " ".join(text.split())
+        if len(text) < 8:
+            return {"ok": False, "error": "llm_prompt_too_short", "detail": text or "(empty)"}
+        return {"ok": True, "prompt": text[:2000]}
+
+    async def forge_generate_room_area_image(
+        self,
+        image_prompt: str,
+        *,
+        zone_id: str = "",
+        room_slug: str = "",
+    ) -> Dict[str, Any]:
+        """ComfyUI: save PNG; optional zone+slug writes next to room YAML for portable world content."""
+        cfg = self.config.comfyui
+        area_wp = (cfg.area_workflow_path or "").strip() or cfg.workflow_path
+        ip = (image_prompt or "").strip()
+        zid = (zone_id or "").strip()
+        rslug = (room_slug or "").strip().removesuffix(".yaml")
+        seg_ok = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$")
+        bundle = bool(zid and rslug and seg_ok.match(zid) and seg_ok.match(rslug))
+        logger.info(
+            "forge room-area-image: enabled=%s area_workflow=%s exists=%s prompt_len=%s bundle=%s",
+            cfg.enabled,
+            area_wp,
+            Path(area_wp).is_file(),
+            len(ip),
+            bundle,
+        )
+        if not cfg.enabled or not Path(area_wp).is_file():
+            return {"ok": False, "error": "comfyui_not_configured"}
+
+        from fablestar.integration.comfyui_client import generate_comfy_png
+
+        try:
+            png, _ = await generate_comfy_png(cfg, image_prompt, kind="area")
+        except Exception as e:
+            logger.warning("ComfyUI area image failed: %s", e, exc_info=True)
+            return {"ok": False, "error": "comfyui_failed", "detail": str(e)}
+        if bundle:
+            zones_root = Path("content/world/zones").resolve()
+            room_art_dir = Path("content/world/zones") / zid / "rooms" / "art" / rslug
+            room_art_dir.mkdir(parents=True, exist_ok=True)
+            gen_name = f"gen_{uuid.uuid4().hex[:12]}.png"
+            dest = (room_art_dir / gen_name).resolve()
+            try:
+                dest.relative_to(zones_root)
+            except ValueError:
+                logger.warning("forge room-area-image: rejected path escape for %s/%s", zid, rslug)
+                bundle = False
+            else:
+                dest.write_bytes(png)
+                url = f"/media/room-art/{zid}/{rslug}/v/{gen_name}"
+                logger.info("forge room-area-image: bundled %s", dest)
+                return {"ok": True, "area_image_url": url, "bundled": True}
+        out_dir = Path("data/rooms")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fname = f"{uuid.uuid4().hex}.png"
+        dest = out_dir / fname
+        dest.write_bytes(png)
+        return {"ok": True, "area_image_url": f"/media/rooms/{fname}", "bundled": False}
+
+    async def play_generate_portrait(self, username: str, password: str, appearance_prompt: str) -> Dict[str, Any]:
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.username == username)
+            )
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+
+        cfg = self.config.comfyui
+        if not cfg.enabled or not Path(cfg.workflow_path).is_file():
+            return {
+                "ok": True,
+                "portrait_url": None,
+                "note": "comfyui_not_configured",
+            }
+
+        try:
+            png, _ = await generate_portrait_png(cfg, appearance_prompt)
+        except Exception as e:
+            logger.warning("ComfyUI portrait failed: %s", e, exc_info=True)
+            return {"ok": False, "error": "comfyui_failed", "detail": str(e)}
+
+        out_dir = Path("data/portraits")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fname = f"{uuid.uuid4().hex}.png"
+        dest = out_dir / fname
+        dest.write_bytes(png)
+        url = f"/media/portraits/{fname}"
+        return {"ok": True, "portrait_url": url}
+
+    async def play_create_character(
+        self,
+        username: str,
+        password: str,
+        name: str,
+        portrait_prompt: str = "",
+        portrait_url: str = "",
+    ) -> Dict[str, Any]:
+        username = (username or "").strip()
+        name = (name or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        if not CHAR_NAME_RE.match(name):
+            return {"ok": False, "error": "invalid_character_name"}
+
+        p_url = (portrait_url or "").strip() or None
+        if p_url:
+            if not p_url.startswith("/media/portraits/") or ".." in p_url or len(p_url) > 2048:
+                return {"ok": False, "error": "invalid_portrait_url"}
+
+        pp = (portrait_prompt or "").strip() or None
+        if pp and len(pp) > 4000:
+            return {"ok": False, "error": "portrait_prompt_too_long"}
+
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.username == username)
+            )
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+
+            result = await db_session.execute(
+                select(Character).where(Character.account_id == account.id)
+            )
+            existing = list(result.scalars().all())
+            if len(existing) >= MAX_CHARACTERS_PER_ACCOUNT:
+                return {"ok": False, "error": "character_limit"}
+
+            taken = await db_session.execute(select(Character).where(Character.name == name))
+            if taken.scalar_one_or_none():
+                return {"ok": False, "error": "character_name_taken"}
+
+            character = Character(
+                account_id=account.id,
+                name=name,
+                room_id="test_zone:entrance",
+                portrait_url=p_url,
+                portrait_prompt=pp,
+            )
+            db_session.add(character)
+            await db_session.commit()
+            await db_session.refresh(character)
+            payload = _character_play_dict(character)
+            result = await db_session.execute(
+                select(Character)
+                .where(Character.account_id == account.id)
+                .order_by(Character.id)
+            )
+            all_chars = [_character_play_dict(c) for c in result.scalars().all()]
+
+        return {"ok": True, "character": payload, "characters": all_chars}
+
+    async def play_refresh_characters(self, username: str, password: str) -> Dict[str, Any]:
+        """Re-list characters after create (same shape as login)."""
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.username == username)
+            )
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+            result = await db_session.execute(
+                select(Character)
+                .where(Character.account_id == account.id)
+                .order_by(Character.id)
+            )
+            characters = list(result.scalars().all())
+            chars_payload = [_character_play_dict(c) for c in characters]
+            aid = account.id
+            uname = account.username
+        return {"ok": True, "username": uname, "account_id": aid, "characters": chars_payload}
 
     async def _session_loop(self, session: Session):
         """Main input/output loop for a single session."""

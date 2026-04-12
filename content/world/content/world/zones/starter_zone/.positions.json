@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "positions": {
+    "test_1_copy_3_stamp_test_1_copy__r0": {
+      "x": 862.75,
+      "y": 224.75,
+      "width": 176,
+      "height": 108
+    },
+    "test_1_copy_3_stamp_test_1_copy_copy__r1": {
+      "x": 1082.75,
+      "y": 224.75,
+      "width": 176,
+      "height": 108
+    },
+    "test_1_copy_3_stamp_test_1_copy_copy_copy__r2": {
+      "x": 1302.75,
+      "y": 224.75,
+      "width": 176,
+      "height": 108
+    }
+  },
+  "notes": [],
+  "muted_edges": []
+}

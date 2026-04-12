@@ -7,8 +7,10 @@ from typing import Annotated, Any, Dict, List, Optional
 import uvicorn
 import yaml
 from fastapi import Depends, FastAPI, Query, Request, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
+from starlette.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 
@@ -65,6 +67,20 @@ class PlayAuthBody(BaseModel):
     password: str
 
 
+class PlayCreateCharacterBody(BaseModel):
+    username: str
+    password: str
+    name: str
+    portrait_prompt: str = ""
+    portrait_url: str = ""
+
+
+class PlayPortraitBody(BaseModel):
+    username: str
+    password: str
+    appearance_prompt: str = ""
+
+
 class ForgeRequest(BaseModel):
     seed: str
     room_type: str = "chamber"
@@ -78,6 +94,20 @@ class ForgeGenericRequest(BaseModel):
     category: str
     seed: str
     context: Dict[str, Any] = {}
+
+
+class ForgeAreaImagePromptRequest(BaseModel):
+    room_name: str = ""
+    room_type: str = "chamber"
+    depth: int = 1
+    description_base: str = ""
+
+
+class ForgeRoomAreaImageRequest(BaseModel):
+    prompt: str = ""
+    # When both set (zone editor), PNG is written next to room YAML for export/import with world content.
+    zone_id: str = ""
+    room_slug: str = ""
 
 class ContentInjectBody(BaseModel):
     """Write arbitrary YAML content to a file under content/world/."""
@@ -133,6 +163,11 @@ class RoomJsonBody(BaseModel):
 class CreateRoomBody(BaseModel):
     slug: str
     room: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CreateZoneBody(BaseModel):
+    id: str
+    name: str = ""
 
 
 class ZonePositionsBody(BaseModel):
@@ -301,6 +336,41 @@ class NexusApp:
             """Cheap check that player REST routes are live (no DB)."""
             return {"ok": True, "play_api": "v1"}
 
+        @self.app.get("/media/room-art/{zone_id}/{room_slug}/v/{filename}")
+        async def media_room_art_variant(zone_id: str, room_slug: str, filename: str):
+            """Scene art variant: zones/{zone}/rooms/art/{room}/{filename}.png"""
+            seg_re = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$")
+            fn_re = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{1,120}\.png$")
+            if not seg_re.match(zone_id) or not seg_re.match(room_slug) or not fn_re.match(filename):
+                raise HTTPException(status_code=404, detail="not_found")
+            path = (
+                Path("content/world/zones") / zone_id / "rooms" / "art" / room_slug / filename
+            ).resolve()
+            zones_root = Path("content/world/zones").resolve()
+            try:
+                path.relative_to(zones_root)
+            except ValueError:
+                raise HTTPException(status_code=404, detail="not_found") from None
+            if not path.is_file():
+                raise HTTPException(status_code=404, detail="not_found")
+            return FileResponse(path, media_type="image/png")
+
+        @self.app.get("/media/room-art/{zone_id}/{slug}.png")
+        async def media_room_art_png(zone_id: str, slug: str):
+            """Legacy flat file: zones/{zone}/rooms/art/{slug}.png (bundled with zone)."""
+            seg_re = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$")
+            if not seg_re.match(zone_id) or not seg_re.match(slug):
+                raise HTTPException(status_code=404, detail="not_found")
+            path = (Path("content/world/zones") / zone_id / "rooms" / "art" / f"{slug}.png").resolve()
+            zones_root = Path("content/world/zones").resolve()
+            try:
+                path.relative_to(zones_root)
+            except ValueError:
+                raise HTTPException(status_code=404, detail="not_found") from None
+            if not path.is_file():
+                raise HTTPException(status_code=404, detail="not_found")
+            return FileResponse(path, media_type="image/png")
+
         @self.app.post("/play/auth/login")
         async def play_auth_login(body: PlayAuthBody):
             """Web player: validate credentials and list characters."""
@@ -308,8 +378,36 @@ class NexusApp:
 
         @self.app.post("/play/auth/register")
         async def play_auth_register(body: PlayAuthBody):
-            """Web player: create account and default character."""
+            """Web player: create account (add characters in the UI)."""
             return await self.server.play_register(body.username, body.password)
+
+        @self.app.post("/play/auth/characters")
+        async def play_auth_characters(body: PlayAuthBody):
+            """Re-list characters for the signed-in account."""
+            return await self.server.play_refresh_characters(body.username, body.password)
+
+        @self.app.get("/play/comfyui/status")
+        async def play_comfyui_status():
+            """Whether ComfyUI portrait generation is configured."""
+            return await self.server.play_comfyui_status()
+
+        @self.app.post("/play/characters/portrait")
+        async def play_character_portrait(body: PlayPortraitBody):
+            """Generate a portrait via ComfyUI (optional); returns /media/portraits/... URL."""
+            return await self.server.play_generate_portrait(
+                body.username, body.password, body.appearance_prompt
+            )
+
+        @self.app.post("/play/characters/create")
+        async def play_character_create(body: PlayCreateCharacterBody):
+            """Create a new character for the account."""
+            return await self.server.play_create_character(
+                body.username,
+                body.password,
+                body.name,
+                portrait_prompt=body.portrait_prompt,
+                portrait_url=body.portrait_url,
+            )
 
         @self.app.get("/players")
         async def get_players(
@@ -394,6 +492,22 @@ class NexusApp:
             _ctx: Annotated[AdminContext, Depends(require_tool("world"))],
         ):
             return content_browser.list_zones()
+
+        @self.app.post("/content/zones")
+        async def content_create_zone(
+            body: CreateZoneBody,
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("builder", "world"))],
+        ):
+            zid = (body.id or "").strip()
+            try:
+                rooms_path = content_browser.create_zone(zid, body.name or "")
+            except FileExistsError:
+                raise HTTPException(status_code=409, detail="zone_exists") from None
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.clear_cache()
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return {"status": "created", "id": zid, "path": str(rooms_path)}
 
         @self.app.get("/content/zones/{zone_id}/rooms")
         async def content_zone_rooms(
@@ -573,6 +687,31 @@ class NexusApp:
             except Exception as e:
                 logger.error(f"Forge: Failed to parse generated YAML: {e}")
                 raise HTTPException(status_code=500, detail="LLM generated invalid YAML. Please retry.")
+
+        @self.app.post("/forge/generate-area-prompt")
+        async def forge_generate_area_prompt(
+            req: ForgeAreaImagePromptRequest,
+            _ctx: Annotated[AdminContext, Depends(require_tool("forge"))],
+        ):
+            """LM Studio / OpenAI-compatible: suggest a ComfyUI prompt from room description."""
+            return await self.server.forge_suggest_area_image_prompt(
+                req.room_name,
+                req.room_type,
+                req.depth,
+                req.description_base,
+            )
+
+        @self.app.post("/forge/room-area-image")
+        async def forge_room_area_image(
+            req: ForgeRoomAreaImageRequest,
+            _ctx: Annotated[AdminContext, Depends(require_tool("forge"))],
+        ):
+            """Generate room scene PNG via ComfyUI; returns area_image_url under /media/rooms/."""
+            return await self.server.forge_generate_room_area_image(
+                req.prompt,
+                zone_id=req.zone_id,
+                room_slug=req.room_slug,
+            )
 
         @self.app.post("/forge/generate-content")
         async def forge_generate_content(
@@ -1096,6 +1235,22 @@ class NexusApp:
             finally:
                 if websocket in self._active_sockets:
                     self._active_sockets.remove(websocket)
+
+        portrait_dir = Path("data/portraits")
+        portrait_dir.mkdir(parents=True, exist_ok=True)
+        self.app.mount(
+            "/media/portraits",
+            StaticFiles(directory=str(portrait_dir.resolve())),
+            name="player_portraits",
+        )
+
+        room_art_dir = Path("data/rooms")
+        room_art_dir.mkdir(parents=True, exist_ok=True)
+        self.app.mount(
+            "/media/rooms",
+            StaticFiles(directory=str(room_art_dir.resolve())),
+            name="room_area_art",
+        )
 
     async def broadcast_log(self, message: str):
         """Send a log message to all connected admin consoles."""

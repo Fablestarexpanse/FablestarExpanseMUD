@@ -179,6 +179,12 @@ def is_public_admin_path(path: str) -> bool:
         return True
     if path.startswith("/play/"):
         return True
+    if path.startswith("/media/portraits/"):
+        return True
+    if path.startswith("/media/rooms/"):
+        return True
+    if path.startswith("/media/room-art/"):
+        return True
     if path == "/admin/auth/login":
         return True
     return False

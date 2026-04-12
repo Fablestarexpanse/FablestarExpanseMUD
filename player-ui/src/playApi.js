@@ -45,3 +45,39 @@ export function playWebSocketUrl() {
   u.hash = "";
   return u.toString();
 }
+
+/** Absolute URL for a Nexus path (e.g. character portrait). */
+export function playMediaUrl(relativePath) {
+  if (!relativePath) return null;
+  const p = relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+  return `${base()}${p}`;
+}
+
+export async function playComfyuiStatus() {
+  const r = await fetch(`${base()}/play/comfyui/status`);
+  return handlePlayResponse(r);
+}
+
+export async function playGeneratePortrait(username, password, appearance_prompt) {
+  const r = await fetch(`${base()}/play/characters/portrait`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password, appearance_prompt }),
+  });
+  return handlePlayResponse(r);
+}
+
+export async function playCreateCharacter(username, password, name, portrait_prompt, portrait_url) {
+  const r = await fetch(`${base()}/play/characters/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username,
+      password,
+      name,
+      portrait_prompt: portrait_prompt || "",
+      portrait_url: portrait_url || "",
+    }),
+  });
+  return handlePlayResponse(r);
+}

@@ -1,0 +1,111 @@
+import { useEffect, useState } from "react";
+import yaml from "js-yaml";
+import { joinPaths } from "../utils/paths.js";
+import { COLORS } from "../theme.js";
+import * as fs from "../hooks/useFileSystem.js";
+import { useContent } from "../hooks/useContentStore.js";
+
+export default function EntityEditor({ worldRoot, selectedId, onSelect, itemIds }) {
+  const { entities, entityIds, dispatch } = useContent();
+  const [draft, setDraft] = useState(null);
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    if (selectedId && entities[selectedId]) {
+      setDraft(JSON.parse(JSON.stringify(entities[selectedId])));
+      setDirty(false);
+    }
+  }, [selectedId, entities]);
+
+  const save = async () => {
+    if (!selectedId || !draft) return;
+    const path = joinPaths(worldRoot, "entities", `${selectedId}.yaml`);
+    await fs.writeYaml(path, draft);
+    dispatch({ type: "UPDATE_ENTITY", id: selectedId, data: draft });
+    setDirty(false);
+  };
+
+  const del = async () => {
+    if (!selectedId || !window.confirm("Delete entity?")) return;
+    await fs.deleteFile(joinPaths(worldRoot, "entities", `${selectedId}.yaml`));
+    dispatch({ type: "DELETE_ENTITY", id: selectedId });
+    onSelect(null);
+  };
+
+  const block = draft || {};
+
+  return (
+    <div style={{ display: "flex", height: "100%", background: COLORS.bg }}>
+      <div style={{ width: 220, borderRight: `1px solid ${COLORS.border}`, overflow: "auto", background: COLORS.bgPanel }}>
+        <button type="button" style={btn} onClick={() => {
+          const id = window.prompt("Entity id");
+          if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) return;
+          const base = {
+            id,
+            name: id,
+            type: "creature",
+            description: { short: "", long: "" },
+            stats: { hp: 10, max_hp: 10, attack: 1, defense: 1 },
+            tags: [],
+            loot: [],
+          };
+          fs.writeYaml(joinPaths(worldRoot, "entities", `${id}.yaml`), base).then(() => {
+            dispatch({ type: "UPDATE_ENTITY", id, data: base });
+            dispatch({ type: "ADD_ENTITY_ID", id });
+            onSelect(id);
+          });
+        }}>+ New</button>
+        {entityIds.map((id) => (
+          <button key={id} type="button" onClick={() => onSelect(id)} style={{ ...listBtn, background: id === selectedId ? COLORS.bgHover : "transparent" }}>
+            {id}
+          </button>
+        ))}
+      </div>
+      <div style={{ flex: 1, padding: 16, overflow: "auto" }}>
+        {draft ? (
+          <>
+            <div style={{ color: COLORS.textDim, fontSize: 11, marginBottom: 8 }}>ID: {block.id} (rename not supported)</div>
+            <label style={lbl}>Name</label>
+            <input style={inp} value={block.name || ""} onChange={(e) => { setDraft({ ...draft, name: e.target.value }); setDirty(true); }} />
+            <label style={lbl}>Type</label>
+            <select style={inp} value={block.type || "creature"} onChange={(e) => { setDraft({ ...draft, type: e.target.value }); setDirty(true); }}>
+              {["creature", "npc", "vendor", "boss", "ambient"].map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <label style={lbl}>Short description</label>
+            <input style={inp} value={block.description?.short || ""} onChange={(e) => { setDraft({ ...draft, description: { ...(draft.description || {}), short: e.target.value } }); setDirty(true); }} />
+            <label style={lbl}>Long description</label>
+            <textarea style={{ ...inp, minHeight: 80 }} value={block.description?.long || ""} onChange={(e) => { setDraft({ ...draft, description: { ...(draft.description || {}), long: e.target.value } }); setDirty(true); }} />
+            <label style={lbl}>Stats</label>
+            {["hp", "max_hp", "attack", "defense"].map((k) => (
+              <div key={k} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ width: 70, fontSize: 11, color: COLORS.textMuted }}>{k}</span>
+                <input type="number" style={{ ...inp, flex: 1 }} value={block.stats?.[k] ?? 0} onChange={(e) => {
+                  setDraft({ ...draft, stats: { ...(draft.stats || {}), [k]: Number(e.target.value) } });
+                  setDirty(true);
+                }} />
+              </div>
+            ))}
+            <label style={lbl}>Loot (item ids, comma-separated)</label>
+            <input style={inp} value={(block.loot || []).join(", ")} onChange={(e) => {
+              setDraft({ ...draft, loot: e.target.value.split(/,\s*/).filter(Boolean) });
+              setDirty(true);
+            }} />
+            <label style={lbl}>YAML</label>
+            <textarea style={{ ...inp, minHeight: 160, fontFamily: "monospace", fontSize: 11 }} readOnly value={yaml.dump(draft, { lineWidth: 120, quotingType: '"' })} />
+            <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+              <button type="button" style={btn} onClick={save} disabled={!dirty}>Save</button>
+              <button type="button" style={{ ...btn, color: COLORS.danger }} onClick={del}>Delete</button>
+            </div>
+          </>
+        ) : (
+          <div style={{ color: COLORS.textMuted }}>Select an entity.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const btn = { padding: "8px 12px", margin: 8, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.bgCard, color: COLORS.text, cursor: "pointer", fontSize: 12 };
+const listBtn = { display: "block", width: "100%", textAlign: "left", padding: "8px 10px", border: "none", color: COLORS.text, cursor: "pointer", fontSize: 12 };
+const lbl = { display: "block", fontSize: 10, color: COLORS.textMuted, marginTop: 10, marginBottom: 4 };
+const inp = { width: "100%", maxWidth: 480, boxSizing: "border-box", padding: 8, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.bgInput, color: COLORS.text, fontSize: 12 };

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON, Boolean
+from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON, Boolean, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from fablestar.state.postgres import Base
 
@@ -26,7 +26,11 @@ class Character(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id"))
     name: Mapped[str] = mapped_column(String(50), unique=True, index=True)
-    
+
+    # Portrait: URL served under Nexus /media/portraits/... when generated locally; optional.
+    portrait_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
+    portrait_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     # World state
     room_id: Mapped[str] = mapped_column(String(255), default="test_zone:entrance")
     

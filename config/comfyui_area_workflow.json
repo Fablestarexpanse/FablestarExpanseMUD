@@ -1,0 +1,700 @@
+{
+  "1": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "2": {
+    "inputs": {
+      "unet_name": "z_image_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "3": {
+    "inputs": {
+      "anything": [
+        "19",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "Clean VRAM Used"
+    }
+  },
+  "4": {
+    "inputs": {
+      "anything": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "easy clearCacheAll",
+    "_meta": {
+      "title": "Clear Cache All"
+    }
+  },
+  "5": {
+    "inputs": {
+      "anything": [
+        "21",
+        0
+      ]
+    },
+    "class_type": "easy clearCacheAll",
+    "_meta": {
+      "title": "Clear Cache All"
+    }
+  },
+  "6": {
+    "inputs": {
+      "model": "ema_vae_fp16.safetensors",
+      "device": "cuda:0",
+      "encode_tiled": true,
+      "encode_tile_size": 1024,
+      "encode_tile_overlap": 128,
+      "decode_tiled": true,
+      "decode_tile_size": 1024,
+      "decode_tile_overlap": 128,
+      "tile_debug": "false",
+      "offload_device": "cpu",
+      "cache_model": true
+    },
+    "class_type": "SeedVR2LoadVAEModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load VAE Model"
+    }
+  },
+  "7": {
+    "inputs": {
+      "int_a": [
+        "15",
+        0
+      ],
+      "float_b": [
+        "22",
+        0
+      ]
+    },
+    "class_type": "Multiply Int Float (JPS)",
+    "_meta": {
+      "title": "Multiply Int Float (JPS)"
+    }
+  },
+  "8": {
+    "inputs": {
+      "ui": [
+        "14",
+        1
+      ]
+    },
+    "class_type": "Display UI",
+    "_meta": {
+      "title": "Divide Image and Select Tile UI"
+    }
+  },
+  "9": {
+    "inputs": {
+      "ui": [
+        "33",
+        1
+      ]
+    },
+    "class_type": "Display UI",
+    "_meta": {
+      "title": "Combine Tiles UI"
+    }
+  },
+  "10": {
+    "inputs": {
+      "ui": [
+        "11",
+        2
+      ]
+    },
+    "class_type": "Display UI",
+    "_meta": {
+      "title": "Divide and Conquer Algorithm UI"
+    }
+  },
+  "11": {
+    "inputs": {
+      "tile_width": [
+        "7",
+        0
+      ],
+      "tile_height": [
+        "7",
+        0
+      ],
+      "min_overlap": "1/8 Tile",
+      "min_scale_factor": [
+        "22",
+        0
+      ],
+      "tile_order": "spiral",
+      "scaling_method": "lanczos",
+      "use_upscale_with_model": false,
+      "image": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "Divide and Conquer Algorithm",
+    "_meta": {
+      "title": "Divide and Conquer Algorithm"
+    }
+  },
+  "13": {
+    "inputs": {
+      "tile_width": [
+        "15",
+        0
+      ],
+      "tile_height": [
+        "15",
+        0
+      ],
+      "min_overlap": "1/8 Tile",
+      "min_scale_factor": 1,
+      "tile_order": "spiral",
+      "scaling_method": "lanczos",
+      "use_upscale_with_model": false,
+      "image": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "Divide and Conquer Algorithm",
+    "_meta": {
+      "title": "Divide and Conquer Algorithm"
+    }
+  },
+  "14": {
+    "inputs": {
+      "tile": 0,
+      "image": [
+        "13",
+        0
+      ],
+      "dac_data": [
+        "13",
+        1
+      ]
+    },
+    "class_type": "Divide Image and Select Tile",
+    "_meta": {
+      "title": "Divide Image and Select Tile"
+    }
+  },
+  "15": {
+    "inputs": {
+      "Number": "480"
+    },
+    "class_type": "Int",
+    "_meta": {
+      "title": "TILE SIZE (320 default)"
+    }
+  },
+  "16": {
+    "inputs": {
+      "weight": 0.1,
+      "image": [
+        "24",
+        0
+      ]
+    },
+    "class_type": "Image Grain Add",
+    "_meta": {
+      "title": "Image Grain Add"
+    }
+  },
+  "17": {
+    "inputs": {
+      "blend_factor": 1,
+      "blend_mode": "normal",
+      "image1": [
+        "27",
+        0
+      ],
+      "image2": [
+        "29",
+        0
+      ]
+    },
+    "class_type": "ImageBlend",
+    "_meta": {
+      "title": "Image Blend"
+    }
+  },
+  "18": {
+    "inputs": {
+      "version": 1775951178714,
+      "exposure": -0.040446917572745544,
+      "brightness": 1.211238632236848,
+      "contrast": 0.7675464395236602,
+      "gamma": 0.8469825363021986,
+      "shadows": 0,
+      "midtones": 0.9761954365811879,
+      "highlights": 0.9747853471252245,
+      "hue": 0,
+      "saturation": 0.9493205130182166,
+      "value": 1,
+      "vibrance": 1,
+      "Reset": "reset",
+      "image": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "OlmImageAdjust",
+    "_meta": {
+      "title": "Olm Image Adjust"
+    }
+  },
+  "19": {
+    "inputs": {
+      "seed": 4105349922,
+      "resolution": [
+        "7",
+        0
+      ],
+      "max_resolution": 4096,
+      "batch_size": 1,
+      "uniform_batch_size": false,
+      "color_correction": "lab",
+      "temporal_overlap": 0,
+      "prepend_frames": 0,
+      "input_noise_scale": 0,
+      "latent_noise_scale": 0,
+      "offload_device": "cpu",
+      "enable_debug": false,
+      "image": [
+        "5",
+        0
+      ],
+      "dit": [
+        "20",
+        0
+      ],
+      "vae": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "SeedVR2VideoUpscaler",
+    "_meta": {
+      "title": "SeedVR2 Video Upscaler (v2.5.24)"
+    }
+  },
+  "20": {
+    "inputs": {
+      "model": "seedvr2_ema_7b_sharp_fp16.safetensors",
+      "device": "cuda:0",
+      "blocks_to_swap": 36,
+      "swap_io_components": true,
+      "offload_device": "cpu",
+      "cache_model": true,
+      "attention_mode": "sdpa"
+    },
+    "class_type": "SeedVR2LoadDiTModel",
+    "_meta": {
+      "title": "SeedVR2 (Down)Load DiT Model"
+    }
+  },
+  "21": {
+    "inputs": {
+      "anything": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "Clean VRAM Used"
+    }
+  },
+  "22": {
+    "inputs": {
+      "Number": 3
+    },
+    "class_type": "Float",
+    "_meta": {
+      "title": "UPSCALE BY"
+    }
+  },
+  "23": {
+    "inputs": {
+      "auto_detect": "enable",
+      "compression_level": 100,
+      "image": [
+        "28",
+        0
+      ]
+    },
+    "class_type": "JPEG artifacts removal FBCNN",
+    "_meta": {
+      "title": "JPEG Compression Removal - FBCNN"
+    }
+  },
+  "24": {
+    "inputs": {
+      "sharpen_radius": 1,
+      "sigma": 1,
+      "alpha": 0.1,
+      "image": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "ImageSharpen",
+    "_meta": {
+      "title": "ImageSharpen"
+    }
+  },
+  "26": {
+    "inputs": {
+      "upscale_method": "lanczos",
+      "scale_by": 0.5,
+      "image": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "ImageScaleBy",
+    "_meta": {
+      "title": "Upscale Image By"
+    }
+  },
+  "27": {
+    "inputs": {
+      "version": 1775951178724,
+      "shadows_r": -0.02949042147983183,
+      "shadows_g": 0,
+      "shadows_b": 0.08200280711902375,
+      "midtones_r": -0.06756128002578443,
+      "midtones_g": 0.0004223959491282958,
+      "midtones_b": 0.1527058301329245,
+      "highlights_r": -0.04580650371381656,
+      "highlights_g": -0.02133238036284657,
+      "highlights_b": 0.1527058301329245,
+      "preserve_luminosity": true,
+      "strength": 0,
+      "Strength": 0,
+      "Preserve Luminosity": true,
+      "Reset": "reset",
+      "image": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "OlmColorBalance",
+    "_meta": {
+      "title": "Olm Color Balance"
+    }
+  },
+  "28": {
+    "inputs": {
+      "samples": [
+        "32",
+        0
+      ],
+      "vae": [
+        "41",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "29": {
+    "inputs": {
+      "preset": "None",
+      "channel": "RGB",
+      "all_curves_json": "{\"rgb\":[[0,0],[1,1]],\"r\":[[0,0],[1,1]],\"g\":[[0,0],[1,1]],\"b\":[[0,0],[1,1]],\"luma\":[[0,0],[1,1]],\"sat\":[[0,0],[1,1]],\"mask\":[[0,0],[1,1]]}",
+      "Preset Name": "",
+      "Save Preset": null,
+      "Reset Node Size": null,
+      "Reset All Curves": null,
+      "image": [
+        "18",
+        0
+      ]
+    },
+    "class_type": "EsesImageEffectCurves",
+    "_meta": {
+      "title": "Eses Image Effect Curves"
+    }
+  },
+  "30": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "35",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "ModelSamplingAuraFlow"
+    }
+  },
+  "31": {
+    "inputs": {
+      "filename_prefix": "z-image",
+      "images": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "32": {
+    "inputs": {
+      "seed": 897752392904171,
+      "steps": 45,
+      "cfg": 4,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "35",
+        0
+      ],
+      "positive": [
+        "34",
+        0
+      ],
+      "negative": [
+        "1",
+        0
+      ],
+      "latent_image": [
+        "44",
+        4
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "33": {
+    "inputs": {
+      "images": [
+        "19",
+        0
+      ],
+      "dac_data": [
+        "11",
+        1
+      ]
+    },
+    "class_type": "Combine Tiles",
+    "_meta": {
+      "title": "Combine Tiles"
+    }
+  },
+  "34": {
+    "inputs": {
+      "text": "prompt goes here",
+      "clip": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "35": {
+    "inputs": {
+      "output_strength": 1,
+      "clip_strength_multiplier": 1,
+      "model": [
+        "2",
+        0
+      ],
+      "lora_stack": [
+        "43",
+        0
+      ],
+      "clip": [
+        "42",
+        0
+      ],
+      "settings": [
+        "38",
+        0
+      ]
+    },
+    "class_type": "LoRAOptimizerSimple",
+    "_meta": {
+      "title": "LoRA Optimizer"
+    }
+  },
+  "36": {
+    "inputs": {
+      "text": [
+        "35",
+        2
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "37": {
+    "inputs": {
+      "group_mode": true,
+      "default_active": true,
+      "allow_strength_adjustment": false,
+      "toggle_trigger_words": {
+        "__value__": []
+      },
+      "orinalMessage": "",
+      "trigger_words": [
+        "43",
+        1
+      ]
+    },
+    "class_type": "TriggerWord Toggle (LoraManager)",
+    "_meta": {
+      "title": "TriggerWord Toggle"
+    }
+  },
+  "38": {
+    "inputs": {
+      "top_n": 5,
+      "scoring_svd": "disabled",
+      "scoring_device": "gpu",
+      "scoring_speed": "fast",
+      "scoring_formula": "v2",
+      "diff_cache_mode": "auto",
+      "diff_cache_ram_pct": 0.5,
+      "record_dataset": "disabled"
+    },
+    "class_type": "LoRAAutoTunerSettings",
+    "_meta": {
+      "title": "LoRA AutoTuner Settings"
+    }
+  },
+  "39": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_pdtgy_00019_.png&type=temp&subfolder=&rand=0.3702572049846876"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_pdtgy_00020_.png&type=temp&subfolder=&rand=0.8165326226577158"
+          }
+        ]
+      },
+      "image_a": [
+        "28",
+        0
+      ],
+      "image_b": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "40": {
+    "inputs": {
+      "images": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "ALL TILES PREVIEW"
+    }
+  },
+  "41": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "42": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "43": {
+    "inputs": {
+      "text": "<lora:Promtwaffle_Rusted_Horizons_zimage_lora_V1.0-4723:1.00>",
+      "loras": {
+        "__value__": [
+          {
+            "name": "Promtwaffle_Rusted_Horizons_zimage_lora_V1.0-4723",
+            "strength": 1,
+            "active": true,
+            "expanded": false,
+            "clipStrength": 1,
+            "locked": false
+          }
+        ]
+      }
+    },
+    "class_type": "Lora Stacker (LoraManager)",
+    "_meta": {
+      "title": "Lora Stacker"
+    }
+  },
+  "44": {
+    "inputs": {
+      "mode": "Manual",
+      "latent_type": "latent_4x8",
+      "width": 1728,
+      "height": 1296,
+      "auto_detect": false,
+      "rescale_mode": "megapixels",
+      "rescale_value": 0.9450191908885718,
+      "batch_size": 1
+    },
+    "class_type": "ResolutionMaster",
+    "_meta": {
+      "title": "Resolution Master"
+    }
+  }
+}

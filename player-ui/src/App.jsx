@@ -1,6 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { T } from "./theme.js";
-import { playLogin, playRegister, playWebSocketUrl } from "./playApi.js";
+import {
+  playLogin,
+  playRegister,
+  playWebSocketUrl,
+  playMediaUrl,
+  playComfyuiStatus,
+  playGeneratePortrait,
+  playCreateCharacter,
+} from "./playApi.js";
 import FablestarClient from "./mud/FablestarClient.jsx";
 import { DEFAULT_NARRATIVE } from "./mud/03-narrative.jsx";
 
@@ -120,70 +128,349 @@ function LoginScreen({ onLoggedIn }) {
   );
 }
 
-function CharacterChooser({ auth, password, onCancel, onChosen }) {
+function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacters }) {
   const { username, characters } = auth;
   const [selectedId, setSelectedId] = useState(characters[0]?.id ?? null);
+  const [view, setView] = useState(() => (characters.length ? "pick" : "create"));
+  const [newName, setNewName] = useState("");
+  const [portraitPrompt, setPortraitPrompt] = useState("");
+  const [pendingPortraitUrl, setPendingPortraitUrl] = useState("");
+  const [comfyReady, setComfyReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [formErr, setFormErr] = useState("");
+
+  useEffect(() => {
+    playComfyuiStatus()
+      .then((s) => setComfyReady(Boolean(s.ready)))
+      .catch(() => setComfyReady(false));
+  }, []);
+
+  useEffect(() => {
+    if (characters.length && selectedId == null) setSelectedId(characters[0].id);
+  }, [characters, selectedId]);
+
+  const thumb = (c) =>
+    c.portrait_url ? (
+      <img
+        src={playMediaUrl(c.portrait_url)}
+        alt=""
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: T.radius.md,
+          objectFit: "cover",
+          border: `1px solid ${T.border.subtle}`,
+        }}
+      />
+    ) : (
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: T.radius.md,
+          background: T.bg.surface,
+          border: `1px solid ${T.border.subtle}`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 20,
+          color: T.glyph.violet,
+        }}
+      >
+        ◈
+      </div>
+    );
+
+  const runGeneratePortrait = async () => {
+    setFormErr("");
+    setBusy(true);
+    try {
+      const res = await playGeneratePortrait(username, password, portraitPrompt);
+      if (!res.ok) {
+        setFormErr(res.detail || res.error || "Portrait generation failed");
+        return;
+      }
+      if (res.portrait_url) setPendingPortraitUrl(res.portrait_url);
+      else setFormErr("ComfyUI is not configured. Copy config/comfyui_portrait_workflow.example.json to config/comfyui_portrait_workflow.json, set comfyui.toml enabled = true, or continue without a portrait.");
+    } catch (e) {
+      setFormErr(e.message || "Request failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runCreateCharacter = async (e) => {
+    e.preventDefault();
+    setFormErr("");
+    setBusy(true);
+    try {
+      const res = await playCreateCharacter(username, password, newName.trim(), portraitPrompt.trim(), pendingPortraitUrl);
+      if (!res.ok) {
+        const map = {
+          invalid_character_name: "Use 2–50 characters: letters, numbers, spaces, _ -",
+          character_name_taken: "That character name is already taken.",
+          character_limit: "Maximum characters per account reached.",
+          invalid_credentials: "Session expired — sign in again.",
+        };
+        setFormErr(map[res.error] || res.error || "Could not create character");
+        return;
+      }
+      onUpdateCharacters(res.characters || []);
+      setSelectedId(res.character?.id ?? null);
+      setNewName("");
+      setPortraitPrompt("");
+      setPendingPortraitUrl("");
+      setView("pick");
+    } catch (err) {
+      setFormErr(err.message || "Request failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const canEnter = characters.length > 0 && selectedId != null;
 
   return (
-    <div style={{
-      flex: 1,
-      minHeight: 0,
-      width: "100%",
-      minHeight: "100%",
-      background: T.bg.void,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: T.font.body,
-      padding: 24,
-      boxSizing: "border-box",
-    }}>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Cinzel:wght@700&display=swap" rel="stylesheet"/>
-      <div style={{ width: "100%", maxWidth: 480 }}>
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        width: "100%",
+        minHeight: "100%",
+        background: T.bg.void,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: T.font.body,
+        padding: 24,
+        boxSizing: "border-box",
+      }}
+    >
+      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Cinzel:wght@700&display=swap" rel="stylesheet" />
+      <div style={{ width: "100%", maxWidth: 520 }}>
         <div style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <h2 style={{ fontFamily: T.font.display, fontSize: 18, color: T.text.primary }}>Choose a character</h2>
-            <p style={{ fontSize: 11, color: T.text.muted, marginTop: 4 }}>Signed in as <span style={{ color: T.text.accent }}>{username}</span></p>
+            <h2 style={{ fontFamily: T.font.display, fontSize: 18, color: T.text.primary }}>
+              {view === "create" ? "New character" : "Choose a character"}
+            </h2>
+            <p style={{ fontSize: 11, color: T.text.muted, marginTop: 4 }}>
+              Signed in as <span style={{ color: T.text.accent }}>{username}</span>
+            </p>
           </div>
-          <button type="button" onClick={onCancel} style={{ padding: "6px 12px", borderRadius: T.radius.md, border: `1px solid ${T.border.medium}`, background: T.bg.surface, color: T.text.muted, fontSize: 10, cursor: "pointer" }}>Back</button>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{
+              padding: "6px 12px",
+              borderRadius: T.radius.md,
+              border: `1px solid ${T.border.medium}`,
+              background: T.bg.surface,
+              color: T.text.muted,
+              fontSize: 10,
+              cursor: "pointer",
+            }}
+          >
+            Back
+          </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {characters.length === 0 && (
-            <div style={{ padding: 16, borderRadius: T.radius.lg, border: `1px dashed ${T.border.glyph}`, background: T.glyph.violetDim, color: T.text.secondary, fontSize: 12 }}>
-              No saved characters on this account. You will create a default character when you enter the Expanse.
-            </div>
-          )}
-          {characters.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setSelectedId(c.id)}
+
+        {view === "create" && (
+          <form onSubmit={runCreateCharacter} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <p style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.45 }}>
+              Name your character and optionally describe their look for a ComfyUI portrait. You can skip the portrait and add one later when the server is configured.
+            </p>
+            <label style={{ fontSize: 10, color: T.text.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Character name</label>
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="e.g. Mara Voss"
               style={{
-                display: "flex", alignItems: "center", gap: 14, padding: 14, textAlign: "left", cursor: "pointer",
-                borderRadius: T.radius.lg, border: `1px solid ${selectedId === c.id ? T.border.glyph : T.border.dim}`,
-                background: selectedId === c.id ? T.glyph.violetDim : T.bg.panel, color: T.text.primary,
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: T.radius.md,
+                border: `1px solid ${T.border.medium}`,
+                background: T.bg.surface,
+                color: T.text.primary,
+                fontFamily: T.font.mono,
+                fontSize: 13,
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <label style={{ fontSize: 10, color: T.text.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Portrait prompt (ComfyUI)
+            </label>
+            <textarea
+              value={portraitPrompt}
+              onChange={(e) => setPortraitPrompt(e.target.value)}
+              placeholder="e.g. portrait headshot, scifi captain, warm light, detailed face, neutral background"
+              rows={4}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: T.radius.md,
+                border: `1px solid ${T.border.medium}`,
+                background: T.bg.surface,
+                color: T.text.primary,
+                fontFamily: T.font.body,
+                fontSize: 12,
+                outline: "none",
+                resize: "vertical",
+                boxSizing: "border-box",
+              }}
+            />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+              <button
+                type="button"
+                disabled={busy || !comfyReady}
+                onClick={runGeneratePortrait}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: T.radius.md,
+                  border: `1px solid ${T.border.glyph}`,
+                  background: comfyReady ? T.glyph.violetDim : T.bg.surface,
+                  color: comfyReady ? T.text.primary : T.text.muted,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: busy || !comfyReady ? "not-allowed" : "pointer",
+                }}
+              >
+                {comfyReady ? "Generate portrait" : "ComfyUI offline"}
+              </button>
+              {pendingPortraitUrl && (
+                <img
+                  src={playMediaUrl(pendingPortraitUrl)}
+                  alt="Preview"
+                  style={{ width: 72, height: 72, borderRadius: T.radius.md, objectFit: "cover", border: `1px solid ${T.border.subtle}` }}
+                />
+              )}
+            </div>
+            {formErr && (
+              <div role="alert" style={{ fontSize: 12, color: T.text.danger }}>
+                {formErr}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={busy || !newName.trim()}
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: T.radius.md,
+                border: "none",
+                cursor: busy ? "wait" : "pointer",
+                background: `linear-gradient(135deg,${T.glyph.violet},${T.glyph.cyan})`,
+                color: "#0a0a0f",
+                fontWeight: 700,
+                fontSize: 12,
               }}
             >
-              <div style={{ width: 44, height: 44, borderRadius: T.radius.md, background: T.bg.surface, border: `1px solid ${T.border.subtle}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: T.glyph.violet }}>◈</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: T.font.display, fontSize: 15, color: T.text.accent }}>{c.name}</div>
-                <div style={{ fontSize: 10, fontFamily: T.font.mono, color: T.text.muted, marginTop: 2 }}>{c.room_id}</div>
-              </div>
-              {selectedId === c.id && <span style={{ fontSize: 10, color: T.text.success }}>●</span>}
+              {busy ? "…" : "Create character"}
             </button>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            const ch = characters.find((c) => c.id === selectedId);
-            onChosen({ characterId: selectedId, characterName: ch?.name ?? username, password });
-          }}
-          style={{
-            width: "100%", marginTop: 20, padding: "12px", borderRadius: T.radius.md, border: "none", cursor: "pointer",
-            background: `linear-gradient(135deg,${T.glyph.violet},${T.glyph.cyan})`, color: "#0a0a0f", fontWeight: 700, fontSize: 12,
-          }}
-        >Enter the Expanse</button>
+            {characters.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setView("pick");
+                  setFormErr("");
+                }}
+                style={{ background: "none", border: "none", color: T.text.muted, fontSize: 11, cursor: "pointer" }}
+              >
+                Cancel — back to list
+              </button>
+            )}
+          </form>
+        )}
+
+        {view === "pick" && (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {characters.length === 0 && (
+                <div
+                  style={{
+                    padding: 16,
+                    borderRadius: T.radius.lg,
+                    border: `1px dashed ${T.border.glyph}`,
+                    background: T.glyph.violetDim,
+                    color: T.text.secondary,
+                    fontSize: 12,
+                  }}
+                >
+                  No characters yet. Create one to enter the game.
+                </div>
+              )}
+              {characters.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedId(c.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: 14,
+                    textAlign: "left",
+                    cursor: "pointer",
+                    borderRadius: T.radius.lg,
+                    border: `1px solid ${selectedId === c.id ? T.border.glyph : T.border.dim}`,
+                    background: selectedId === c.id ? T.glyph.violetDim : T.bg.panel,
+                    color: T.text.primary,
+                  }}
+                >
+                  {thumb(c)}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: T.font.display, fontSize: 15, color: T.text.accent }}>{c.name}</div>
+                    <div style={{ fontSize: 10, fontFamily: T.font.mono, color: T.text.muted, marginTop: 2 }}>{c.room_id}</div>
+                  </div>
+                  {selectedId === c.id && <span style={{ fontSize: 10, color: T.text.success }}>●</span>}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setView("create");
+                setFormErr("");
+              }}
+              style={{
+                width: "100%",
+                marginTop: 12,
+                padding: "10px",
+                borderRadius: T.radius.md,
+                border: `1px solid ${T.border.medium}`,
+                background: T.bg.surface,
+                color: T.text.muted,
+                fontSize: 11,
+                cursor: "pointer",
+              }}
+            >
+              + Create another character
+            </button>
+            <button
+              type="button"
+              disabled={!canEnter}
+              onClick={() => {
+                const ch = characters.find((c) => c.id === selectedId);
+                onChosen({ characterId: selectedId, characterName: ch?.name ?? username, password });
+              }}
+              style={{
+                width: "100%",
+                marginTop: 16,
+                padding: "12px",
+                borderRadius: T.radius.md,
+                border: "none",
+                cursor: canEnter ? "pointer" : "not-allowed",
+                opacity: canEnter ? 1 : 0.45,
+                background: `linear-gradient(135deg,${T.glyph.violet},${T.glyph.cyan})`,
+                color: "#0a0a0f",
+                fontWeight: 700,
+                fontSize: 12,
+              }}
+            >
+              Enter the Expanse
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
@@ -302,6 +589,7 @@ export default function App() {
           password={passwordRef.current}
           onCancel={onSignOut}
           onChosen={onChosen}
+          onUpdateCharacters={(chars) => setAuth((a) => (a ? { ...a, characters: chars } : a))}
         />
       </div>
     );
@@ -318,6 +606,14 @@ export default function App() {
           narrativeLines={narrativeLines}
           onSendCommand={onSendCommand}
           wsConnected={wsConnected}
+          sceneImageUrl={
+            import.meta.env.VITE_SCENE_IMAGE_URL
+              ? String(import.meta.env.VITE_SCENE_IMAGE_URL).startsWith("http")
+                ? import.meta.env.VITE_SCENE_IMAGE_URL
+                : playMediaUrl(import.meta.env.VITE_SCENE_IMAGE_URL)
+              : undefined
+          }
+          sceneRoomLabel={import.meta.env.VITE_SCENE_ROOM_LABEL || undefined}
         />
       </div>
     );

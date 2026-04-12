@@ -768,7 +768,7 @@ const ForgeChat = ({ category, onClose }) => {
         if (root && typeof root === "object" && root.id) parsedId = root.id;
       }
       const responseText =
-        `**${cat.label}** generated via Nexus. Review YAML on the right. For **rooms**, use **Accept & Deploy** to write \`content/world/zones/<zone>/rooms/<file>.yaml\` (requires a valid \`id: "zone:room_slug"\` in the YAML).`;
+        `**${cat.label}** generated via Nexus. Review YAML on the right. **Rooms**: deploy writes \`content/world/zones/<zone>/rooms/\` (needs \`id: zone:slug\`). **Entities / items**: use **Deploy** to save under \`content/world/entities/\` or \`items/\`. **Other categories**: copy YAML into the repo manually — no inject route yet.`;
       setMessages((prev) => prev.map((m, i) =>
         (i === prev.length - 1 ? { role: "assistant", content: responseText, loading: false } : m)
       ));
@@ -798,20 +798,70 @@ const ForgeChat = ({ category, onClose }) => {
     if (yamlPreview) navigator.clipboard.writeText(yamlPreview);
   };
 
-  const deployRoomYaml = async () => {
-    if (!yamlPreview || category !== "room") return;
-    const rid = lastInjectId || extractYamlRoomId(yamlPreview);
-    if (!rid || !rid.includes(":")) {
-      window.alert("Room YAML needs an id like zone_key:room_slug to deploy.");
-      return;
-    }
+  const canDeployYaml = category === "room" || category === "entity" || category === "item";
+
+  const deployContent = async () => {
+    if (!yamlPreview || !canDeployYaml) return;
     setInjectBusy(true);
     try {
-      await axios.post(`${API_BASE}/forge/inject`, { id: rid, yaml_content: yamlPreview });
-      window.alert(`Saved room to content/world/zones (${rid}).`);
+      if (category === "room") {
+        const rid = lastInjectId || extractYamlRoomId(yamlPreview);
+        if (!rid || !rid.includes(":")) {
+          window.alert("Room YAML needs an id like zone_key:room_slug to deploy.");
+          return;
+        }
+        await axios.post(`${API_BASE}/forge/inject`, { id: rid, yaml_content: yamlPreview });
+        window.alert(`Saved room to content/world/zones (${rid}).`);
+        return;
+      }
+      if (category === "entity") {
+        let eid = lastInjectId || extractYamlRoomId(yamlPreview);
+        if (!eid || !/^[a-zA-Z0-9_]+$/.test(String(eid).trim())) {
+          const p = window.prompt("Entity ID (filename without .yaml):", eid ? String(eid).trim() : "");
+          if (p === null) return;
+          eid = String(p).trim();
+        }
+        if (!eid || !/^[a-zA-Z0-9_]+$/.test(eid)) {
+          window.alert("Invalid entity id (use letters, numbers, underscores).");
+          return;
+        }
+        await axios.put(`${API_BASE}/content/entities/${eid}/yaml`, {
+          path: `entities/${eid}`,
+          yaml_content: yamlPreview,
+        });
+        window.alert(`Saved entity to content/world/entities/${eid}.yaml`);
+        try {
+          await axios.post(`${API_BASE}/content/cache/reload`);
+        } catch {
+          /* cache reload is optional (may require server tool) */
+        }
+        return;
+      }
+      if (category === "item") {
+        let iid = lastInjectId || extractYamlRoomId(yamlPreview);
+        if (!iid || !/^[a-zA-Z0-9_]+$/.test(String(iid).trim())) {
+          const p = window.prompt("Item ID (filename without .yaml):", iid ? String(iid).trim() : "");
+          if (p === null) return;
+          iid = String(p).trim();
+        }
+        if (!iid || !/^[a-zA-Z0-9_]+$/.test(iid)) {
+          window.alert("Invalid item id (use letters, numbers, underscores).");
+          return;
+        }
+        await axios.put(`${API_BASE}/content/items/${iid}/yaml`, {
+          path: `items/${iid}`,
+          yaml_content: yamlPreview,
+        });
+        window.alert(`Saved item to content/world/items/${iid}.yaml`);
+        try {
+          await axios.post(`${API_BASE}/content/cache/reload`);
+        } catch {
+          /* optional */
+        }
+      }
     } catch (e) {
       const detail = e.response?.data?.detail;
-      window.alert(typeof detail === "string" ? detail : (e.message || "Inject failed"));
+      window.alert(typeof detail === "string" ? detail : (e.message || "Deploy failed"));
     } finally {
       setInjectBusy(false);
     }
@@ -1000,11 +1050,22 @@ const ForgeChat = ({ category, onClose }) => {
                 <Badge color={COLORS.success}>valid</Badge>
               </div>
               <div style={{ display: "flex", gap: 4 }}>
-                <ActionButton small variant="ghost" icon={<Icons.Copy />} onClick={copyYaml}>Copy</ActionButton>
-                <ActionButton small variant="success" icon={<Icons.Save />} onClick={deployRoomYaml} disabled={category !== "room" || injectBusy}>Accept</ActionButton>
+                <ActionButton small variant="ghost" icon={<Icons.Copy />} onClick={copyYaml}>
+                  {canDeployYaml ? "Copy" : "Copy YAML"}
+                </ActionButton>
+                {canDeployYaml && (
+                  <ActionButton small variant="success" icon={<Icons.Save />} onClick={deployContent} disabled={injectBusy}>
+                    {category === "room" ? "Accept" : category === "entity" ? "Deploy to entities/" : "Deploy to items/"}
+                  </ActionButton>
+                )}
                 <ActionButton small variant="ghost" onClick={() => setShowYaml(false)}>Hide</ActionButton>
               </div>
             </div>
+            {!canDeployYaml && yamlPreview && (
+              <div style={{ padding: "8px 16px", fontSize: 11, color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif", borderBottom: `1px solid ${COLORS.border}` }}>
+                Save this YAML manually to the appropriate <code style={{ color: COLORS.textDim }}>content/</code> directory — no deploy path for this category yet.
+              </div>
+            )}
             <pre style={{
               flex: 1, overflow: "auto", padding: "14px 16px", margin: 0,
               fontSize: 11.5, lineHeight: 1.55, color: COLORS.text,
@@ -1018,9 +1079,21 @@ const ForgeChat = ({ category, onClose }) => {
               display: "flex", justifyContent: "space-between", alignItems: "center",
             }}>
               <div style={{ display: "flex", gap: 6 }}>
-                <ActionButton small variant="success" icon={<Icons.Check />} onClick={deployRoomYaml} disabled={category !== "room" || injectBusy || !yamlPreview}>
-                  {injectBusy ? "Deploying…" : "Accept & Deploy"}
-                </ActionButton>
+                {canDeployYaml ? (
+                  <ActionButton small variant="success" icon={<Icons.Check />} onClick={deployContent} disabled={injectBusy || !yamlPreview}>
+                    {injectBusy
+                      ? "Deploying…"
+                      : category === "room"
+                        ? "Accept & Deploy"
+                        : category === "entity"
+                          ? "Deploy to entities/"
+                          : "Deploy to items/"}
+                  </ActionButton>
+                ) : (
+                  <ActionButton small variant="default" icon={<Icons.Copy />} onClick={copyYaml} disabled={!yamlPreview}>
+                    Copy YAML
+                  </ActionButton>
+                )}
                 <ActionButton small variant="default" icon={<Icons.Save />} onClick={copyYaml}>Save Draft</ActionButton>
               </div>
               <ActionButton small variant="danger" icon={<Icons.Trash />}>Discard</ActionButton>

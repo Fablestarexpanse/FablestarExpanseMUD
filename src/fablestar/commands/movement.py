@@ -38,10 +38,26 @@ def move_to(direction: str):
 
     return mover
 
-# Register all directions
-for direction in ["north", "south", "east", "west", "up", "down"]:
-    # Using the closure as the handler
+# Register cardinal / vertical (single-letter aliases)
+for direction, aliases in [
+    ("north", ["n"]),
+    ("south", ["s"]),
+    ("east", ["e"]),
+    ("west", ["w"]),
+    ("up", ["u"]),
+    ("down", ["d"]),
+]:
     handler = move_to(direction)
-    # Set docstring for help system
     handler.__doc__ = f"Move {direction}."
-    command(direction, aliases=[direction[0]])(handler)
+    command(direction, aliases=aliases)(handler)
+
+# Corner directions (two-letter aliases; "n" stays north only)
+for direction, aliases in [
+    ("northeast", ["ne"]),
+    ("northwest", ["nw"]),
+    ("southeast", ["se"]),
+    ("southwest", ["sw"]),
+]:
+    handler = move_to(direction)
+    handler.__doc__ = f"Move {direction}."
+    command(direction, aliases=aliases)(handler)

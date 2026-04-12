@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle } from "react";
+import yaml from "js-yaml";
 import {
   ReactFlow,
   Background,
@@ -38,8 +39,10 @@ function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNav
   const [syncMsg, setSyncMsg] = useState("");
   const [extExits, setExtExits] = useState([]);
   const [graphFind, setGraphFind] = useState("");
+  const [describeProgress, setDescribeProgress] = useState(null);
 
   const neighborSlugs = nodes.map((n) => n.data?.slug).filter(Boolean);
+  const selectedRoomCount = useMemo(() => nodes.filter((n) => n.selected).length, [nodes]);
 
   const loadGraph = useCallback(
     async (opts) => {
@@ -230,6 +233,147 @@ function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNav
     [zoneId, loadGraph, onSync]
   );
 
+  const onEdgesDelete = useCallback(
+    async (deletedEdges) => {
+      for (const edge of deletedEdges) {
+        const dirHint = edge.data?.direction ?? edge.sourceHandle;
+        if (!dirHint) {
+          window.alert("Cannot determine exit direction — remove it manually in the Exits tab.");
+          continue;
+        }
+        const ns = rf.getNodes();
+        const sourceNode = ns.find((n) => n.id === edge.source);
+        const slug = sourceNode?.data?.slug;
+        if (!slug) continue;
+        const raw = { ...(sourceNode.data.raw || {}) };
+        const exits = { ...(raw.exits && typeof raw.exits === "object" ? raw.exits : {}) };
+        const keys = Object.keys(exits);
+        const match = keys.find((k) => k.toLowerCase() === String(dirHint).toLowerCase());
+        if (!match) {
+          window.alert("Cannot determine exit direction — remove it manually in the Exits tab.");
+          continue;
+        }
+        delete exits[match];
+        raw.exits = exits;
+        try {
+          await axios.put(`${API_BASE}/content/zones/${zoneId}/rooms/${slug}`, { room: raw });
+          await loadGraph({ keepSlug: slug });
+          setSyncMsg("Exit removed ✓");
+          onSync?.();
+        } catch (e) {
+          window.alert(e.response?.data?.detail || e.message);
+        }
+      }
+    },
+    [rf, zoneId, loadGraph, onSync]
+  );
+
+  const duplicateRoom = useCallback(async () => {
+    const sel = rf.getNodes().filter((n) => n.selected);
+    if (sel.length !== 1) return;
+    const src = sel[0];
+    const s = src.data?.slug;
+    if (!s) return;
+    const suggested = `${s}_copy`;
+    const input = window.prompt("New room slug:", suggested);
+    if (input === null) return;
+    const newSlug = String(input).trim();
+    if (!newSlug || !/^[a-zA-Z0-9_-]+$/.test(newSlug)) return;
+    let cloned;
+    try {
+      cloned = JSON.parse(JSON.stringify(src.data.raw || {}));
+    } catch {
+      window.alert("Could not copy room data.");
+      return;
+    }
+    cloned.exits = {};
+    cloned.id = `${zoneId}:${newSlug}`;
+    cloned.zone = zoneId;
+    try {
+      await axios.post(`${API_BASE}/content/zones/${zoneId}/rooms`, { slug: newSlug, room: cloned });
+      await loadGraph({ keepSlug: newSlug });
+      setSyncMsg("Room duplicated ✓");
+      onSync?.();
+    } catch (e) {
+      window.alert(e.response?.data?.detail || e.message);
+    }
+  }, [rf, zoneId, loadGraph, onSync]);
+
+  const runAiDescribeAll = useCallback(async () => {
+    const targets = rf.getNodes().filter((n) => n.data?.hasDescription === false);
+    if (!targets.length) {
+      window.alert("No rooms with missing descriptions.");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Generate AI descriptions for ${targets.length} rooms with missing descriptions? This will overwrite blank descriptions.`
+      )
+    ) {
+      return;
+    }
+    let done = 0;
+    const total = targets.length;
+    setDescribeProgress({ cur: 0, total });
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        const n = targets[i];
+        const slug = n.data?.slug;
+        if (!slug) continue;
+        setDescribeProgress({ cur: i + 1, total });
+        const { data: ywrap } = await axios.get(`${API_BASE}/content/room/${zoneId}/${slug}/yaml`);
+        const disk = yaml.load(ywrap.yaml || "{}");
+        if (typeof disk !== "object" || !disk) continue;
+        const type = disk.type || "chamber";
+        const depth = Number(disk.depth) || 1;
+        const tags = Array.isArray(disk.tags) ? disk.tags.join(", ") : "";
+        const featureNames = Array.isArray(disk.features)
+          ? disk.features
+              .map((f) => (typeof f === "object" && f ? f.name || f.id : ""))
+              .filter(Boolean)
+              .join(", ")
+          : "";
+        const seed = `Write a base description for a ${type} room (depth ${depth}) in zone ${zoneId}. Tags: ${tags}. Features: ${featureNames}.`;
+        const { data: forge } = await axios.post(`${API_BASE}/forge/generate-content`, {
+          category: "room",
+          seed,
+          context: { room_type: type, depth },
+        });
+        let gen = forge.data;
+        if (!gen || typeof gen !== "object") {
+          try {
+            gen = yaml.load(forge.yaml || "");
+          } catch {
+            gen = null;
+          }
+        }
+        let base =
+          gen && typeof gen === "object"
+            ? gen.description?.base ?? (typeof gen.description === "string" ? gen.description : null)
+            : null;
+        if (typeof base === "string" && base.trim()) {
+          const prevDesc = disk.description;
+          const merged = {
+            ...disk,
+            description:
+              typeof prevDesc === "object" && prevDesc
+                ? { ...prevDesc, base: base.trim() }
+                : { base: base.trim() },
+          };
+          await axios.put(`${API_BASE}/content/zones/${zoneId}/rooms/${slug}`, { room: merged });
+          done += 1;
+        }
+      }
+      await loadGraph();
+      setSyncMsg(`Described ${done} rooms ✓`);
+      onSync?.();
+    } catch (e) {
+      window.alert(e.response?.data?.detail || e.message);
+    } finally {
+      setDescribeProgress(null);
+    }
+  }, [rf, zoneId, loadGraph, onSync]);
+
   const btn = {
     padding: "6px 10px",
     fontSize: 11,
@@ -307,6 +451,7 @@ function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNav
               onNodeDoubleClick={(_, n) => setSelected(n)}
               onSelectionChange={({ nodes: ns }) => setSelected(ns[0] || null)}
               onNodesDelete={onNodesDelete}
+              onEdgesDelete={onEdgesDelete}
               fitView
               connectionMode={ConnectionMode.Loose}
               deleteKeyCode={["Backspace", "Delete"]}
@@ -316,6 +461,11 @@ function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNav
               <MiniMap pannable zoomable />
               <Panel position="top-left">
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, background: COLORS.bgPanel, padding: 8, borderRadius: 8, border: `1px solid ${COLORS.border}`, alignItems: "center" }}>
+                  {describeProgress && (
+                    <span style={{ fontSize: 10, color: COLORS.warning, fontFamily: "'JetBrains Mono', monospace", width: "100%" }}>
+                      Describing rooms… {describeProgress.cur}/{describeProgress.total}
+                    </span>
+                  )}
                   <input
                     type="search"
                     placeholder="Find room…"
@@ -346,6 +496,12 @@ function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNav
                   </button>
                   <button type="button" style={btn} onClick={addRoom}>
                     Add room
+                  </button>
+                  <button type="button" style={btn} onClick={duplicateRoom} disabled={selectedRoomCount !== 1}>
+                    Duplicate
+                  </button>
+                  <button type="button" style={btn} onClick={runAiDescribeAll} disabled={!!describeProgress}>
+                    AI Describe All
                   </button>
                   <button type="button" style={btn} onClick={() => loadGraph()}>
                     Reload

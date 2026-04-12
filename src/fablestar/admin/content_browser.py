@@ -21,6 +21,7 @@ SYSTEMS_DIR = Path("content/world/systems")
 SHIPS_DIR = Path("content/world/ships")
 GALAXY_FILE = Path("content/world/galaxy.yaml")
 POSITIONS_FILENAME = ".positions.json"
+_POSITIONS_DOC_KEYS = frozenset({"version", "positions", "notes", "reference_image", "muted_edges"})
 
 
 def _safe_segment(segment: str) -> bool:
@@ -87,6 +88,39 @@ def _room_entity_count(path: Path) -> int:
 
 def list_zones() -> List[Dict[str, Any]]:
     return [z for z in (zone_summary(zid) for zid in list_zone_ids()) if z]
+
+
+def create_zone(zone_id: str, zone_name: str) -> Path:
+    """Create ``content/world/zones/{zone_id}/`` with ``zone.yaml`` and starter ``rooms/entrance.yaml``."""
+    if not re.match(r"^[a-zA-Z0-9_-]+$", zone_id or ""):
+        raise ValueError("invalid_zone_id")
+    root = ZONES_ROOT / zone_id
+    if root.exists():
+        raise FileExistsError("zone_exists")
+    rooms_dir = root / "rooms"
+    rooms_dir.mkdir(parents=True, exist_ok=True)
+    display = (zone_name or "").strip() or zone_id.replace("_", " ").title()
+    meta = {"name": display, "type": "exploration", "status": "active"}
+    (root / "zone.yaml").write_text(
+        yaml.safe_dump(meta, default_flow_style=False, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    entrance: Dict[str, Any] = {
+        "id": f"{zone_id}:entrance",
+        "zone": zone_id,
+        "type": "hub",
+        "depth": 1,
+        "description": {"base": f"The entrance to {display}."},
+        "exits": {},
+        "features": [],
+        "entity_spawns": [],
+        "tags": [],
+    }
+    (rooms_dir / "entrance.yaml").write_text(
+        yaml.safe_dump(entrance, default_flow_style=False, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    return rooms_dir
 
 
 def room_row(zone_id: str, stem: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -230,22 +264,35 @@ def _positions_path(zone_id: str) -> Path:
     return ZONES_ROOT / zone_id / POSITIONS_FILENAME
 
 
-def load_zone_positions(zone_id: str) -> Dict[str, Dict[str, float]]:
+def _load_positions_raw(zone_id: str) -> Dict[str, Any]:
     p = _positions_path(zone_id)
     if not p.is_file():
         return {}
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            return {}
-        out: Dict[str, Dict[str, float]] = {}
-        for k, v in data.items():
-            if isinstance(v, dict) and "x" in v and "y" in v:
-                out[str(k)] = {"x": float(v["x"]), "y": float(v["y"])}
-        return out
+        return data if isinstance(data, dict) else {}
     except Exception as e:
         logger.warning("positions %s: %s", p, e)
         return {}
+
+
+def load_zone_positions(zone_id: str) -> Dict[str, Dict[str, float]]:
+    """Room slug -> {x, y} for layout. Supports legacy flat JSON and v2 wrapped format."""
+    data = _load_positions_raw(zone_id)
+    if not data:
+        return {}
+    out: Dict[str, Dict[str, float]] = {}
+    if data.get("version") == 2 and isinstance(data.get("positions"), dict):
+        for k, v in data["positions"].items():
+            if isinstance(v, dict) and "x" in v and "y" in v:
+                out[str(k)] = {"x": float(v["x"]), "y": float(v["y"])}
+        return out
+    for k, v in data.items():
+        if k in _POSITIONS_DOC_KEYS:
+            continue
+        if isinstance(v, dict) and "x" in v and "y" in v:
+            out[str(k)] = {"x": float(v["x"]), "y": float(v["y"])}
+    return out
 
 
 def _atomic_write_json(path: Path, obj: Any) -> None:
@@ -285,20 +332,59 @@ def _atomic_write_yaml(path: Path, data: Any) -> None:
 
 
 def save_zone_positions(zone_id: str, positions: Dict[str, Any]) -> str:
-    """Map room slug -> {x, y}. Writes .positions.json atomically."""
+    """Map room slug -> {x, y}. Merges into v2 .positions.json; preserves WorldForge metadata."""
     if not _safe_segment(zone_id):
         raise ValueError("invalid_zone")
     zpath = ZONES_ROOT / zone_id
     if not zpath.is_dir():
         raise ValueError("zone_not_found")
-    clean: Dict[str, Dict[str, float]] = {}
+    existing = _load_positions_raw(zone_id)
+
+    pos_full: Dict[str, Dict[str, Any]] = {}
+    if existing.get("version") == 2 and isinstance(existing.get("positions"), dict):
+        for k, v in existing["positions"].items():
+            if isinstance(v, dict) and "x" in v and "y" in v:
+                pos_full[str(k)] = dict(v)
+    else:
+        for k, v in existing.items():
+            if k in _POSITIONS_DOC_KEYS:
+                continue
+            if isinstance(v, dict) and "x" in v and "y" in v:
+                pos_full[str(k)] = dict(v)
+
+    authoritative: Dict[str, Dict[str, Any]] = {}
     for k, v in (positions or {}).items():
         if not _safe_segment(str(k)):
             continue
         if isinstance(v, dict):
-            clean[str(k)] = {"x": float(v.get("x", 0)), "y": float(v.get("y", 0))}
+            authoritative[str(k)] = v
+
+    pos_merged: Dict[str, Dict[str, Any]] = {}
+    for k, v in authoritative.items():
+        prev = pos_full.get(k, {})
+        entry: Dict[str, Any] = dict(prev) if isinstance(prev, dict) else {}
+        entry["x"] = float(v.get("x", 0))
+        entry["y"] = float(v.get("y", 0))
+        pos_merged[k] = entry
+
+    notes = existing.get("notes")
+    if not isinstance(notes, list):
+        notes = []
+    muted = existing.get("muted_edges")
+    if not isinstance(muted, list):
+        muted = []
+    ref_img = existing.get("reference_image")
+    out_doc: Dict[str, Any] = {
+        "version": 2,
+        "positions": pos_merged,
+        "notes": notes,
+        "muted_edges": muted,
+    }
+    if isinstance(ref_img, dict):
+        out_doc["reference_image"] = ref_img
+
     p = _positions_path(zone_id)
-    _atomic_write_json(p, clean)
+    _atomic_write_json(p, out_doc)
     return str(p)
 
 
@@ -379,6 +465,7 @@ def zone_graph(zone_id: str) -> Dict[str, Any]:
                     "roomId": rid,
                     "roomType": data.get("type", "?"),
                     "depth": data.get("depth", 0),
+                    "group": data.get("group"),
                     "hasDescription": has_desc,
                     "entityCount": len(spawns) if isinstance(spawns, list) else 0,
                     "exitCount": len(exits),
@@ -407,6 +494,7 @@ def zone_graph(zone_id: str) -> Dict[str, Any]:
                     continue
                 edge_ids_used.add(eid)
                 dlow = str(direction).lower()
+                one_way = bool(ex.get("one_way")) if isinstance(ex, dict) else False
                 edges.append(
                     {
                         "id": eid,
@@ -416,7 +504,11 @@ def zone_graph(zone_id: str) -> Dict[str, Any]:
                         "targetHandle": _opposite_dir(dlow),
                         "type": "exit",
                         "label": str(direction),
-                        "data": {"direction": str(direction), "description": edesc},
+                        "data": {
+                            "direction": str(direction),
+                            "description": edesc,
+                            "oneWay": one_way,
+                        },
                     }
                 )
             else:

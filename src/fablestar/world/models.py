@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 class ExitModel(BaseModel):
     destination: str
     description: str
+    one_way: bool = False
 
 class FeatureModel(BaseModel):
     id: str
@@ -29,6 +30,7 @@ class RoomModel(BaseModel):
     zone: str
     type: str
     depth: int = 1
+    group: Optional[str] = None
     description: Dict[str, str] = Field(default_factory=lambda: {"base": "A featureless room."})
     exits: Dict[str, ExitModel] = Field(default_factory=dict)
     features: List[FeatureModel] = Field(default_factory=list)
@@ -81,3 +83,30 @@ class ShipTemplate(BaseModel):
     name: str
     size: str = "small"
     rooms: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class GlyphEffectModel(BaseModel):
+    type: str = "damage"
+    magnitude: int = 0
+    duration: int = 0
+    cooldown: int = 0
+
+
+class GlyphCostModel(BaseModel):
+    energy: int = 0
+
+
+class GlyphModel(BaseModel):
+    """On-disk glyph ability YAML under content/world/glyphs/."""
+
+    id: str
+    name: str
+    category: str = "combat"
+    tier: int = 1
+    body_slot: str = "forearm"
+    description: str = ""
+    inscription: str = ""
+    effect: GlyphEffectModel = Field(default_factory=GlyphEffectModel)
+    cost: GlyphCostModel = Field(default_factory=GlyphCostModel)
+    prerequisites: List[str] = Field(default_factory=list)
+    tags: Set[str] = Field(default_factory=set)

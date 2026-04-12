@@ -1,0 +1,168 @@
+import { useCallback, useEffect, useState } from "react";
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  MarkerType,
+  useReactFlow,
+  ReactFlowProvider,
+  BackgroundVariant,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import { joinPaths } from "../utils/paths.js";
+import { COLORS } from "../theme.js";
+import SystemNode from "../nodes/SystemNode.jsx";
+import ConnectionEdge from "../edges/ConnectionEdge.jsx";
+import SystemPanel from "../panels/SystemPanel.jsx";
+import { layoutGraph } from "../utils/AutoLayout.js";
+import * as fs from "../hooks/useFileSystem.js";
+import { useContent } from "../hooks/useContentStore.js";
+
+const nodeTypes = { system: SystemNode };
+const edgeTypes = { connection: ConnectionEdge };
+
+function Inner({ worldRoot }) {
+  const rf = useReactFlow();
+  const { systems, systemIds, galaxy, dispatch } = useContent();
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [draft, setDraft] = useState(null);
+  const [dirty, setDirty] = useState(false);
+
+  const rebuild = useCallback(() => {
+    const ns = [];
+    const es = [];
+    const seen = new Set();
+    for (const sid of systemIds) {
+      const doc = systems[sid];
+      const sys = doc?.system || doc || {};
+      const c = sys.coordinates || { x: 0, y: 0 };
+      ns.push({
+        id: sid,
+        type: "system",
+        position: { x: Number(c.x) * 12 || 0, y: Number(c.y) * 12 || 0 },
+        data: {
+          label: sys.name || sid,
+          starType: sys.star?.type || "?",
+          faction: sys.faction || "?",
+          security: sys.security || "?",
+        },
+      });
+      for (const conn of sys.connections || []) {
+        const tgt = conn.target || conn.system || conn.id;
+        if (!tgt || seen.has(`${sid}->${tgt}`)) continue;
+        seen.add(`${sid}->${tgt}`);
+        es.push({
+          id: `${sid}|${tgt}`,
+          source: sid,
+          target: tgt,
+          type: "connection",
+          markerEnd: { type: MarkerType.ArrowClosed, color: COLORS.cyan, width: 16, height: 16 },
+          data: { label: conn.type || "" },
+        });
+      }
+    }
+    setNodes(ns);
+    setEdges(es);
+  }, [systems, systemIds, setNodes, setEdges]);
+
+  useEffect(() => {
+    rebuild();
+  }, [rebuild]);
+
+  useEffect(() => {
+    if (selectedId && systems[selectedId]) {
+      setDraft(JSON.parse(JSON.stringify(systems[selectedId])));
+      setDirty(false);
+    }
+  }, [selectedId, systems]);
+
+  const saveSystem = async () => {
+    if (!selectedId || !draft) return;
+    const path = joinPaths(worldRoot, "systems", `${selectedId}.yaml`);
+    await fs.writeYaml(path, draft);
+    dispatch({ type: "UPDATE_SYSTEM", id: selectedId, data: draft });
+    setDirty(false);
+  };
+
+  const saveGalaxy = async () => {
+    await fs.writeYaml(joinPaths(worldRoot, "galaxy.yaml"), galaxy);
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: COLORS.bg, position: "relative" }}>
+      <div style={{ padding: 8, borderBottom: `1px solid ${COLORS.border}`, display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button type="button" style={tb} onClick={() => layoutGraph(rf.getNodes(), rf.getEdges()).then(setNodes)}>
+          Auto Layout
+        </button>
+        <button type="button" style={tb} onClick={() => rf.fitView({ padding: 0.2 })}>
+          Fit View
+        </button>
+        <button type="button" style={tb} onClick={saveGalaxy}>
+          Save galaxy.yaml
+        </button>
+        <button type="button" style={tb} onClick={saveSystem} disabled={!selectedId}>
+          Save system
+        </button>
+      </div>
+      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onNodeClick={(_, n) => setSelectedId(n.id)}
+          fitView
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background variant={BackgroundVariant.Dots} gap={24} size={1.5} color={COLORS.textDim} />
+          <Controls />
+          <MiniMap />
+        </ReactFlow>
+      </div>
+      {selectedId && draft ? (
+        <div style={{ position: "absolute", top: 48, right: 0, width: 340, bottom: 0, borderLeft: `1px solid ${COLORS.border}`, background: COLORS.bgPanel, zIndex: 10 }}>
+          <SystemPanel
+            rawDoc={draft}
+            onChangeDoc={(d) => {
+              setDraft(d);
+              setDirty(true);
+            }}
+            onSave={saveSystem}
+            onRevert={() => {
+              setDraft(JSON.parse(JSON.stringify(systems[selectedId])));
+              setDirty(false);
+            }}
+            dirty={dirty}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const tb = {
+  padding: "6px 10px",
+  borderRadius: 6,
+  border: `1px solid ${COLORS.border}`,
+  background: COLORS.bgCard,
+  color: COLORS.text,
+  cursor: "pointer",
+  fontSize: 11,
+};
+
+export default function GalaxyEditor({ worldRoot }) {
+  return (
+    <ReactFlowProvider>
+      <div style={{ position: "relative", height: "100%" }}>
+        <Inner worldRoot={worldRoot} />
+      </div>
+    </ReactFlowProvider>
+  );
+}

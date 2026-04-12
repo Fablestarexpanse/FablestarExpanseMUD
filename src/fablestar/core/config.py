@@ -31,6 +31,25 @@ class RedisConfig(BaseModel):
     db: int = 0
     password: Optional[str] = None
 
+class ComfyUIConfig(BaseModel):
+    """Optional ComfyUI HTTP API for character portraits and room area art."""
+
+    enabled: bool = False
+    base_url: str = "http://127.0.0.1:8188"
+    workflow_path: str = "config/comfyui_portrait_workflow.json"
+    # Node id (string) in the API-format workflow JSON
+    positive_prompt_node_id: str = "6"
+    output_node_id: str = "9"
+    # Optional separate workflow for wide / environmental room shots (defaults to portrait workflow if blank)
+    area_workflow_path: str = ""
+    area_positive_prompt_node_id: str = ""
+    area_output_node_id: str = ""
+    # If set, replaces inputs.ckpt_name on every CheckpointLoaderSimple node (avoids editing JSON).
+    checkpoint_name: str = ""
+    timeout_seconds: float = 120.0
+    poll_interval_seconds: float = 0.75
+
+
 class LLMConfig(BaseModel):
     primary_backend: str = "lm_studio"
     lm_studio_url: str = "http://localhost:1234/v1"
@@ -55,6 +74,7 @@ class Config(BaseModel):
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     redis: RedisConfig = Field(default_factory=RedisConfig)
     llm: LLMConfig = Field(default_factory=LLMConfig)
+    comfyui: ComfyUIConfig = Field(default_factory=ComfyUIConfig)
 
 def load_config(config_dir: str = "config") -> Config:
     """Load configuration from TOML files in the specified directory."""

@@ -1,9 +1,31 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import yaml from "js-yaml";
-import { COLORS, ROOM_TYPE_COLORS } from "./builderConstants";
+import { COLORS, ROOM_TYPE_COLORS, API_BASE } from "./builderConstants.js";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4001";
+const FEATURE_INTERACTIONS = ["examine", "use", "take", "push", "pull", "read"];
+const HAZARD_TYPE_SUGGESTIONS = ["environmental", "trap", "magical", "structural", "biological"];
+
+const BLANK_FEATURE = { id: "", name: "", keywords: [], description: "", interaction: "examine" };
+const BLANK_HAZARD = { id: "", type: "environmental", severity: 1, description: "" };
+
+function roomPayloadForSave(room) {
+  try {
+    const out = JSON.parse(JSON.stringify(room));
+    const d = out.description;
+    if (d && typeof d === "object" && !Array.isArray(d)) {
+      const next = { ...d };
+      for (const k of ["dawn", "dusk", "night"]) {
+        const v = next[k];
+        if (v === "" || v == null || (typeof v === "string" && !String(v).trim())) delete next[k];
+      }
+      out.description = next;
+    }
+    return out;
+  } catch {
+    return room;
+  }
+}
 
 const ROOM_TYPES = [
   "chamber",
@@ -59,6 +81,14 @@ export default function RoomPropertyPanel({
   const [spawnTemplates, setSpawnTemplates] = useState([]);
   const [newTag, setNewTag] = useState("");
   const [exitDraft, setExitDraft] = useState({ direction: "north", destination: "", description: "" });
+  const [dirty, setDirty] = useState(false);
+  const [timeVariantsOpen, setTimeVariantsOpen] = useState(false);
+  const [exitPickerDir, setExitPickerDir] = useState(null);
+  const [pickerZones, setPickerZones] = useState([]);
+  const [pickerZoneId, setPickerZoneId] = useState("");
+  const [pickerRooms, setPickerRooms] = useState([]);
+  const [featureKwDraft, setFeatureKwDraft] = useState({});
+  const [featureCardOpen, setFeatureCardOpen] = useState({});
 
   const slug = node?.data?.slug;
   const roomLocalId = node?.data?.slug;
@@ -73,6 +103,12 @@ export default function RoomPropertyPanel({
   }, []);
 
   useEffect(() => {
+    setDirty(false);
+    setExitPickerDir(null);
+    setPickerZoneId("");
+    setPickerRooms([]);
+    setFeatureKwDraft({});
+    setFeatureCardOpen({});
     if (!node?.data?.raw) {
       setRaw({});
       setRawYaml("");
@@ -86,6 +122,25 @@ export default function RoomPropertyPanel({
     }
     setMsg("");
   }, [node]);
+
+  useEffect(() => {
+    if (!exitPickerDir) return;
+    axios
+      .get(`${API_BASE}/content/zones`)
+      .then((r) => setPickerZones(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setPickerZones([]));
+  }, [exitPickerDir]);
+
+  useEffect(() => {
+    if (!exitPickerDir || !pickerZoneId) {
+      setPickerRooms([]);
+      return;
+    }
+    axios
+      .get(`${API_BASE}/content/zones/${pickerZoneId}/rooms`)
+      .then((r) => setPickerRooms(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setPickerRooms([]));
+  }, [exitPickerDir, pickerZoneId]);
 
   const changeTab = useCallback(
     (t) => {
@@ -110,10 +165,14 @@ export default function RoomPropertyPanel({
   }
 
   const setField = (path, value) => {
+    setDirty(true);
     setRaw((prev) => {
       const next = { ...prev };
       if (path === "description.base") {
-        next.description = { ...(next.description || {}), base: value };
+        next.description = { ...(typeof next.description === "object" && next.description ? next.description : {}), base: value };
+      } else if (path.startsWith("description.")) {
+        const key = path.slice("description.".length);
+        next.description = { ...(typeof next.description === "object" && next.description ? next.description : {}), [key]: value };
       } else {
         next[path] = value;
       }
@@ -122,18 +181,22 @@ export default function RoomPropertyPanel({
   };
 
   const setTags = (tagsArr) => {
+    setDirty(true);
     setRaw((prev) => ({ ...prev, tags: tagsArr }));
   };
 
   const saveJson = async () => {
     setBusy(true);
     setMsg("");
+    const payload = roomPayloadForSave(raw);
     try {
       if (mode === "ship" && shipId) {
-        await axios.put(`${API_BASE}/content/ships/${shipId}/rooms/${roomLocalId}`, { room: raw });
+        await axios.put(`${API_BASE}/content/ships/${shipId}/rooms/${roomLocalId}`, { room: payload });
       } else {
-        await axios.put(`${API_BASE}/content/zones/${zoneId}/rooms/${slug}`, { room: raw });
+        await axios.put(`${API_BASE}/content/zones/${zoneId}/rooms/${slug}`, { room: payload });
       }
+      setRaw(payload);
+      setDirty(false);
       setMsg("Saved ✓");
       onSaved?.();
     } catch (e) {
@@ -149,12 +212,19 @@ export default function RoomPropertyPanel({
     try {
       const parsed = yaml.load(rawYaml);
       if (typeof parsed !== "object" || !parsed) throw new Error("Invalid YAML");
+      const payload = roomPayloadForSave(parsed);
       if (mode === "ship" && shipId) {
-        await axios.put(`${API_BASE}/content/ships/${shipId}/rooms/${roomLocalId}`, { room: parsed });
+        await axios.put(`${API_BASE}/content/ships/${shipId}/rooms/${roomLocalId}`, { room: payload });
       } else {
-        await axios.put(`${API_BASE}/content/zones/${zoneId}/rooms/${slug}`, { room: parsed });
+        await axios.put(`${API_BASE}/content/zones/${zoneId}/rooms/${slug}`, { room: payload });
       }
-      setRaw(parsed);
+      setRaw(payload);
+      try {
+        setRawYaml(yaml.dump(payload, { lineWidth: 120 }));
+      } catch {
+        /* ignore */
+      }
+      setDirty(false);
       setMsg("Saved ✓");
       onSaved?.();
     } catch (e) {
@@ -188,6 +258,7 @@ export default function RoomPropertyPanel({
         if (typeof parsed === "object" && parsed) {
           setRaw(parsed);
           setRawYaml(text);
+          setDirty(false);
         }
         setMsg("Reverted from disk.");
       } else {
@@ -222,7 +293,11 @@ export default function RoomPropertyPanel({
       if (parsed && typeof parsed === "object") {
         const base = parsed.description?.base || parsed.description;
         if (typeof base === "string") {
-          setField("description.base", base);
+          setDirty(true);
+          setRaw((prev) => ({
+            ...prev,
+            description: { ...(typeof prev.description === "object" && prev.description ? prev.description : {}), base },
+          }));
           setMsg("AI text merged — review and Save.");
         } else {
           setMsg("AI returned YAML; check structure.");
@@ -239,6 +314,7 @@ export default function RoomPropertyPanel({
     try {
       const parsed = yaml.load(rawYaml);
       if (typeof parsed === "object" && parsed) {
+        setDirty(true);
         setRaw(parsed);
         setMsg("Imported into form — click Save.");
       }
@@ -250,6 +326,70 @@ export default function RoomPropertyPanel({
   const exitsObj = raw.exits && typeof raw.exits === "object" ? raw.exits : {};
   const tags = normalizeTags(raw.tags);
   const freeDirs = EXIT_DIRS.filter((d) => !exitsObj[d]);
+  const featuresList = Array.isArray(raw.features) ? raw.features : [];
+  const hazardsList = Array.isArray(raw.hazards) ? raw.hazards : [];
+
+  const addFeature = () => {
+    setDirty(true);
+    setRaw((prev) => ({
+      ...prev,
+      features: [...(Array.isArray(prev.features) ? prev.features : []), { ...BLANK_FEATURE }],
+    }));
+  };
+  const removeFeature = (index) => {
+    setDirty(true);
+    setRaw((prev) => {
+      const list = [...(Array.isArray(prev.features) ? prev.features : [])];
+      list.splice(index, 1);
+      return { ...prev, features: list };
+    });
+  };
+  const patchFeature = (index, patch) => {
+    setDirty(true);
+    setRaw((prev) => {
+      const list = [...(Array.isArray(prev.features) ? prev.features : [])];
+      const cur = list[index];
+      if (!cur || typeof cur !== "object") return prev;
+      list[index] = { ...cur, ...patch };
+      return { ...prev, features: list };
+    });
+  };
+  const setFeatureKeywords = (index, keywords) => {
+    setDirty(true);
+    setRaw((prev) => {
+      const list = [...(Array.isArray(prev.features) ? prev.features : [])];
+      const cur = list[index];
+      if (!cur || typeof cur !== "object") return prev;
+      list[index] = { ...cur, keywords: Array.isArray(keywords) ? keywords : [] };
+      return { ...prev, features: list };
+    });
+  };
+
+  const addHazard = () => {
+    setDirty(true);
+    setRaw((prev) => ({
+      ...prev,
+      hazards: [...(Array.isArray(prev.hazards) ? prev.hazards : []), { ...BLANK_HAZARD }],
+    }));
+  };
+  const removeHazard = (index) => {
+    setDirty(true);
+    setRaw((prev) => {
+      const list = [...(Array.isArray(prev.hazards) ? prev.hazards : [])];
+      list.splice(index, 1);
+      return { ...prev, hazards: list };
+    });
+  };
+  const patchHazard = (index, patch) => {
+    setDirty(true);
+    setRaw((prev) => {
+      const list = [...(Array.isArray(prev.hazards) ? prev.hazards : [])];
+      const cur = list[index];
+      if (!cur || typeof cur !== "object") return prev;
+      list[index] = { ...cur, ...patch };
+      return { ...prev, hazards: list };
+    });
+  };
 
   const formatZoneDestination = (targetSlug) => {
     if (!targetSlug) return "";
@@ -272,6 +412,7 @@ export default function RoomPropertyPanel({
       setMsg("Destination required.");
       return;
     }
+    setDirty(true);
     setRaw((prev) => ({
       ...prev,
       exits: {
@@ -284,6 +425,7 @@ export default function RoomPropertyPanel({
   };
 
   const removeExit = (dir) => {
+    setDirty(true);
     setRaw((prev) => {
       const next = { ...prev };
       const ex = { ...(next.exits || {}) };
@@ -294,6 +436,7 @@ export default function RoomPropertyPanel({
   };
 
   const updateExitDescription = (dir, description) => {
+    setDirty(true);
     setRaw((prev) => {
       const ex = { ...(prev.exits || {}) };
       if (ex[dir]) ex[dir] = { ...ex[dir], description };
@@ -302,6 +445,7 @@ export default function RoomPropertyPanel({
   };
 
   const updateExitDestination = (dir, destination) => {
+    setDirty(true);
     setRaw((prev) => {
       const ex = { ...(prev.exits || {}) };
       if (ex[dir]) ex[dir] = { ...ex[dir], destination };
@@ -310,6 +454,7 @@ export default function RoomPropertyPanel({
   };
 
   const addSpawn = () => {
+    setDirty(true);
     setRaw((prev) => ({
       ...prev,
       entity_spawns: [...(Array.isArray(prev.entity_spawns) ? prev.entity_spawns : []), { template: "", chance: 1, max_count: 1 }],
@@ -318,6 +463,7 @@ export default function RoomPropertyPanel({
   };
 
   const removeSpawn = (index) => {
+    setDirty(true);
     setRaw((prev) => {
       const list = [...(Array.isArray(prev.entity_spawns) ? prev.entity_spawns : [])];
       list.splice(index, 1);
@@ -326,6 +472,7 @@ export default function RoomPropertyPanel({
   };
 
   const updateSpawn = (index, patch) => {
+    setDirty(true);
     setRaw((prev) => {
       const list = [...(Array.isArray(prev.entity_spawns) ? prev.entity_spawns : [])];
       const cur = list[index];
@@ -347,6 +494,9 @@ export default function RoomPropertyPanel({
   };
 
   const descBase = raw.description?.base ?? "";
+  const descDawn = typeof raw.description === "object" && raw.description ? raw.description.dawn ?? "" : "";
+  const descDusk = typeof raw.description === "object" && raw.description ? raw.description.dusk ?? "" : "";
+  const descNight = typeof raw.description === "object" && raw.description ? raw.description.night ?? "" : "";
   const roomName = raw.name ?? "";
 
   const tabBtn = (id, label) => (
@@ -378,8 +528,28 @@ export default function RoomPropertyPanel({
       <div style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, borderBottom: `1px solid ${COLORS.border}` }}>
         <div style={{ width: 3, height: 24, borderRadius: 2, background: ROOM_TYPE_COLORS[raw.type] || COLORS.accent }} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: COLORS.text, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {node.data?.label || slug}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: COLORS.text, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {node.data?.label || slug}
+            </div>
+            {dirty && (
+              <span
+                style={{
+                  fontSize: 9,
+                  fontWeight: 600,
+                  color: COLORS.warning,
+                  background: `${COLORS.warning}22`,
+                  border: `1px solid ${COLORS.warning}55`,
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Unsaved changes
+              </span>
+            )}
           </div>
           <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: COLORS.textMuted }}>
             {mode === "ship" ? `${shipId}:${slug}` : `${zoneId}:${slug}`}
@@ -391,6 +561,8 @@ export default function RoomPropertyPanel({
         {tabBtn("general", "General")}
         {tabBtn("exits", "Exits")}
         {tabBtn("entities", "Entities")}
+        {tabBtn("features", "Features")}
+        {tabBtn("hazards", "Hazards")}
         {tabBtn("yaml", "YAML")}
       </div>
 
@@ -460,6 +632,52 @@ export default function RoomPropertyPanel({
               AI Generate description
             </button>
 
+            <button
+              type="button"
+              onClick={() => setTimeVariantsOpen((o) => !o)}
+              style={{
+                width: "100%",
+                textAlign: "left",
+                padding: "8px 10px",
+                marginBottom: timeVariantsOpen ? 8 : 10,
+                background: COLORS.bgPanel,
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 6,
+                color: COLORS.textMuted,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'DM Sans', sans-serif",
+              }}
+            >
+              Time-of-day variants (optional) {timeVariantsOpen ? "▾" : "▸"}
+            </button>
+            {timeVariantsOpen && (
+              <>
+                <label style={{ fontSize: 10, color: COLORS.textMuted }}>Dawn</label>
+                <textarea
+                  value={descDawn}
+                  onChange={(e) => setField("description.dawn", e.target.value)}
+                  rows={4}
+                  style={{ ...inp, resize: "vertical", marginBottom: 8 }}
+                />
+                <label style={{ fontSize: 10, color: COLORS.textMuted }}>Dusk</label>
+                <textarea
+                  value={descDusk}
+                  onChange={(e) => setField("description.dusk", e.target.value)}
+                  rows={4}
+                  style={{ ...inp, resize: "vertical", marginBottom: 8 }}
+                />
+                <label style={{ fontSize: 10, color: COLORS.textMuted }}>Night</label>
+                <textarea
+                  value={descNight}
+                  onChange={(e) => setField("description.night", e.target.value)}
+                  rows={4}
+                  style={{ ...inp, resize: "vertical", marginBottom: 10 }}
+                />
+              </>
+            )}
+
             <label style={{ fontSize: 10, color: COLORS.textMuted }}>Tags</label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", marginBottom: 10 }}>
               {tags.map((t) => (
@@ -513,7 +731,85 @@ export default function RoomPropertyPanel({
                     </button>
                   </div>
                   <label style={{ fontSize: 9, color: COLORS.textDim }}>Destination</label>
-                  <input type="text" value={dest} onChange={(e) => updateExitDestination(dir, e.target.value)} style={{ ...inp, marginBottom: 6 }} />
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 6 }}>
+                    <input type="text" value={dest} onChange={(e) => updateExitDestination(dir, e.target.value)} style={{ ...inp, flex: 1, marginBottom: 0 }} />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExitPickerDir(exitPickerDir === dir ? null : dir);
+                        setPickerZoneId(zoneId);
+                      }}
+                      style={{
+                        flexShrink: 0,
+                        padding: "6px 8px",
+                        fontSize: 10,
+                        background: COLORS.bgHover,
+                        border: `1px solid ${COLORS.border}`,
+                        borderRadius: 6,
+                        color: COLORS.accent,
+                        cursor: "pointer",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Pick room…
+                    </button>
+                  </div>
+                  {exitPickerDir === dir && (
+                    <div
+                      style={{
+                        padding: 8,
+                        marginBottom: 8,
+                        background: COLORS.bgInput,
+                        border: `1px dashed ${COLORS.borderActive}`,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <div style={{ fontSize: 10, color: COLORS.textMuted, marginBottom: 6 }}>Cross-zone destination</div>
+                      <select
+                        value={pickerZoneId}
+                        onChange={(e) => setPickerZoneId(e.target.value)}
+                        style={{ ...inp, marginBottom: 6 }}
+                      >
+                        <option value="">Select zone…</option>
+                        {pickerZones.map((z) => (
+                          <option key={z.id} value={z.id}>
+                            {z.name || z.id}
+                          </option>
+                        ))}
+                      </select>
+                      {pickerZoneId && (
+                        <div style={{ maxHeight: 140, overflow: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+                          {pickerRooms.map((r) => {
+                            const rs = r.name || (r.id && String(r.id).includes(":") ? String(r.id).split(":").pop() : r.id) || "?";
+                            return (
+                              <button
+                                key={r.id || rs}
+                                type="button"
+                                onClick={() => {
+                                  const slugPart = r.name || (String(r.id || "").includes(":") ? String(r.id).split(":").pop() : rs);
+                                  updateExitDestination(dir, `${pickerZoneId}:${slugPart}`);
+                                  setExitPickerDir(null);
+                                }}
+                                style={{
+                                  textAlign: "left",
+                                  padding: "6px 8px",
+                                  fontSize: 11,
+                                  background: COLORS.bgPanel,
+                                  border: `1px solid ${COLORS.border}`,
+                                  borderRadius: 4,
+                                  color: COLORS.text,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {rs}
+                              </button>
+                            );
+                          })}
+                          {pickerRooms.length === 0 && <div style={{ fontSize: 10, color: COLORS.textDim }}>No rooms in this zone.</div>}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <label style={{ fontSize: 9, color: COLORS.textDim }}>Description</label>
                   <input type="text" value={dsc} onChange={(e) => updateExitDescription(dir, e.target.value)} style={inp} />
                 </div>
@@ -565,6 +861,200 @@ export default function RoomPropertyPanel({
               </button>
               )}
             </div>
+          </>
+        )}
+
+        {activeTab === "features" && (
+          <>
+            {featuresList.map((feat, fi) => {
+              const o = typeof feat === "object" && feat ? feat : { ...BLANK_FEATURE };
+              const kws = Array.isArray(o.keywords) ? o.keywords.map(String).filter(Boolean) : [];
+              const open = featureCardOpen[fi] !== false;
+              return (
+                <div key={fi} style={{ marginBottom: 8, border: `1px solid ${COLORS.border}`, borderRadius: 8, overflow: "hidden" }}>
+                  <button
+                    type="button"
+                    onClick={() => setFeatureCardOpen((p) => ({ ...p, [fi]: !(p[fi] ?? true) }))}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "8px 10px",
+                      background: COLORS.bgPanel,
+                      border: "none",
+                      color: COLORS.textMuted,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    {open ? "▾" : "▸"} Feature {fi + 1}{o.id ? ` · ${o.id}` : ""}
+                  </button>
+                  {open && (
+                    <div style={{ padding: 10, background: COLORS.bgCard }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 10, color: COLORS.textDim }}>id (slug)</span>
+                        <button type="button" onClick={() => removeFeature(fi)} style={{ background: "none", border: "none", color: COLORS.danger, cursor: "pointer", fontSize: 11 }}>
+                          Remove
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={o.id || ""}
+                        onChange={(e) => patchFeature(fi, { id: e.target.value })}
+                        placeholder="feature_slug"
+                        style={{ ...inp, marginBottom: 8 }}
+                      />
+                      <label style={{ fontSize: 9, color: COLORS.textDim }}>Name</label>
+                      <input type="text" value={o.name || ""} onChange={(e) => patchFeature(fi, { name: e.target.value })} style={{ ...inp, marginBottom: 8 }} />
+                      <label style={{ fontSize: 9, color: COLORS.textDim }}>Keywords</label>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center", marginBottom: 8 }}>
+                        {kws.map((kw) => (
+                          <span
+                            key={kw}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              padding: "2px 8px",
+                              borderRadius: 4,
+                              fontSize: 10,
+                              color: COLORS.info,
+                              background: `${COLORS.info}18`,
+                              fontFamily: "'JetBrains Mono', monospace",
+                            }}
+                          >
+                            {kw}
+                            <button
+                              type="button"
+                              onClick={() => patchFeature(fi, { keywords: kws.filter((x) => x !== kw) })}
+                              style={{ background: "none", border: "none", color: COLORS.textMuted, cursor: "pointer", padding: 0, fontSize: 12 }}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                        <input
+                          type="text"
+                          value={featureKwDraft[fi] || ""}
+                          onChange={(e) => setFeatureKwDraft((d) => ({ ...d, [fi]: e.target.value }))}
+                          onKeyDown={(e) => {
+                            if (e.key !== "Enter") return;
+                            e.preventDefault();
+                            const t = (featureKwDraft[fi] || "").trim();
+                            if (!t || kws.includes(t)) return;
+                            patchFeature(fi, { keywords: [...kws, t] });
+                            setFeatureKwDraft((d) => ({ ...d, [fi]: "" }));
+                          }}
+                          placeholder="keyword + Enter"
+                          style={{ ...inp, maxWidth: 120, padding: "4px 8px", fontSize: 11 }}
+                        />
+                      </div>
+                      <label style={{ fontSize: 9, color: COLORS.textDim }}>Description</label>
+                      <textarea
+                        value={o.description || ""}
+                        onChange={(e) => patchFeature(fi, { description: e.target.value })}
+                        rows={4}
+                        style={{ ...inp, resize: "vertical", marginBottom: 8 }}
+                      />
+                      <label style={{ fontSize: 9, color: COLORS.textDim }}>Interaction</label>
+                      <select
+                        value={o.interaction || "examine"}
+                        onChange={(e) => patchFeature(fi, { interaction: e.target.value })}
+                        style={{ ...inp, marginBottom: 0 }}
+                      >
+                        {FEATURE_INTERACTIONS.map((x) => (
+                          <option key={x} value={x}>
+                            {x}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <button
+              type="button"
+              onClick={addFeature}
+              style={{
+                width: "100%",
+                padding: 10,
+                background: "transparent",
+                border: `1px dashed ${COLORS.border}`,
+                borderRadius: 8,
+                color: COLORS.textMuted,
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              + Add feature
+            </button>
+          </>
+        )}
+
+        {activeTab === "hazards" && (
+          <>
+            <datalist id="hazard-type-dl">
+              {HAZARD_TYPE_SUGGESTIONS.map((x) => (
+                <option key={x} value={x} />
+              ))}
+            </datalist>
+            {hazardsList.map((hz, hi) => {
+              const o = typeof hz === "object" && hz ? hz : { ...BLANK_HAZARD };
+              return (
+                <div key={hi} style={{ padding: 10, background: COLORS.bgPanel, border: `1px solid ${COLORS.border}`, borderRadius: 8, marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ fontSize: 10, color: COLORS.textMuted }}>Hazard {hi + 1}</span>
+                    <button type="button" onClick={() => removeHazard(hi)} style={{ background: "none", border: "none", color: COLORS.danger, cursor: "pointer", fontSize: 11 }}>
+                      Remove
+                    </button>
+                  </div>
+                  <label style={{ fontSize: 9, color: COLORS.textDim }}>ID</label>
+                  <input type="text" value={o.id || ""} onChange={(e) => patchHazard(hi, { id: e.target.value })} style={{ ...inp, marginBottom: 8 }} />
+                  <label style={{ fontSize: 9, color: COLORS.textDim }}>Type</label>
+                  <input
+                    type="text"
+                    list="hazard-type-dl"
+                    value={o.type || ""}
+                    onChange={(e) => patchHazard(hi, { type: e.target.value })}
+                    style={{ ...inp, marginBottom: 8 }}
+                  />
+                  <label style={{ fontSize: 9, color: COLORS.textDim }}>Severity (1–5)</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={o.severity ?? 1}
+                    onChange={(e) => patchHazard(hi, { severity: Math.min(5, Math.max(1, parseInt(e.target.value, 10) || 1)) })}
+                    style={{ ...inp, marginBottom: 8 }}
+                  />
+                  <label style={{ fontSize: 9, color: COLORS.textDim }}>Description</label>
+                  <textarea
+                    value={o.description || ""}
+                    onChange={(e) => patchHazard(hi, { description: e.target.value })}
+                    rows={3}
+                    style={{ ...inp, resize: "vertical", marginBottom: 0 }}
+                  />
+                </div>
+              );
+            })}
+            <button
+              type="button"
+              onClick={addHazard}
+              style={{
+                width: "100%",
+                padding: 10,
+                background: "transparent",
+                border: `1px dashed ${COLORS.border}`,
+                borderRadius: 8,
+                color: COLORS.textMuted,
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              + Add hazard
+            </button>
           </>
         )}
 
@@ -636,7 +1126,15 @@ export default function RoomPropertyPanel({
 
         {activeTab === "yaml" && (
           <>
-            <textarea value={rawYaml} onChange={(e) => setRawYaml(e.target.value)} rows={14} style={{ ...inp, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }} />
+            <textarea
+              value={rawYaml}
+              onChange={(e) => {
+                setDirty(true);
+                setRawYaml(e.target.value);
+              }}
+              rows={14}
+              style={{ ...inp, fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}
+            />
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
               <button type="button" onClick={importYaml} style={{ padding: "6px 10px", background: COLORS.bgHover, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.text, cursor: "pointer", fontSize: 11 }}>
                 Parse into form
@@ -652,7 +1150,7 @@ export default function RoomPropertyPanel({
       {/* Undo/redo for the whole builder is deferred; single-room edit history could stack here later. */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingTop: 10, borderTop: `1px solid ${COLORS.border}`, marginTop: 8 }}>
         <button type="button" disabled={busy} onClick={saveJson} style={{ padding: "8px 12px", background: COLORS.accent, color: "#fff", border: "none", borderRadius: 6, fontWeight: 600, cursor: "pointer", fontSize: 12 }}>
-          Save
+          {dirty ? "Save *" : "Save"}
         </button>
         <button type="button" disabled={busy} onClick={revert} style={{ padding: "8px 12px", background: COLORS.bgHover, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.text, cursor: "pointer", fontSize: 12 }}>
           Revert
