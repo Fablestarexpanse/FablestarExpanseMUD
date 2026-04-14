@@ -1,0 +1,165 @@
+{
+  "_comment": "Fablestar player portrait: Nexus injects prompt into node 57; PNG from SaveImage 40 (post RemBg 59). Edit LoRA in 56 to match your models.",
+  "1": {
+    "inputs": {
+      "text": "",
+      "clip": ["53", 0]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "2": {
+    "inputs": {
+      "unet_name": "z_image_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader"
+  },
+  "28": {
+    "inputs": {
+      "samples": ["42", 0],
+      "vae": ["52", 0]
+    },
+    "class_type": "VAEDecode"
+  },
+  "30": {
+    "inputs": {
+      "shift": 3,
+      "model": ["44", 0]
+    },
+    "class_type": "ModelSamplingAuraFlow"
+  },
+  "40": {
+    "inputs": {
+      "filename_prefix": "z-image",
+      "images": ["59", 0]
+    },
+    "class_type": "SaveImage"
+  },
+  "42": {
+    "inputs": {
+      "seed": 584856337233175,
+      "steps": 15,
+      "cfg": 4,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": ["44", 0],
+      "positive": ["57", 0],
+      "negative": ["1", 0],
+      "latent_image": ["55", 4]
+    },
+    "class_type": "KSampler"
+  },
+  "44": {
+    "inputs": {
+      "output_strength": 1,
+      "clip_strength_multiplier": 1,
+      "model": ["2", 0],
+      "lora_stack": ["56", 0],
+      "clip": ["53", 0],
+      "settings": ["47", 0]
+    },
+    "class_type": "LoRAOptimizerSimple"
+  },
+  "45": {
+    "inputs": {
+      "text_0": "(Full LoRA optimizer report appears when you run this graph in ComfyUI.)",
+      "text": ["44", 2]
+    },
+    "class_type": "ShowText|pysssss"
+  },
+  "46": {
+    "inputs": {
+      "group_mode": true,
+      "default_active": true,
+      "allow_strength_adjustment": false,
+      "toggle_trigger_words": { "__value__": [] },
+      "orinalMessage": "",
+      "trigger_words": ["56", 1]
+    },
+    "class_type": "TriggerWord Toggle (LoraManager)"
+  },
+  "47": {
+    "inputs": {
+      "top_n": 5,
+      "scoring_svd": "disabled",
+      "scoring_device": "gpu",
+      "scoring_speed": "fast",
+      "scoring_formula": "v2",
+      "diff_cache_mode": "auto",
+      "diff_cache_ram_pct": 0.5,
+      "record_dataset": "disabled"
+    },
+    "class_type": "LoRAAutoTunerSettings"
+  },
+  "52": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader"
+  },
+  "53": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader"
+  },
+  "55": {
+    "inputs": {
+      "mode": "Manual",
+      "latent_type": "latent_4x8",
+      "width": 1024,
+      "height": 1024,
+      "auto_detect": false,
+      "rescale_mode": "megapixels",
+      "rescale_value": 1.3810679320049757,
+      "batch_size": 1
+    },
+    "class_type": "ResolutionMaster"
+  },
+  "56": {
+    "inputs": {
+      "text": "<lora:Butternutcrunch_PolyPop_000001750:1.00>",
+      "loras": {
+        "__value__": [
+          {
+            "name": "Butternutcrunch_PolyPop_000001750",
+            "strength": 1,
+            "active": true,
+            "expanded": false,
+            "clipStrength": 1,
+            "locked": false
+          }
+        ]
+      }
+    },
+    "class_type": "Lora Stacker (LoraManager)"
+  },
+  "57": {
+    "inputs": {
+      "text": "",
+      "clip": ["53", 0]
+    },
+    "class_type": "CLIPTextEncode"
+  },
+  "59": {
+    "inputs": {
+      "rem_mode": "BEN2",
+      "image_output": "Hide",
+      "save_prefix": "ComfyUI",
+      "torchscript_jit": false,
+      "add_background": "none",
+      "refine_foreground": true,
+      "images": ["28", 0]
+    },
+    "class_type": "easy imageRemBg"
+  },
+  "60": {
+    "inputs": {
+      "images": ["59", 0]
+    },
+    "class_type": "PreviewImage"
+  }
+}

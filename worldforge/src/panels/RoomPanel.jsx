@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import yaml from "js-yaml";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 import { joinPaths } from "../utils/paths.js";
 import * as fs from "../hooks/useFileSystem.js";
 
@@ -24,24 +24,34 @@ function comfySuggestCheckpointNameToml(status) {
   return status.area_ready === true && status.checkpoint_name_set === false;
 }
 
-function pill(active, onClick, children) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        padding: "4px 10px",
-        borderRadius: 6,
-        border: `1px solid ${active ? COLORS.accent : COLORS.border}`,
-        background: active ? `${COLORS.accent}22` : COLORS.bgInput,
-        color: active ? COLORS.accent : COLORS.textMuted,
-        fontSize: 10,
-        cursor: "pointer",
-      }}
-    >
-      {children}
-    </button>
-  );
+function roomPanelChrome(COLORS) {
+  const lbl = { display: "block", fontSize: 10, color: COLORS.textMuted, marginBottom: 4, marginTop: 8 };
+  const inp = {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "8px 10px",
+    borderRadius: 6,
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.bgInput,
+    color: COLORS.text,
+    fontSize: 12,
+  };
+  const btn = {
+    padding: "8px 14px",
+    borderRadius: 6,
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.bgCard,
+    color: COLORS.text,
+    cursor: "pointer",
+    fontSize: 12,
+  };
+  return {
+    lbl,
+    inp,
+    btn,
+    btnPrimary: { ...btn, background: `${COLORS.accent}33`, borderColor: COLORS.accent },
+    btnDanger: { ...btn, color: COLORS.danger, borderColor: COLORS.danger },
+  };
 }
 
 export default function RoomPanel({
@@ -64,6 +74,27 @@ export default function RoomPanel({
   nexusToken,
   shipMode,
 }) {
+  const { colors: COLORS } = useTheme();
+  const { lbl, inp, btn, btnPrimary, btnDanger } = useMemo(() => roomPanelChrome(COLORS), [COLORS]);
+  function pill(active, onClick, children) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          padding: "4px 10px",
+          borderRadius: 6,
+          border: `1px solid ${active ? COLORS.accent : COLORS.border}`,
+          background: active ? `${COLORS.accent}22` : COLORS.bgInput,
+          color: active ? COLORS.accent : COLORS.textMuted,
+          fontSize: 10,
+          cursor: "pointer",
+        }}
+      >
+        {children}
+      </button>
+    );
+  }
   const [tab, setTab] = useState("General");
   const [yamlText, setYamlText] = useState("");
   const [colorClipboardHint, setColorClipboardHint] = useState("");
@@ -1051,6 +1082,8 @@ function AddExitForm({ existing, onAdd }) {
 }
 
 function FeatureList({ features, onChange }) {
+  const { colors: COLORS } = useTheme();
+  const { lbl, inp, btnPrimary, btnDanger } = useMemo(() => roomPanelChrome(COLORS), [COLORS]);
   const add = () => onChange([...features, { id: `f_${Date.now()}`, name: "", keywords: [], description: "", interaction: "examine" }]);
   return (
     <div>
@@ -1089,6 +1122,8 @@ function FeatureList({ features, onChange }) {
 }
 
 function HazardList({ hazards, onChange }) {
+  const { colors: COLORS } = useTheme();
+  const { lbl, inp, btnPrimary, btnDanger } = useMemo(() => roomPanelChrome(COLORS), [COLORS]);
   const add = () => onChange([...hazards, { id: `h_${Date.now()}`, type: "trap", severity: 1, description: "" }]);
   return (
     <div>
@@ -1127,6 +1162,8 @@ function HazardList({ hazards, onChange }) {
 }
 
 function SpawnList({ spawns, onChange }) {
+  const { colors: COLORS } = useTheme();
+  const { lbl, inp, btnPrimary, btnDanger } = useMemo(() => roomPanelChrome(COLORS), [COLORS]);
   const add = () => onChange([...spawns, { template: "", chance: 1, max_count: 1 }]);
   return (
     <div>
@@ -1160,26 +1197,3 @@ function SpawnList({ spawns, onChange }) {
     </div>
   );
 }
-
-const lbl = { display: "block", fontSize: 10, color: COLORS.textMuted, marginBottom: 4, marginTop: 8 };
-const inp = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "8px 10px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 12,
-};
-const btn = {
-  padding: "8px 14px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  cursor: "pointer",
-  fontSize: 12,
-};
-const btnPrimary = { ...btn, background: `${COLORS.accent}33`, borderColor: COLORS.accent };
-const btnDanger = { ...btn, color: COLORS.danger, borderColor: COLORS.danger };

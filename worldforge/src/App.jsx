@@ -3,7 +3,7 @@ import { ContentProvider, useContent } from "./hooks/useContentStore.js";
 import { useLocalSettings, readSnapEnabled } from "./hooks/useLocalSettings.js";
 import * as fs from "./hooks/useFileSystem.js";
 import { createWorldScaffold } from "./utils/worldScaffold.js";
-import { COLORS } from "./theme.js";
+import { useTheme } from "./ThemeContext.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import ExportDialog from "./components/ExportDialog.jsx";
 import ZoneEditor from "./editors/ZoneEditor.jsx";
@@ -16,6 +16,7 @@ import GlyphEditor from "./editors/GlyphEditor.jsx";
 const LS_ROOT = "worldforge_content_root";
 
 function Welcome({ onOpen }) {
+  const { colors: COLORS } = useTheme();
   return (
     <div
       style={{
@@ -57,10 +58,42 @@ function Welcome({ onOpen }) {
 }
 
 function SettingsPanel({ onClose, settings }) {
+  const { colors: COLORS, colorScheme, setColorScheme } = useTheme();
+  const sl = { display: "block", fontSize: 11, color: COLORS.textMuted, marginTop: 12, marginBottom: 4 };
+  const si = {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: 8,
+    borderRadius: 6,
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.bgInput,
+    color: COLORS.text,
+    fontSize: 12,
+  };
+  const segBtn = (active) => ({
+    flex: 1,
+    padding: "8px 12px",
+    borderRadius: 6,
+    border: `1px solid ${active ? COLORS.accent : COLORS.border}`,
+    background: active ? `${COLORS.accent}22` : COLORS.bgCard,
+    color: COLORS.text,
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: active ? 600 : 400,
+  });
   return (
     <div style={{ position: "absolute", inset: 0, background: `${COLORS.bg}dd`, zIndex: 90, display: "flex", alignItems: "center", justifyContent: "center" }} onMouseDown={onClose}>
-      <div style={{ width: 400, background: COLORS.bgPanel, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }} onMouseDown={(e) => e.stopPropagation()}>
+      <div style={{ width: 420, maxWidth: "94vw", background: COLORS.bgPanel, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20 }} onMouseDown={(e) => e.stopPropagation()}>
         <h3 style={{ marginTop: 0, color: COLORS.text }}>Settings</h3>
+        <label style={{ ...sl, marginTop: 0 }}>Appearance</label>
+        <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+          <button type="button" style={segBtn(colorScheme === "dark")} onClick={() => setColorScheme("dark")}>
+            Dark
+          </button>
+          <button type="button" style={segBtn(colorScheme === "light")} onClick={() => setColorScheme("light")}>
+            Light
+          </button>
+        </div>
         <label style={sl}>Nexus API URL</label>
         <input style={si} value={settings.nexusUrl} onChange={(e) => settings.setNexusUrl(e.target.value)} />
         <label style={sl}>Nexus bearer token (optional)</label>
@@ -98,10 +131,8 @@ function SettingsPanel({ onClose, settings }) {
   );
 }
 
-const sl = { display: "block", fontSize: 11, color: COLORS.textMuted, marginTop: 12, marginBottom: 4 };
-const si = { width: "100%", boxSizing: "border-box", padding: 8, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.bgInput, color: COLORS.text, fontSize: 12 };
-
 function ScaffoldPrompt({ pending, onCreate, onPickOther, onCancel, busy }) {
+  const { colors: COLORS } = useTheme();
   const missing = pending.reason === "missing";
   const title = missing ? "No content/world folder" : "World folder is empty";
   const body = missing
@@ -192,6 +223,7 @@ function ScaffoldPrompt({ pending, onCreate, onPickOther, onCancel, busy }) {
 }
 
 function Shell() {
+  const { colors: COLORS } = useTheme();
   const {
     contentRoot,
     worldRoot,

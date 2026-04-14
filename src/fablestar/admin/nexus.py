@@ -14,7 +14,7 @@ from starlette.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 
-from fablestar.admin import content_browser, staff_service
+from fablestar.admin import content_browser, player_accounts, staff_service
 from fablestar.admin.admin_security import (
     AdminContext,
     NexusAdminAuthMiddleware,
@@ -35,6 +35,33 @@ def get_admin_ctx(request: Request) -> AdminContext:
     if ctx is None:
         raise HTTPException(status_code=500, detail="admin_context_missing")
     return ctx
+
+
+def _admin_actor_payload(ctx: AdminContext) -> Optional[Dict[str, Any]]:
+    if ctx.bypass_auth:
+        return None
+    return {
+        "display_name": ctx.display_name,
+        "username": ctx.username,
+        "role": ctx.role,
+    }
+
+
+def _require_head_or_admin_console(ctx: AdminContext) -> None:
+    if ctx.bypass_auth or ctx.is_head_admin() or ctx.role == "admin":
+        return
+    raise HTTPException(status_code=403, detail="head_or_admin_required")
+
+
+def _assert_console_role_grant_allowed(ctx: AdminContext, target_role: str) -> None:
+    tr = (target_role or "gm").lower().strip()
+    if tr not in ("gm", "admin", "head_admin"):
+        raise HTTPException(status_code=400, detail="invalid_role")
+    if ctx.bypass_auth or ctx.is_head_admin():
+        return
+    if ctx.role == "admin" and tr == "gm":
+        return
+    raise HTTPException(status_code=403, detail="head_admin_required_for_role")
 
 
 def require_tool(tool_id: str):
@@ -67,6 +94,20 @@ class PlayAuthBody(BaseModel):
     password: str
 
 
+class PlayAuthCharactersBody(BaseModel):
+    """Re-list characters; optional delete, scene LLM suggest, or scene Comfy generate (same auth as login)."""
+
+    username: str
+    password: str
+    delete_character_id: Optional[int] = None
+    suggest_scene: bool = False
+    narrative_context: str = ""
+    room_hint: str = ""
+    generate_scene: bool = False
+    scene_prompt: str = ""
+    character_id: Optional[int] = None
+
+
 class PlayCreateCharacterBody(BaseModel):
     username: str
     password: str
@@ -75,10 +116,49 @@ class PlayCreateCharacterBody(BaseModel):
     portrait_url: str = ""
 
 
+class PlayDeleteCharacterBody(BaseModel):
+    username: str
+    password: str
+    character_id: int = Field(..., ge=1)
+
+
 class PlayPortraitBody(BaseModel):
     username: str
     password: str
     appearance_prompt: str = ""
+
+
+class PlaySuggestPortraitPromptBody(BaseModel):
+    username: str
+    password: str
+    character_name: str = ""
+    appearance_notes: str = ""
+
+
+class PlaySceneSuggestBody(BaseModel):
+    username: str
+    password: str
+    narrative_context: str = ""
+    room_hint: str = ""
+
+
+class PlaySceneGenerateBody(BaseModel):
+    username: str
+    password: str
+    scene_prompt: str = ""
+    character_id: Optional[int] = None
+
+
+class PlaySceneGalleryListBody(BaseModel):
+    username: str
+    password: str
+
+
+class PlaySceneApplyGalleryBody(BaseModel):
+    username: str
+    password: str
+    gallery_id: int = Field(..., ge=1)
+    character_id: int = Field(..., ge=1)
 
 
 class ForgeRequest(BaseModel):
@@ -152,6 +232,29 @@ class StaffPatchBody(BaseModel):
     permissions: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None
+
+
+class PlayerAccountPatchBody(BaseModel):
+    echo_credits: Optional[int] = None
+    echo_credits_add: Optional[int] = None
+    is_gm: Optional[bool] = None
+    email: Optional[str] = None
+
+
+class PlayerCharacterPatchBody(BaseModel):
+    digi_balance: Optional[int] = None
+    pvp_enabled: Optional[bool] = None
+    reputation: Optional[int] = None
+    room_id: Optional[str] = None
+    portrait_url: Optional[str] = None
+    portrait_prompt: Optional[str] = None
+
+
+class ConsoleAccessBody(BaseModel):
+    """Nexus console login uses the same username as this play account (lowercased)."""
+
+    password: str = Field(..., min_length=4)
+    role: str = "gm"
 
 
 class RoomJsonBody(BaseModel):
@@ -230,10 +333,14 @@ class NexusApp:
         self._setup_middleware()
 
     def _setup_middleware(self):
+        # allow_credentials must be False when allow_origins is "*": otherwise actual
+        # responses emit Allow-Origin: * with Allow-Credentials: true (unless the request
+        # carried cookies), which browsers reject — player-ui fetches then fail with
+        # "Failed to fetch". UIs use header auth, not credentialed cookies.
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"], # In development, allow all
-            allow_credentials=True,
+            allow_origins=["*"],
+            allow_credentials=False,
             allow_methods=["*"],
             allow_headers=["*"],
         )
@@ -271,6 +378,10 @@ class NexusApp:
                 self._admin_ws_sockets.remove(ws)
 
     def _setup_routes(self):
+        @self.app.get("/admin/bootstrap")
+        async def admin_bootstrap():
+            return {"admin_auth_required": bool(self.server.config.server.admin_auth_required)}
+
         @self.app.post("/admin/auth/login")
         async def admin_auth_login(body: StaffLoginBody):
             row = await staff_service.authenticate_staff(self.server, body.username, body.password)
@@ -321,6 +432,91 @@ class NexusApp:
             patch = body.model_dump(exclude_unset=True)
             row = await staff_service.apply_staff_patch(self.server, staff_id, patch)
             return staff_service.staff_public(row)
+
+        @self.app.get("/admin/player-accounts")
+        async def admin_player_accounts_list(
+            _ctx: Annotated[AdminContext, Depends(require_tool("players"))],
+        ):
+            return await player_accounts.list_accounts_with_counts(self.server)
+
+        @self.app.get("/admin/player-accounts/{account_id}")
+        async def admin_player_accounts_get(
+            account_id: int,
+            _ctx: Annotated[AdminContext, Depends(require_tool("players"))],
+        ):
+            row = await player_accounts.get_account_detail(self.server, account_id)
+            if row is None:
+                raise HTTPException(status_code=404, detail="account_not_found")
+            return row
+
+        @self.app.patch("/admin/player-accounts/{account_id}")
+        async def admin_player_accounts_patch(
+            request: Request,
+            account_id: int,
+            body: PlayerAccountPatchBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("players"))],
+        ):
+            ctx = get_admin_ctx(request)
+            patch = body.model_dump(exclude_unset=True)
+            row = await player_accounts.patch_account(
+                self.server, account_id, patch, actor=_admin_actor_payload(ctx)
+            )
+            if row is None:
+                raise HTTPException(status_code=404, detail="account_not_found")
+            return row
+
+        @self.app.put("/admin/player-accounts/{account_id}/console-access")
+        async def admin_player_console_access_put(
+            request: Request,
+            account_id: int,
+            body: ConsoleAccessBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("players"))],
+        ):
+            ctx = get_admin_ctx(request)
+            _require_head_or_admin_console(ctx)
+            _assert_console_role_grant_allowed(ctx, body.role)
+            row = await staff_service.set_console_access_for_play_account(
+                self.server,
+                account_id,
+                password=body.password,
+                role=body.role,
+                permissions=None,
+            )
+            return staff_service.staff_public(row)
+
+        @self.app.delete("/admin/player-accounts/{account_id}/console-access")
+        async def admin_player_console_access_delete(
+            request: Request,
+            account_id: int,
+            _ctx: Annotated[AdminContext, Depends(require_tool("players"))],
+        ):
+            ctx = get_admin_ctx(request)
+            _require_head_or_admin_console(ctx)
+            ok = await staff_service.revoke_console_access_for_play_account(self.server, account_id)
+            if not ok:
+                raise HTTPException(status_code=404, detail="console_access_not_found")
+            return {"status": "ok", "revoked": True}
+
+        @self.app.patch("/admin/player-accounts/{account_id}/characters/{character_id}")
+        async def admin_player_character_patch(
+            request: Request,
+            account_id: int,
+            character_id: int,
+            body: PlayerCharacterPatchBody,
+            _ctx: Annotated[AdminContext, Depends(require_tool("players"))],
+        ):
+            ctx = get_admin_ctx(request)
+            patch = body.model_dump(exclude_unset=True)
+            row = await player_accounts.patch_character(
+                self.server,
+                account_id,
+                character_id,
+                patch,
+                actor=_admin_actor_payload(ctx),
+            )
+            if row is None:
+                raise HTTPException(status_code=404, detail="character_not_found")
+            return row
 
         @self.app.get("/status", response_model=ServerStatus)
         async def get_status():
@@ -382,8 +578,28 @@ class NexusApp:
             return await self.server.play_register(body.username, body.password)
 
         @self.app.post("/play/auth/characters")
-        async def play_auth_characters(body: PlayAuthBody):
-            """Re-list characters for the signed-in account."""
+        async def play_auth_characters(body: PlayAuthCharactersBody):
+            """Re-list characters, or scene suggest/generate/delete when those flags/ids are set."""
+            if body.suggest_scene:
+                return await self.server.play_suggest_scene_prompt(
+                    body.username,
+                    body.password,
+                    narrative_context=body.narrative_context,
+                    room_hint=body.room_hint,
+                )
+            if body.generate_scene:
+                return await self.server.play_generate_scene_image(
+                    body.username,
+                    body.password,
+                    body.scene_prompt,
+                    character_id=body.character_id,
+                )
+            if body.delete_character_id is not None:
+                if body.delete_character_id < 1:
+                    return {"ok": False, "error": "character_id_invalid"}
+                return await self.server.play_delete_character(
+                    body.username, body.password, body.delete_character_id
+                )
             return await self.server.play_refresh_characters(body.username, body.password)
 
         @self.app.get("/play/comfyui/status")
@@ -398,6 +614,16 @@ class NexusApp:
                 body.username, body.password, body.appearance_prompt
             )
 
+        @self.app.post("/play/characters/suggest-portrait-prompt")
+        async def play_suggest_portrait_prompt(body: PlaySuggestPortraitPromptBody):
+            """LLM: suggest a ComfyUI portrait prompt from character name and notes."""
+            return await self.server.play_suggest_portrait_prompt(
+                body.username,
+                body.password,
+                body.character_name,
+                appearance_notes=body.appearance_notes,
+            )
+
         @self.app.post("/play/characters/create")
         async def play_character_create(body: PlayCreateCharacterBody):
             """Create a new character for the account."""
@@ -407,6 +633,48 @@ class NexusApp:
                 body.name,
                 portrait_prompt=body.portrait_prompt,
                 portrait_url=body.portrait_url,
+            )
+
+        @self.app.post("/play/characters/delete")
+        async def play_character_delete(body: PlayDeleteCharacterBody):
+            """Remove a character owned by the account."""
+            return await self.server.play_delete_character(
+                body.username, body.password, body.character_id
+            )
+
+        @self.app.post("/play/scene/suggest-prompt")
+        async def play_scene_suggest_prompt(body: PlaySceneSuggestBody):
+            """LLM: suggest a ComfyUI environment prompt from recent narrative text."""
+            return await self.server.play_suggest_scene_prompt(
+                body.username,
+                body.password,
+                narrative_context=body.narrative_context,
+                room_hint=body.room_hint,
+            )
+
+        @self.app.post("/play/scene/generate")
+        async def play_scene_generate(body: PlaySceneGenerateBody):
+            """Run area ComfyUI workflow; returns scene_image_url under /media/rooms/."""
+            return await self.server.play_generate_scene_image(
+                body.username,
+                body.password,
+                body.scene_prompt,
+                character_id=body.character_id,
+            )
+
+        @self.app.post("/play/scene/gallery")
+        async def play_scene_gallery(body: PlaySceneGalleryListBody):
+            """List scene images saved for this account (ComfyUI history)."""
+            return await self.server.play_list_scene_gallery(body.username, body.password)
+
+        @self.app.post("/play/scene/apply-gallery")
+        async def play_scene_apply_gallery(body: PlaySceneApplyGalleryBody):
+            """Apply a gallery image as this character's current scene art."""
+            return await self.server.play_apply_scene_from_gallery(
+                body.username,
+                body.password,
+                body.gallery_id,
+                body.character_id,
             )
 
         @self.app.get("/players")
@@ -431,6 +699,13 @@ class NexusApp:
                     "peer": session.protocol.peer_info,
                     "room_id": room_id,
                 })
+            names = [p["player_id"] for p in players if p.get("player_id")]
+            by_name = await player_accounts.lookup_characters_by_names(self.server, names)
+            for p in players:
+                pid = p.get("player_id")
+                if pid and pid in by_name:
+                    p["character_id"] = by_name[pid]["character_id"]
+                    p["account_id"] = by_name[pid]["account_id"]
             return players
 
         @self.app.post("/admin/sessions/{session_id}/disconnect")
@@ -594,6 +869,7 @@ class NexusApp:
                 "llm_model": cfg.llm.chat_model,
                 "llm_detected_model": llm_probe.get("detected_model"),
                 "llm_models_align": llm_probe.get("models_align"),
+                "llm_chat_model_auto": llm_probe.get("chat_model_auto"),
                 "llm_connected": llm_probe["connected"],
                 "llm_latency_ms": llm_probe["latency_ms"],
                 "sessions": len(self.server.session_manager.sessions),
@@ -625,6 +901,7 @@ class NexusApp:
                     "detected_model": probe.get("detected_model"),
                     "detected_model_source": probe.get("detected_model_source"),
                     "models_align": probe.get("models_align"),
+                    "chat_model_auto": probe.get("chat_model_auto"),
                     "status_cached": probe.get("cached", False),
                 }
             )
@@ -655,12 +932,17 @@ class NexusApp:
             _ctx: Annotated[AdminContext, Depends(require_tool("server"))],
         ):
             """Minimal chat completion to verify the pipeline (Forge / look use the same client)."""
+            eff = await self.server.llm_client.effective_chat_model()
             text = await self.server.llm_client.generate(
                 'Reply with exactly one word: "pong"',
                 system_prompt="You follow instructions literally.",
                 max_tokens=16,
             )
-            return {"reply": text.strip(), "model": self.server.config.llm.chat_model}
+            return {
+                "reply": text.strip(),
+                "model": eff,
+                "chat_model_config": self.server.config.llm.chat_model,
+            }
 
         @self.app.post("/forge/generate")
         async def forge_generate(

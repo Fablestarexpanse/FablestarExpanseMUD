@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from "@xyflow/react";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 function linkLabelText(data) {
   const m = String(data?.mapLabel || "").trim();
@@ -19,6 +19,7 @@ export default function ExitEdge({
   markerEnd,
   selected,
 }) {
+  const { colors: COLORS } = useTheme();
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,

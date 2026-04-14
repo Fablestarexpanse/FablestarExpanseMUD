@@ -1,20 +1,25 @@
-import { useEffect, useRef, useState } from "react";
-import { COLORS } from "../theme.js";
-
-const inp = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "10px 12px",
-  borderRadius: 8,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 13,
-};
-
-const lbl = { display: "block", fontSize: 11, color: COLORS.textMuted, marginBottom: 6, marginTop: 12 };
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "../ThemeContext.jsx";
 
 export default function GroupFormModal({ open, onConfirm, onCancel }) {
+  const { colors: COLORS } = useTheme();
+  const inp = useMemo(
+    () => ({
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "10px 12px",
+      borderRadius: 8,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgInput,
+      color: COLORS.text,
+      fontSize: 13,
+    }),
+    [COLORS]
+  );
+  const lbl = useMemo(
+    () => ({ display: "block", fontSize: 11, color: COLORS.textMuted, marginBottom: 6, marginTop: 12 }),
+    [COLORS]
+  );
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [color, setColor] = useState("#7c6aef");

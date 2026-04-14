@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from "@xyflow/react";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 export default function ConnectionEdge({
   id,
@@ -13,6 +13,7 @@ export default function ConnectionEdge({
   markerEnd,
   selected,
 }) {
+  const { colors: COLORS } = useTheme();
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,

@@ -1,8 +1,9 @@
 import { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 export default memo(function SystemNode({ data, selected }) {
+  const { colors: COLORS } = useTheme();
   return (
     <div
       style={{

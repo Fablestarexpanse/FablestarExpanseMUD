@@ -1,8 +1,38 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import yaml from "js-yaml";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 export default function SystemPanel({ rawDoc, onChangeDoc, onSave, onRevert, dirty }) {
+  const { colors: COLORS } = useTheme();
+  const lbl = useMemo(
+    () => ({ display: "block", fontSize: 10, color: COLORS.textMuted, marginTop: 8, marginBottom: 4 }),
+    [COLORS]
+  );
+  const inp = useMemo(
+    () => ({
+      width: "100%",
+      boxSizing: "border-box",
+      padding: 8,
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgInput,
+      color: COLORS.text,
+      fontSize: 12,
+    }),
+    [COLORS]
+  );
+  const btn = useMemo(
+    () => ({
+      padding: "8px 12px",
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+      marginTop: 8,
+    }),
+    [COLORS]
+  );
   const block = rawDoc?.system || rawDoc || {};
   const [yamlText, setYamlText] = useState("");
 
@@ -52,24 +82,3 @@ export default function SystemPanel({ rawDoc, onChangeDoc, onSave, onRevert, dir
     </div>
   );
 }
-
-const lbl = { display: "block", fontSize: 10, color: COLORS.textMuted, marginTop: 8, marginBottom: 4 };
-const inp = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: 8,
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 12,
-};
-const btn = {
-  padding: "8px 12px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  cursor: "pointer",
-  marginTop: 8,
-};

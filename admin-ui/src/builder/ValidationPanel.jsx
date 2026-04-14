@@ -1,4 +1,4 @@
-import { COLORS } from "./builderConstants";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 /**
  * @param {import('@xyflow/react').Node[]} nodes
@@ -63,6 +63,7 @@ export function runZoneValidation(nodes, edges, externalExits = []) {
 }
 
 export default function ValidationPanel({ issues }) {
+  const { colors: COLORS } = useAdminTheme();
   if (!issues?.length) {
     return (
       <div style={{ fontSize: 12, color: COLORS.success, fontFamily: "'DM Sans', sans-serif" }}>

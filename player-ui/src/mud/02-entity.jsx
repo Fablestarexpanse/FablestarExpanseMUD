@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { T } from "../theme.js";
 import { Tooltip } from "./01-primitives.jsx";
+import { usePlayTheme } from "../PlayThemeContext.jsx";
 
 export function EntitySpan({ type, name, id, children, onContextMenu: parentCtx }) {
+  const { T } = usePlayTheme();
   const colors = { npc: T.glyph.amber, item: T.glyph.cyan, exit: T.glyph.emerald, player: T.glyph.violet, glyph: T.text.glyph };
   const col = colors[type] || T.text.accent;
   const [hov, setHov] = useState(false);

@@ -1,5 +1,5 @@
-/** Mirrors admin-ui builderConstants COLORS. */
-export const COLORS = {
+/** Dark palette — mirrors admin-ui builderConstants. */
+export const COLORS_DARK = {
   bg: "#0a0b0f",
   bgPanel: "#111318",
   bgCard: "#161920",
@@ -20,18 +20,67 @@ export const COLORS = {
   forge: "#e879f9",
 };
 
-export const ROOM_TYPE_COLORS = {
-  chamber: COLORS.cyan,
-  corridor: COLORS.textMuted,
-  junction: COLORS.accent,
-  alcove: COLORS.info,
-  descent: COLORS.warning,
-  danger: COLORS.danger,
-  safe: COLORS.success,
-  boss: COLORS.danger,
-  hub: COLORS.forge,
-  command: COLORS.info,
-  engineering: COLORS.warning,
-  airlock: COLORS.danger,
-  "?": COLORS.textDim,
+export const ROOM_TYPE_COLORS_DARK = {
+  chamber: COLORS_DARK.cyan,
+  corridor: COLORS_DARK.textMuted,
+  junction: COLORS_DARK.accent,
+  alcove: COLORS_DARK.info,
+  descent: COLORS_DARK.warning,
+  danger: COLORS_DARK.danger,
+  safe: COLORS_DARK.success,
+  boss: COLORS_DARK.danger,
+  hub: COLORS_DARK.forge,
+  command: COLORS_DARK.info,
+  engineering: COLORS_DARK.warning,
+  airlock: COLORS_DARK.danger,
+  "?": COLORS_DARK.textDim,
 };
+
+/** Light palette for desktop tool readability (avoid pure white chrome). */
+export const COLORS_LIGHT = {
+  bg: "#d6dae6",
+  bgPanel: "#e8ebf4",
+  bgCard: "#f0f2f8",
+  bgHover: "#dde1ec",
+  bgInput: "#f6f7fb",
+  border: "#aeb6ca",
+  borderActive: "#7c82a3",
+  text: "#1a1d28",
+  textMuted: "#4b5166",
+  textDim: "#7a8199",
+  accent: "#5b4cdb",
+  accentGlow: "rgba(91, 76, 219, 0.1)",
+  success: "#059669",
+  warning: "#b45309",
+  danger: "#dc2626",
+  info: "#2563eb",
+  cyan: "#0e7490",
+  forge: "#a21caf",
+};
+
+export const ROOM_TYPE_COLORS_LIGHT = {
+  chamber: COLORS_LIGHT.cyan,
+  corridor: COLORS_LIGHT.textMuted,
+  junction: COLORS_LIGHT.accent,
+  alcove: COLORS_LIGHT.info,
+  descent: COLORS_LIGHT.warning,
+  danger: COLORS_LIGHT.danger,
+  safe: COLORS_LIGHT.success,
+  boss: COLORS_LIGHT.danger,
+  hub: COLORS_LIGHT.forge,
+  command: COLORS_LIGHT.info,
+  engineering: COLORS_LIGHT.warning,
+  airlock: COLORS_LIGHT.danger,
+  "?": COLORS_LIGHT.textDim,
+};
+
+/**
+ * @param {"dark" | "light"} scheme
+ * @returns {{ colors: typeof COLORS_DARK, roomTypeColors: typeof ROOM_TYPE_COLORS_DARK }}
+ */
+export function getPalette(scheme) {
+  if (scheme === "light") {
+    return { colors: COLORS_LIGHT, roomTypeColors: ROOM_TYPE_COLORS_LIGHT };
+  }
+  return { colors: COLORS_DARK, roomTypeColors: ROOM_TYPE_COLORS_DARK };
+}

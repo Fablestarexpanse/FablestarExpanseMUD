@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { T } from "../theme.js";
+import { usePlayTheme } from "../PlayThemeContext.jsx";
 import { GameCmdContext } from "./00-ctx.jsx";
 import { ContextMenu, DraggablePanel } from "./01-primitives.jsx";
-import { NarrativePanel, CommandInput } from "./03-narrative.jsx";
+import { NarrativePanel, CommandInput, lastRoomTitleHint } from "./03-narrative.jsx";
 import {
   AfflictionTracker, QuestJournal, TargetPanel, SessionStats, KeybindManager, TriggerBuilder, QuickActions,
 } from "./04-panels-a.jsx";
@@ -10,6 +10,8 @@ import { MiniMap } from "./05-minimap.jsx";
 import {
   CharacterPanel, GlyphBar, InventoryPanel, SocialPanel, ScenePanel,
 } from "./06-panels-b.jsx";
+import { PORTRAIT_ASPECT_RATIO_CSS } from "../portraitProfile.js";
+import { GmBadge } from "../GmBadge.jsx";
 
 /** Layout presets were authored for this logical size; we scale to the real viewport. */
 const DESIGN_W = 1180;
@@ -60,8 +62,19 @@ export default function FablestarClient({
   wsConnected,
   /** Absolute URL for current room scene art (from room YAML area_image_url + Nexus base). */
   sceneImageUrl,
+  /** ComfyUI scene render in progress (spinner on Scene panel). */
+  sceneGenerating = false,
   sceneRoomLabel,
+  /** Safe filename stem for Scene panel download (no extension). */
+  sceneDownloadBaseName = "fablestar-scene",
+  /** Optional: { credits, label } for ComfyUI / pixel economy display. */
+  echoEconomy,
+  /** In-world currency label from server (e.g. Digi). */
+  gameCurrencyDisplayName = "Digi",
+  /** Optional: narrative toolbar → ComfyUI scene generation (credentials + callbacks). */
+  sceneGen,
 }) {
+  const { T, toggleMode, mode } = usePlayTheme();
   const [layout, setLayout] = useState("standard");
   const [collapsed, setCollapsed] = useState({});
   const [focusStack, setFocusStack] = useState([]);
@@ -71,6 +84,7 @@ export default function FablestarClient({
   const { sx, sy, layoutKey } = useWorkspaceScale();
 
   const preset = PRESETS[layout];
+  const conduitLocation = useMemo(() => lastRoomTitleHint(narrativeLines || []), [narrativeLines]);
   const toggleCollapse = (id) => setCollapsed(p => ({ ...p, [id]: !p[id] }));
   const bringToFront = (id) => setFocusStack(p => [...p.filter(x => x !== id), id]);
   const getZ = (id) => { const i = focusStack.indexOf(id); return i === -1 ? 1 : i + 2; };
@@ -89,29 +103,72 @@ export default function FablestarClient({
     onSendCommand?.(cmd);
   }, [onSendCommand]);
 
+  const onArtCreditsInfo = useCallback(() => {
+    const art = echoEconomy?.label || "pixels";
+    const game = gameCurrencyDisplayName || "Digi";
+    window.alert(
+      `${art} is your account balance for AI portraits and scene art (ComfyUI). It is shared by every character and is not the same as in-world ${game}.\n\n` +
+        "Your host can grant more, or future progression may award it. There is no in-client purchase yet."
+    );
+  }, [echoEconomy?.label, gameCurrencyDisplayName]);
+
+  const onDigiWalletInfo = useCallback(() => {
+    const game = gameCurrencyDisplayName || "Digi";
+    const art = echoEconomy?.label || "pixels";
+    window.alert(
+      `${game} is your in-world wallet for this character only — loot, quests, trades. It is separate from ${art} (AI portrait / scene balance on your account).\n\n` +
+        "Each character has their own balance; pick another character to see a different amount here."
+    );
+  }, [gameCurrencyDisplayName, echoEconomy?.label]);
+
   const panels = useMemo(() => [
     { id: "narrative", title: "Narrative", icon: "📜", accent: T.text.narrative, minW: 340, minH: 260, content: (
       <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
-        <div style={{flex:1,overflow:"hidden"}}><NarrativePanel lines={narrativeLines} onContextMenu={openCtx}/></div>
+        <div style={{flex:1,overflow:"hidden"}}>
+          <NarrativePanel
+            lines={narrativeLines}
+            onContextMenu={openCtx}
+            sceneGen={sceneGen}
+            portraitBackdropUrl={session?.portraitImageUrl || null}
+          />
+        </div>
         <CommandInput onSubmitCommand={sendCommand} />
       </div>
     ) },
     { id: "scene", title: "Scene", icon: "🎨", accent: T.glyph.violet, minW: 240, minH: 180, content: (
-      <ScenePanel imageUrl={sceneImageUrl} roomLabel={sceneRoomLabel} />
+      <ScenePanel
+        imageUrl={sceneImageUrl}
+        roomLabel={sceneRoomLabel}
+        downloadBaseName={sceneDownloadBaseName}
+        generating={sceneGenerating}
+      />
     ) },
-    { id: "character", title: "Conduit", icon: "◈", accent: T.glyph.violet, minW: 200, minH: 240, content: <CharacterPanel displayName={session?.characterName} /> },
+    { id: "character", title: "Conduit", icon: "◈", accent: T.glyph.violet, minW: 200, minH: 240, content: (
+      <CharacterPanel
+        displayName={session?.characterName}
+        portraitImageUrl={session?.portraitImageUrl}
+        showHeroPortrait={!session?.portraitImageUrl}
+        accountName={session?.username}
+        locationLabel={conduitLocation}
+        level={null}
+        digiBalance={session?.digiBalance}
+        gameCurrencyLabel={gameCurrencyDisplayName}
+        pvpEnabled={session?.pvpEnabled}
+        reputation={session?.reputation}
+      />
+    ) },
     { id: "map", title: "Map — Sector 7", icon: "🗺", accent: T.glyph.cyan, minW: 220, minH: 160, content: <MiniMap/> },
     { id: "glyphs", title: "Glyph Loadout", icon: "✦", accent: T.glyph.violet, minW: 320, minH: 70, content: <GlyphBar/> },
     { id: "inventory", title: "Inventory", icon: "◻", accent: T.glyph.amber, minW: 200, minH: 180, content: <InventoryPanel onContextMenu={openCtx}/> },
     { id: "social", title: "Comms", icon: "💬", accent: T.glyph.cyan, minW: 220, minH: 140, badge: (notifications.tells||0)+(notifications.guild||0), content: <SocialPanel unreadCounts={notifications}/> },
     { id: "afflictions", title: "Effects", icon: "⊘", accent: T.glyph.crimson, minW: 200, minH: 180, content: <AfflictionTracker/> },
-    { id: "quests", title: "Quest Journal", icon: "📖", accent: T.glyph.emerald, minW: 260, minH: 250, content: <QuestJournal/> },
+    { id: "quests", title: "Quest Journal", icon: "📖", accent: T.glyph.emerald, minW: 260, minH: 250, content: <QuestJournal gameCurrencyLabel={gameCurrencyDisplayName} /> },
     { id: "target", title: "Target", icon: "⎯", accent: T.glyph.amber, minW: 220, minH: 180, content: <TargetPanel/> },
     { id: "stats", title: "Session Stats", icon: "📊", accent: T.text.info, minW: 200, minH: 200, content: <SessionStats/> },
     { id: "keybinds", title: "Keybinds", icon: "⌨", accent: T.text.muted, minW: 240, minH: 280, content: <KeybindManager/> },
     { id: "triggers", title: "Triggers", icon: "⚡", accent: T.glyph.amber, minW: 260, minH: 260, content: <TriggerBuilder/> },
     { id: "quickactions", title: "Quick Actions", icon: "▶", accent: T.glyph.cyan, minW: 200, minH: 60, content: <QuickActions/> },
-  ], [narrativeLines, openCtx, sendCommand, notifications, session?.characterName, sceneImageUrl, sceneRoomLabel]);
+  ], [narrativeLines, openCtx, sendCommand, notifications, session?.characterName, session?.username, session?.portraitImageUrl, session?.digiBalance, session?.pvpEnabled, session?.reputation, sceneImageUrl, sceneGenerating, sceneRoomLabel, sceneDownloadBaseName, sceneGen, conduitLocation, gameCurrencyDisplayName]);
 
   return (
     <GameCmdContext.Provider value={{ sendCommand }}>
@@ -126,7 +183,7 @@ export default function FablestarClient({
       fontFamily: T.font.body,
       position: "relative",
     }}>
-      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Cinzel:wght@400;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+      <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Exo+2:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600&family=Oxanium:wght@400;500;600;700&display=swap" rel="stylesheet"/>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes pulse{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.5;transform:scale(1.1)}}
@@ -150,10 +207,174 @@ export default function FablestarClient({
 
         {session && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: 8, paddingLeft: 12, borderLeft: `1px solid ${T.border.dim}` }}>
+            {session.portraitImageUrl ? (
+              <div
+                className="fablestar-portrait-stage"
+                style={{
+                  width: 26,
+                  aspectRatio: PORTRAIT_ASPECT_RATIO_CSS,
+                  borderRadius: T.radius.md,
+                  border: `1px solid ${T.border.glyph}`,
+                  flexShrink: 0,
+                  overflow: "hidden",
+                }}
+              >
+                <div className="fablestar-portrait-aurora fablestar-portrait-aurora--thumb" aria-hidden />
+                <img
+                  src={session.portraitImageUrl}
+                  alt=""
+                  className="fablestar-portrait-cutout fablestar-portrait-cutout--thumb"
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    objectPosition: "center",
+                    display: "block",
+                  }}
+                />
+              </div>
+            ) : null}
             <span style={{ fontFamily: T.font.body, fontSize: 11, color: T.text.secondary }}>{session.username}</span>
+            {session.isGm ? <GmBadge style={{ marginLeft: 4 }} /> : null}
             <span style={{ fontSize: 8, color: T.text.muted }}>·</span>
             <span style={{ fontFamily: T.font.display, fontSize: 11, color: T.text.accent }}>{session.characterName}</span>
-            <button type="button" onClick={onSignOut} style={{ marginLeft: 6, padding: "2px 8px", borderRadius: T.radius.sm, border: `1px solid ${T.border.medium}`, background: T.bg.surface, color: T.text.muted, fontSize: 9, cursor: "pointer", fontFamily: T.font.body }}>
+            <div style={{ marginLeft: 8, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              {echoEconomy?.credits != null ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "4px 10px 4px 12px",
+                    borderRadius: T.radius.md,
+                    border: `1px solid ${T.currency.pixel.border}`,
+                    background: T.currency.pixel.bg,
+                    maxWidth: 200,
+                  }}
+                  title="Shared by all your characters. Spent on AI portrait and scene generation (not Digi)."
+                >
+                  <div style={{ minWidth: 0, lineHeight: 1.2 }}>
+                    <div
+                      style={{
+                        fontSize: 8,
+                        fontWeight: 600,
+                        color: T.currency.pixel.label,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                        fontFamily: T.font.body,
+                      }}
+                    >
+                      Pixels · account
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 13,
+                        fontFamily: T.font.mono,
+                        fontWeight: 600,
+                        color: echoEconomy.credits < (echoEconomy.warnBelow ?? 12) ? T.currency.pixel.warn : T.currency.pixel.fg,
+                        marginTop: 1,
+                      }}
+                    >
+                      {echoEconomy.label} {echoEconomy.credits}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onArtCreditsInfo}
+                    title="What this is and how to get more"
+                    style={{
+                      flexShrink: 0,
+                      width: 22,
+                      height: 22,
+                      padding: 0,
+                      borderRadius: T.radius.sm,
+                      border: `1px solid ${T.currency.pixel.border}`,
+                      background: T.bg.deep,
+                      color: T.currency.pixel.fg,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      fontFamily: T.font.body,
+                      lineHeight: 1,
+                    }}
+                  >
+                    ?
+                  </button>
+                </div>
+              ) : null}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "4px 10px 4px 12px",
+                  borderRadius: T.radius.md,
+                  border: `1px solid ${T.currency.digi.border}`,
+                  background: T.currency.digi.bg,
+                  maxWidth: 200,
+                }}
+                title={`In-world wallet for ${session.characterName} (this character only).`}
+              >
+                <div style={{ minWidth: 0, lineHeight: 1.2 }}>
+                  <div
+                    style={{
+                      fontSize: 8,
+                      fontWeight: 600,
+                      color: T.currency.digi.label,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.07em",
+                      fontFamily: T.font.body,
+                    }}
+                  >
+                    {gameCurrencyDisplayName} · character
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontFamily: T.font.mono,
+                      fontWeight: 600,
+                      color: T.currency.digi.fg,
+                      marginTop: 1,
+                    }}
+                  >
+                    {String(gameCurrencyDisplayName).toLowerCase()}{" "}
+                    {typeof session.digiBalance === "number" ? session.digiBalance : 0}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={onDigiWalletInfo}
+                  title="What Digi is (in-world vs pixels)"
+                  style={{
+                    flexShrink: 0,
+                    width: 22,
+                    height: 22,
+                    padding: 0,
+                    borderRadius: T.radius.sm,
+                    border: `1px solid ${T.currency.digi.border}`,
+                    background: T.bg.deep,
+                    color: T.currency.digi.fg,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    fontFamily: T.font.body,
+                    lineHeight: 1,
+                  }}
+                >
+                  ?
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={toggleMode}
+              title={mode === "dark" ? "Light mode" : "Dark mode"}
+              style={{ marginLeft: 6, padding: "2px 8px", borderRadius: T.radius.sm, border: `1px solid ${T.border.medium}`, background: T.bg.surface, color: T.text.muted, fontSize: 9, cursor: "pointer", fontFamily: T.font.body }}
+            >
+              {mode === "dark" ? "Light" : "Dark"}
+            </button>
+            <button type="button" onClick={onSignOut} style={{ marginLeft: 4, padding: "2px 8px", borderRadius: T.radius.sm, border: `1px solid ${T.border.medium}`, background: T.bg.surface, color: T.text.muted, fontSize: 9, cursor: "pointer", fontFamily: T.font.body }}>
               Sign out
             </button>
           </div>

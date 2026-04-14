@@ -5,7 +5,7 @@ import SurfaceView from "./SurfaceView.jsx";
 import ZoneEditor from "./ZoneEditor.jsx";
 import ShipEditor from "./ShipEditor.jsx";
 import BuilderSearchPanel from "./BuilderSearchPanel.jsx";
-import { COLORS } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 const SCALE_TABS = [
   { id: "galaxy", label: "Galaxy" },
@@ -34,21 +34,6 @@ function readInitialNav() {
   }
 }
 
-function hdrBtnStyle(disabled) {
-  return {
-    padding: "6px 12px",
-    fontSize: 12,
-    fontWeight: 600,
-    borderRadius: 6,
-    border: `1px solid ${COLORS.border}`,
-    background: COLORS.bgCard,
-    color: COLORS.text,
-    cursor: disabled ? "not-allowed" : "pointer",
-    opacity: disabled ? 0.5 : 1,
-    fontFamily: "'DM Sans', sans-serif",
-  };
-}
-
 function contextHint(scale, crumb) {
   switch (scale) {
     case "galaxy":
@@ -71,6 +56,19 @@ function contextHint(scale, crumb) {
 }
 
 export default function WorldBuilderPage() {
+  const { colors: COLORS } = useAdminTheme();
+  const hdrBtnStyle = (disabled) => ({
+    padding: "6px 12px",
+    fontSize: 12,
+    fontWeight: 600,
+    borderRadius: 6,
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.bgCard,
+    color: COLORS.text,
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.5 : 1,
+    fontFamily: "'DM Sans', sans-serif",
+  });
   const [crumbs, setCrumbs] = useState(() => [{ scale: "galaxy", id: null, label: "Galaxy" }]);
   const [navigateRoomSlug, setNavigateRoomSlug] = useState(null);
   const zoneEditorRef = useRef(null);

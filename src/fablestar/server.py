@@ -5,23 +5,24 @@ import re
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import bcrypt
 import httpx
 from sqlalchemy import select
 
 from fablestar.admin.llm_persist import save_llm_toml
-from fablestar.core.config import Config, LLMConfig, load_config
+from fablestar.core.config import Config, LLMConfig, load_config, resolve_config_asset_path
 from fablestar.core.events import EventBus
 from fablestar.core.tick import TickManager
 from fablestar.network.session import SessionManager, Session
 from fablestar.state.redis_client import RedisState
 from fablestar.state.postgres import PostgresState
 from fablestar.state.persistence import PersistenceManager
-from fablestar.state.models import Account, Character
+from fablestar.state.models import Account, AccountSceneImage, Character
 from fablestar.world.loader import ContentLoader
 from fablestar.world.spawner import EntitySpawnManager
+from fablestar.admin import player_accounts, staff_service
 from fablestar.admin.nexus import NexusApp
 from fablestar.tools.hot_reload import HotReloader
 from fablestar.parser.dispatcher import CommandDispatcher
@@ -32,6 +33,14 @@ from fablestar import app
 from fablestar.integration.comfyui_client import generate_portrait_png
 
 logger = logging.getLogger(__name__)
+
+
+def _default_character_portrait_prompt(character_name: str) -> str:
+    n = (character_name or "").strip() or "traveler"
+    return (
+        f"square portrait, full character centered, transparent background, science fiction RPG character {n}, "
+        "detailed face and eyes, cinematic soft light, high detail"
+    )
 
 MAX_CHARACTERS_PER_ACCOUNT = 8
 
@@ -78,6 +87,14 @@ def _workflow_has_checkpoint_simple_node(workflow_path: Path) -> bool:
 CHAR_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9 _-]{1,49}$")
 
 
+def _safe_player_scene_storage_url(url: Optional[str]) -> bool:
+    """Only allow persisting Nexus-served paths we write under data/ or bundled room-art."""
+    u = (url or "").strip()
+    if not u.startswith("/media/") or ".." in u or len(u) > 2048:
+        return False
+    return u.startswith("/media/rooms/") or u.startswith("/media/room-art/")
+
+
 def _character_play_dict(character: Character) -> Dict[str, Any]:
     return {
         "id": character.id,
@@ -85,6 +102,10 @@ def _character_play_dict(character: Character) -> Dict[str, Any]:
         "room_id": character.room_id,
         "portrait_url": character.portrait_url,
         "portrait_prompt": character.portrait_prompt,
+        "last_scene_image_url": character.last_scene_image_url,
+        "digi_balance": int(character.digi_balance),
+        "pvp_enabled": bool(character.pvp_enabled),
+        "reputation": int(character.reputation),
     }
 
 
@@ -129,6 +150,154 @@ class FablestarServer:
         # ISO8601 UTC timestamp of last POST /content/cache/reload (for admin UI)
         self.last_content_reload_at: Optional[str] = None
 
+    def _economy_public_fields(self) -> Dict[str, Any]:
+        c = self.config.comfyui
+        s = self.config.server
+        return {
+            "currency_display_name": c.currency_display_name,
+            "game_currency_display_name": s.game_currency_display_name,
+            "pixels_per_usd": int(c.pixels_per_usd),
+        }
+
+    async def _echo_read_balance(self, account_id: int) -> int:
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(select(Account.echo_credits).where(Account.id == account_id))
+            v = result.scalar_one_or_none()
+            return int(v) if v is not None else 0
+
+    async def _echo_debit_for_generation(self, account_id: int, cost: int) -> tuple[bool, Dict[str, Any], int, int]:
+        """
+        Debit echo_credits before ComfyUI. Returns:
+        (success, error_response_dict_if_failed, balance_after, amount_charged).
+        When economy is off or cost is 0, amount_charged is 0 and balance_after is current balance.
+        """
+        c = self.config.comfyui
+        if not c.economy_enabled or cost <= 0:
+            bal = await self._echo_read_balance(account_id)
+            return True, {}, bal, 0
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.id == account_id).with_for_update()
+            )
+            account = result.scalar_one_or_none()
+            if account is None:
+                return False, {"ok": False, "error": "account_not_found"}, 0, 0
+            bal = int(account.echo_credits)
+            if bal < cost:
+                err = {
+                    "ok": False,
+                    "error": "insufficient_credits",
+                    "balance": bal,
+                    "required": cost,
+                    **self._economy_public_fields(),
+                }
+                await db_session.rollback()
+                return False, err, bal, 0
+            account.echo_credits = bal - cost
+            await db_session.commit()
+            return True, {}, bal - cost, cost
+
+    async def _echo_refund(self, account_id: int, amount: int) -> None:
+        if amount <= 0 or not self.config.comfyui.economy_enabled:
+            return
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.id == account_id).with_for_update()
+            )
+            account = result.scalar_one_or_none()
+            if account is None:
+                await db_session.rollback()
+                return
+            account.echo_credits = int(account.echo_credits) + amount
+            await db_session.commit()
+
+    def _staff_role_label(self, role: str) -> str:
+        r = (role or "").lower().strip()
+        if r == "head_admin":
+            return "Head Admin"
+        if r == "admin":
+            return "Admin"
+        if r == "gm":
+            return "GM"
+        return "Staff"
+
+    async def _notify_play_sessions_json_line(self, account_id: int, payload: Dict[str, Any]) -> None:
+        line = json.dumps(payload, separators=(",", ":"))
+        from fablestar.network.session import SessionState
+
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Character.name).where(Character.account_id == account_id)
+            )
+            names = [row[0] for row in result.all()]
+        for name in names:
+            sess = self.session_manager.get_session_by_player(name)
+            if sess is None or sess.state != SessionState.PLAYING:
+                continue
+            try:
+                await sess.send(line)
+            except Exception:
+                logger.debug("play client notify failed for player %s", name, exc_info=True)
+
+    async def notify_play_clients_echo_grant(
+        self,
+        account_id: int,
+        *,
+        added: int,
+        new_balance: int,
+    ) -> None:
+        """Send a JSON client_notice to any /ws/play session tied to a character on this account."""
+        if added <= 0:
+            return
+        c = self.config.comfyui
+        lab = (c.currency_display_name or "pixels").strip() or "pixels"
+        payload = {
+            "ok": True,
+            "client_notice": "echo_credits_granted",
+            "echo_credits_added": int(added),
+            "echo_credits": int(new_balance),
+            "currency_display_name": lab,
+            **self._economy_public_fields(),
+        }
+        await self._notify_play_sessions_json_line(account_id, payload)
+
+    async def notify_play_clients_staff_audit(
+        self,
+        account_id: int,
+        *,
+        actor_display_name: str,
+        actor_role: str,
+        summary_lines: List[str],
+        echo_credits: Optional[int] = None,
+        echo_credits_added: Optional[int] = None,
+        character_name: Optional[str] = None,
+        play_account_is_gm: Optional[bool] = None,
+    ) -> None:
+        """Tell connected play clients who changed their account/character and what changed."""
+        if not summary_lines:
+            return
+        c = self.config.comfyui
+        lab = (c.currency_display_name or "pixels").strip() or "pixels"
+        payload: Dict[str, Any] = {
+            "ok": True,
+            "client_notice": "staff_account_update",
+            "staff_display_name": (actor_display_name or "Staff").strip() or "Staff",
+            "staff_role": (actor_role or "gm").strip(),
+            "staff_role_label": self._staff_role_label(actor_role),
+            "audit_lines": summary_lines,
+            "currency_display_name": lab,
+            **self._economy_public_fields(),
+        }
+        if echo_credits is not None:
+            payload["echo_credits"] = int(echo_credits)
+        if echo_credits_added is not None and echo_credits_added > 0:
+            payload["echo_credits_added"] = int(echo_credits_added)
+        if character_name:
+            payload["character_name"] = character_name
+        if play_account_is_gm is not None:
+            payload["play_account_is_gm"] = bool(play_account_is_gm)
+        await self._notify_play_sessions_json_line(account_id, payload)
+
     _LLM_PATCH_KEYS = frozenset({
         "primary_backend",
         "lm_studio_url",
@@ -169,7 +338,16 @@ class FablestarServer:
         
         # 0. Connect to state stores
         await self.redis.connect()
-        
+
+        try:
+            await staff_service.ensure_dev_default_staff(self)
+        except Exception as e:
+            logger.warning("Default dev staff account not ensured: %s", e)
+        try:
+            await player_accounts.ensure_dev_default_play_accounts(self)
+        except Exception as e:
+            logger.warning("Default dev play accounts not ensured: %s", e)
+
         # 1. Load Command Modules
         registry.reload_module("fablestar.commands.info")
         registry.reload_module("fablestar.commands.communication")
@@ -295,11 +473,17 @@ class FablestarServer:
             aid = account.id
             uname = account.username
             await db_session.commit()
+            ec = int(account.echo_credits)
+            is_gm = bool(account.is_gm)
+        eco = self._economy_public_fields()
         return {
             "ok": True,
             "username": uname,
             "account_id": aid,
             "characters": chars_payload,
+            "echo_credits": ec,
+            "is_gm": is_gm,
+            **eco,
         }
 
     async def play_register(self, username: str, password: str) -> Dict[str, Any]:
@@ -316,32 +500,42 @@ class FablestarServer:
             if result.scalar_one_or_none():
                 return {"ok": False, "error": "username_taken"}
             pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+            start_credits = int(self.config.comfyui.starting_echo_credits)
             account = Account(
                 username=username,
                 password_hash=pw_hash,
                 last_login=datetime.utcnow(),
+                echo_credits=start_credits,
             )
             db_session.add(account)
             await db_session.commit()
             await db_session.refresh(account)
             aid = account.id
+            ec = account.echo_credits
+            is_gm = bool(account.is_gm)
+        eco = self._economy_public_fields()
         return {
             "ok": True,
             "username": username,
             "account_id": aid,
             "characters": [],
+            "echo_credits": ec,
+            "is_gm": is_gm,
+            **eco,
         }
 
     async def play_comfyui_status(self) -> Dict[str, Any]:
         c = self.config.comfyui
-        wf = Path(c.workflow_path).is_file()
+        portrait_resolved = resolve_config_asset_path(c.workflow_path)
+        wf = portrait_resolved.is_file()
         ready = bool(c.enabled and wf)
         area_wp = (c.area_workflow_path or "").strip() or c.workflow_path
-        area_wf = Path(area_wp).is_file()
+        area_path = resolve_config_asset_path(area_wp)
+        area_wf = area_path.is_file()
         area_ready = bool(c.enabled and area_wf)
         ckpt_set = bool((c.checkpoint_name or "").strip())
-        area_path = Path(area_wp)
         area_uses_ckpt_loader = _workflow_has_checkpoint_simple_node(area_path)
+        portrait_uses_ckpt_loader = _workflow_has_checkpoint_simple_node(portrait_resolved)
         suggest_checkpoint_name_in_toml = bool(
             c.enabled and area_wf and area_uses_ckpt_loader and not ckpt_set
         )
@@ -353,8 +547,12 @@ class FablestarServer:
             "ok": True,
             "enabled": c.enabled,
             "base_url": c.base_url,
+            "workflow_path": c.workflow_path,
+            "positive_prompt_node_id": c.positive_prompt_node_id,
+            "output_node_id": c.output_node_id,
             "workflow_present": wf,
             "ready": ready,
+            "portrait_workflow_uses_checkpoint_loader": portrait_uses_ckpt_loader,
             "area_workflow_present": area_wf,
             "area_ready": area_ready,
             "area_workflow_path": area_wp,
@@ -363,6 +561,11 @@ class FablestarServer:
             "suggest_checkpoint_name_in_toml": suggest_checkpoint_name_in_toml,
             "comfy_reachable": comfy_reachable,
             "comfy_ping_error": comfy_ping_error,
+            "economy_enabled": bool(c.economy_enabled),
+            "area_generation_cost": int(c.area_generation_cost),
+            "portrait_generation_cost": int(c.portrait_generation_cost),
+            "pixels_per_usd": int(c.pixels_per_usd),
+            "currency_display_name": (c.currency_display_name or "pixels").strip() or "pixels",
         }
 
     async def forge_suggest_area_image_prompt(
@@ -391,6 +594,234 @@ class FablestarServer:
             return {"ok": False, "error": "llm_prompt_too_short", "detail": text or "(empty)"}
         return {"ok": True, "prompt": text[:2000]}
 
+    async def play_suggest_portrait_prompt(
+        self,
+        username: str,
+        password: str,
+        character_name: str,
+        appearance_notes: str = "",
+    ) -> Dict[str, Any]:
+        """LLM: single-line ComfyUI-style portrait prompt from name and optional notes."""
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.username == username)
+            )
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+
+        cn = (character_name or "").strip() or "?"
+        notes = (appearance_notes or "").strip()
+        prompt = self.prompt_manager.render(
+            "forge_portrait_character_prompt",
+            character_name=cn,
+            appearance_notes=notes or "(none)",
+        )
+        try:
+            raw = await self.llm_client.generate(
+                prompt,
+                system_prompt=(
+                    "You output only a single image-generation prompt for a character portrait "
+                    "(headshot or bust). No quotes, markdown, labels, or preamble."
+                ),
+                max_tokens=400,
+            )
+        except Exception as e:
+            logger.warning("play suggest portrait prompt LLM failed: %s", e, exc_info=True)
+            return {"ok": False, "error": "llm_failed", "detail": str(e)}
+        text = (raw or "").strip().strip('"').strip("'")
+        text = " ".join(text.split())
+        if len(text) < 8:
+            return {"ok": False, "error": "llm_prompt_too_short", "detail": text or "(empty)"}
+        return {"ok": True, "prompt": text[:2000]}
+
+    async def play_suggest_scene_prompt(
+        self,
+        username: str,
+        password: str,
+        narrative_context: str = "",
+        room_hint: str = "",
+    ) -> Dict[str, Any]:
+        """LLM: ComfyUI-style environment prompt from recent narrative text."""
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.username == username)
+            )
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+
+        ctx = (narrative_context or "").strip()
+        if len(ctx) > 8000:
+            ctx = ctx[:8000]
+        rh = (room_hint or "").strip() or "Unknown location"
+        prompt = self.prompt_manager.render(
+            "play_scene_image_prompt",
+            narrative_context=ctx or "(no narrative text yet)",
+            room_hint=rh,
+        )
+        try:
+            raw = await self.llm_client.generate(
+                prompt,
+                system_prompt=(
+                    "You output only a single image-generation prompt for an environment or scene. "
+                    "No quotes, markdown, labels, or preamble."
+                ),
+                max_tokens=500,
+            )
+        except Exception as e:
+            logger.warning("play suggest scene prompt LLM failed: %s", e, exc_info=True)
+            return {"ok": False, "error": "llm_failed", "detail": str(e)}
+        text = (raw or "").strip().strip('"').strip("'")
+        text = " ".join(text.split())
+        if len(text) < 8:
+            return {"ok": False, "error": "llm_prompt_too_short", "detail": text or "(empty)"}
+        return {"ok": True, "prompt": text[:2000]}
+
+    async def play_generate_scene_image(
+        self,
+        username: str,
+        password: str,
+        scene_prompt: str,
+        character_id: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """ComfyUI area workflow: save PNG under /media/rooms/ (or room-art); optional character_id persists URL for reload."""
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.username == username)
+            )
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+            account_id = account.id
+        ip = (scene_prompt or "").strip()
+        if len(ip) < 3:
+            return {"ok": False, "error": "prompt_too_short"}
+        if len(ip) > 4000:
+            return {"ok": False, "error": "prompt_too_long"}
+        cfg = self.config.comfyui
+        area_wp = (cfg.area_workflow_path or "").strip() or cfg.workflow_path
+        if not cfg.enabled or not resolve_config_asset_path(area_wp).is_file():
+            return {
+                "ok": False,
+                "error": "comfyui_not_configured",
+                **self._economy_public_fields(),
+                "echo_credits": await self._echo_read_balance(account_id),
+            }
+        cost = int(cfg.area_generation_cost)
+        ok_debit, err_debit, bal_after, charged = await self._echo_debit_for_generation(account_id, cost)
+        if not ok_debit:
+            return err_debit
+        res = await self.forge_generate_room_area_image(ip)
+        if not res.get("ok"):
+            if charged:
+                await self._echo_refund(account_id, charged)
+            return {
+                **res,
+                **self._economy_public_fields(),
+                "echo_credits": await self._echo_read_balance(account_id),
+            }
+        scene_url = res.get("area_image_url")
+        scene_url_str = str(scene_url).strip()[:2048] if scene_url else ""
+        if scene_url and _safe_player_scene_storage_url(scene_url_str):
+            async with self.db.session_factory() as db_session:
+                db_session.add(
+                    AccountSceneImage(
+                        account_id=account_id,
+                        image_url=scene_url_str,
+                        character_id=character_id if character_id is not None and character_id >= 1 else None,
+                        prompt_preview=ip[:512] if ip else None,
+                    )
+                )
+                if character_id is not None and character_id >= 1:
+                    char = await db_session.get(Character, character_id)
+                    if char is not None and char.account_id == account_id:
+                        char.last_scene_image_url = scene_url_str
+                await db_session.commit()
+        return {
+            "ok": True,
+            "scene_image_url": scene_url,
+            "bundled": bool(res.get("bundled")),
+            **self._economy_public_fields(),
+            "echo_credits": bal_after,
+            "cost_charged": charged,
+        }
+
+    async def play_list_scene_gallery(self, username: str, password: str) -> Dict[str, Any]:
+        """List ComfyUI scene images recorded for this account (newest first)."""
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(select(Account).where(Account.username == username))
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+            aid = account.id
+            q = (
+                select(AccountSceneImage, Character.name)
+                .outerjoin(Character, AccountSceneImage.character_id == Character.id)
+                .where(AccountSceneImage.account_id == aid)
+                .order_by(AccountSceneImage.created_at.desc())
+                .limit(200)
+            )
+            rows = (await db_session.execute(q)).all()
+        items = []
+        for img, char_name in rows:
+            ts = img.created_at
+            items.append(
+                {
+                    "id": img.id,
+                    "image_url": img.image_url,
+                    "created_at": ts.isoformat() + "Z" if ts else None,
+                    "character_id": img.character_id,
+                    "character_name": char_name,
+                    "prompt_preview": (img.prompt_preview or "")[:240],
+                }
+            )
+        return {"ok": True, "items": items}
+
+    async def play_apply_scene_from_gallery(
+        self,
+        username: str,
+        password: str,
+        gallery_id: int,
+        character_id: int,
+    ) -> Dict[str, Any]:
+        """Set the active scene image for a character from a row in this account's gallery."""
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        if gallery_id < 1 or character_id < 1:
+            return {"ok": False, "error": "invalid_ids"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(select(Account).where(Account.username == username))
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
+                return {"ok": False, "error": "invalid_credentials"}
+            aid = account.id
+            row = await db_session.get(AccountSceneImage, gallery_id)
+            if row is None or row.account_id != aid:
+                return {"ok": False, "error": "gallery_item_not_found"}
+            url = (row.image_url or "").strip()[:2048]
+            if not _safe_player_scene_storage_url(url):
+                return {"ok": False, "error": "invalid_stored_url"}
+            char = await db_session.get(Character, character_id)
+            if char is None or char.account_id != aid:
+                return {"ok": False, "error": "character_not_owned"}
+            char.last_scene_image_url = url
+            await db_session.commit()
+        return {"ok": True, "scene_image_url": url}
+
     async def forge_generate_room_area_image(
         self,
         image_prompt: str,
@@ -406,15 +837,17 @@ class FablestarServer:
         rslug = (room_slug or "").strip().removesuffix(".yaml")
         seg_ok = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$")
         bundle = bool(zid and rslug and seg_ok.match(zid) and seg_ok.match(rslug))
+        area_resolved = resolve_config_asset_path(area_wp)
         logger.info(
-            "forge room-area-image: enabled=%s area_workflow=%s exists=%s prompt_len=%s bundle=%s",
+            "forge room-area-image: enabled=%s area_workflow=%s resolved=%s exists=%s prompt_len=%s bundle=%s",
             cfg.enabled,
             area_wp,
-            Path(area_wp).is_file(),
+            area_resolved,
+            area_resolved.is_file(),
             len(ip),
             bundle,
         )
-        if not cfg.enabled or not Path(area_wp).is_file():
+        if not cfg.enabled or not area_resolved.is_file():
             return {"ok": False, "error": "comfyui_not_configured"}
 
         from fablestar.integration.comfyui_client import generate_comfy_png
@@ -458,20 +891,37 @@ class FablestarServer:
             account = result.scalar_one_or_none()
             if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
                 return {"ok": False, "error": "invalid_credentials"}
+            account_id = account.id
 
         cfg = self.config.comfyui
-        if not cfg.enabled or not Path(cfg.workflow_path).is_file():
+        eco = self._economy_public_fields()
+        if not cfg.enabled or not resolve_config_asset_path(cfg.workflow_path).is_file():
             return {
                 "ok": True,
                 "portrait_url": None,
                 "note": "comfyui_not_configured",
+                **eco,
+                "echo_credits": await self._echo_read_balance(account_id),
             }
+
+        cost = int(cfg.portrait_generation_cost)
+        ok_debit, err_debit, bal_after, charged = await self._echo_debit_for_generation(account_id, cost)
+        if not ok_debit:
+            return err_debit
 
         try:
             png, _ = await generate_portrait_png(cfg, appearance_prompt)
         except Exception as e:
             logger.warning("ComfyUI portrait failed: %s", e, exc_info=True)
-            return {"ok": False, "error": "comfyui_failed", "detail": str(e)}
+            if charged:
+                await self._echo_refund(account_id, charged)
+            return {
+                "ok": False,
+                "error": "comfyui_failed",
+                "detail": str(e),
+                **eco,
+                "echo_credits": await self._echo_read_balance(account_id),
+            }
 
         out_dir = Path("data/portraits")
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -479,7 +929,13 @@ class FablestarServer:
         dest = out_dir / fname
         dest.write_bytes(png)
         url = f"/media/portraits/{fname}"
-        return {"ok": True, "portrait_url": url}
+        return {
+            "ok": True,
+            "portrait_url": url,
+            **eco,
+            "echo_credits": bal_after,
+            "cost_charged": charged,
+        }
 
     async def play_create_character(
         self,
@@ -496,15 +952,16 @@ class FablestarServer:
         if not CHAR_NAME_RE.match(name):
             return {"ok": False, "error": "invalid_character_name"}
 
-        p_url = (portrait_url or "").strip() or None
-        if p_url:
-            if not p_url.startswith("/media/portraits/") or ".." in p_url or len(p_url) > 2048:
+        p_url_in = (portrait_url or "").strip() or None
+        if p_url_in:
+            if not p_url_in.startswith("/media/portraits/") or ".." in p_url_in or len(p_url_in) > 2048:
                 return {"ok": False, "error": "invalid_portrait_url"}
 
-        pp = (portrait_prompt or "").strip() or None
-        if pp and len(pp) > 4000:
+        pp_in = (portrait_prompt or "").strip() or None
+        if pp_in and len(pp_in) > 4000:
             return {"ok": False, "error": "portrait_prompt_too_long"}
 
+        account_id: Optional[int] = None
         async with self.db.session_factory() as db_session:
             result = await db_session.execute(
                 select(Account).where(Account.username == username)
@@ -512,6 +969,7 @@ class FablestarServer:
             account = result.scalar_one_or_none()
             if not account or not bcrypt.checkpw(password.encode(), account.password_hash.encode()):
                 return {"ok": False, "error": "invalid_credentials"}
+            account_id = account.id
 
             result = await db_session.execute(
                 select(Character).where(Character.account_id == account.id)
@@ -524,12 +982,47 @@ class FablestarServer:
             if taken.scalar_one_or_none():
                 return {"ok": False, "error": "character_name_taken"}
 
+        p_url = p_url_in
+        pp = pp_in
+        portrait_gen_failed: Optional[str] = None
+        create_portrait_charged = 0
+
+        if not p_url:
+            cfg = self.config.comfyui
+            if cfg.enabled and resolve_config_asset_path(cfg.workflow_path).is_file():
+                prompt_use = pp if pp else _default_character_portrait_prompt(name)
+                cost_c = int(cfg.character_create_portrait_cost)
+                ok_d, err_d, _bal_d, charged_c = await self._echo_debit_for_generation(account_id, cost_c)
+                if not ok_d:
+                    return err_d
+                create_portrait_charged = charged_c
+                try:
+                    png, _ = await generate_portrait_png(cfg, prompt_use)
+                    out_dir = Path("data/portraits")
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    fname = f"{uuid.uuid4().hex}.png"
+                    dest = out_dir / fname
+                    dest.write_bytes(png)
+                    p_url = f"/media/portraits/{fname}"
+                    if not pp:
+                        pp = prompt_use
+                except Exception as e:
+                    if create_portrait_charged:
+                        await self._echo_refund(account_id, create_portrait_charged)
+                    portrait_gen_failed = str(e)
+                    logger.warning("ComfyUI portrait on character create failed: %s", e, exc_info=True)
+
+        async with self.db.session_factory() as db_session:
+            start_digi = int(self.config.server.starting_digi_balance)
             character = Character(
-                account_id=account.id,
+                account_id=account_id,
                 name=name,
                 room_id="test_zone:entrance",
                 portrait_url=p_url,
                 portrait_prompt=pp,
+                digi_balance=start_digi,
+                pvp_enabled=False,
+                reputation=0,
             )
             db_session.add(character)
             await db_session.commit()
@@ -537,12 +1030,78 @@ class FablestarServer:
             payload = _character_play_dict(character)
             result = await db_session.execute(
                 select(Character)
-                .where(Character.account_id == account.id)
+                .where(Character.account_id == account_id)
                 .order_by(Character.id)
             )
             all_chars = [_character_play_dict(c) for c in result.scalars().all()]
 
-        return {"ok": True, "character": payload, "characters": all_chars}
+        final_bal = await self._echo_read_balance(account_id)
+        is_gm = False
+        async with self.db.session_factory() as db_session:
+            acc_row = await db_session.get(Account, account_id)
+            if acc_row is not None:
+                is_gm = bool(acc_row.is_gm)
+        out: Dict[str, Any] = {
+            "ok": True,
+            "character": payload,
+            "characters": all_chars,
+            **self._economy_public_fields(),
+            "echo_credits": final_bal,
+            "is_gm": is_gm,
+        }
+        if create_portrait_charged and not portrait_gen_failed:
+            out["cost_charged"] = create_portrait_charged
+        if portrait_gen_failed:
+            out["portrait_generation_failed"] = True
+            out["portrait_generation_detail"] = portrait_gen_failed
+        return out
+
+    async def play_delete_character(
+        self, username: str, password: str, character_id: int
+    ) -> Dict[str, Any]:
+        """Remove one character if it belongs to the authenticated account."""
+        username = (username or "").strip()
+        if not username:
+            return {"ok": False, "error": "username_required"}
+        if character_id is None or character_id < 1:
+            return {"ok": False, "error": "character_id_invalid"}
+        async with self.db.session_factory() as db_session:
+            result = await db_session.execute(
+                select(Account).where(Account.username == username)
+            )
+            account = result.scalar_one_or_none()
+            if not account or not bcrypt.checkpw(
+                password.encode(), account.password_hash.encode()
+            ):
+                return {"ok": False, "error": "invalid_credentials"}
+            result = await db_session.execute(
+                select(Character).where(Character.id == character_id)
+            )
+            char = result.scalar_one_or_none()
+            if char is None or char.account_id != account.id:
+                return {"ok": False, "error": "character_not_found"}
+            await db_session.delete(char)
+            await db_session.commit()
+            result = await db_session.execute(
+                select(Character)
+                .where(Character.account_id == account.id)
+                .order_by(Character.id)
+            )
+            chars_payload = [_character_play_dict(c) for c in result.scalars().all()]
+            aid = account.id
+            uname = account.username
+            ec = int(account.echo_credits)
+            is_gm = bool(account.is_gm)
+        eco = self._economy_public_fields()
+        return {
+            "ok": True,
+            "username": uname,
+            "account_id": aid,
+            "characters": chars_payload,
+            "echo_credits": ec,
+            "is_gm": is_gm,
+            **eco,
+        }
 
     async def play_refresh_characters(self, username: str, password: str) -> Dict[str, Any]:
         """Re-list characters after create (same shape as login)."""
@@ -565,7 +1124,18 @@ class FablestarServer:
             chars_payload = [_character_play_dict(c) for c in characters]
             aid = account.id
             uname = account.username
-        return {"ok": True, "username": uname, "account_id": aid, "characters": chars_payload}
+            ec = int(account.echo_credits)
+            is_gm = bool(account.is_gm)
+        eco = self._economy_public_fields()
+        return {
+            "ok": True,
+            "username": uname,
+            "account_id": aid,
+            "characters": chars_payload,
+            "echo_credits": ec,
+            "is_gm": is_gm,
+            **eco,
+        }
 
     async def _session_loop(self, session: Session):
         """Main input/output loop for a single session."""

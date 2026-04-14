@@ -11,6 +11,9 @@ exits:
   east:
     destination: starter_zone:test_1_copy_3_stamp_test_1_copy_copy_copy__r2
     description: ""
+  south:
+    destination: starter_zone:test_1_copy_3_stamp_test_1_copy_copy__r1_copy
+    description: ""
 features: []
 entity_spawns: []
 hazards: []

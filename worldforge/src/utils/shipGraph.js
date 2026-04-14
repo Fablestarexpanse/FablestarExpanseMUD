@@ -1,8 +1,9 @@
 import { MarkerType } from "@xyflow/react";
-import { COLORS } from "../theme.js";
+import { COLORS_DARK } from "../theme.js";
 import { oppositeDir } from "./zoneGraph.js";
 
-export function buildShipFlow(shipId, shipDoc, layoutDoc) {
+export function buildShipFlow(shipId, shipDoc, layoutDoc, opts = {}) {
+  const { colors: COLORS = COLORS_DARK } = opts;
   const ship = shipDoc?.ship || shipDoc || {};
   const rooms = Array.isArray(ship.rooms) ? ship.rooms : [];
   const prefix = `ship:${shipId}:`;

@@ -13,30 +13,38 @@ import { STAMP_ZONE_ID } from "../utils/stampBundle.js";
 import RoomNode from "../nodes/RoomNode.jsx";
 import NoteNode from "../nodes/NoteNode.jsx";
 import ExitEdge from "../edges/ExitEdge.jsx";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 const nodeTypes = { room: RoomNode, note: NoteNode };
 const edgeTypes = { exit: ExitEdge };
 
 function StampPreviewInner({ roomsMap, positionsDoc }) {
+  const { colors: COLORS, colorScheme } = useTheme();
   const { nodes: n0, edges: e0 } = useMemo(() => {
     const muted = mutedEdgeSetFromDoc(positionsDoc);
-    const { nodes, edges } = buildZoneFlow(STAMP_ZONE_ID, roomsMap, positionsDoc, { mutedEdgeSet: muted });
+    const { nodes, edges } = buildZoneFlow(STAMP_ZONE_ID, roomsMap, positionsDoc, {
+      mutedEdgeSet: muted,
+      colors: COLORS,
+    });
     return { nodes, edges: dedupeMutualBidirectionalEdges(edges) };
-  }, [roomsMap, positionsDoc]);
+  }, [roomsMap, positionsDoc, COLORS]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(n0);
   const [edges, setEdges, onEdgesChange] = useEdgesState(e0);
 
   useEffect(() => {
     const muted = mutedEdgeSetFromDoc(positionsDoc);
-    const { nodes: n, edges: e } = buildZoneFlow(STAMP_ZONE_ID, roomsMap, positionsDoc, { mutedEdgeSet: muted });
+    const { nodes: n, edges: e } = buildZoneFlow(STAMP_ZONE_ID, roomsMap, positionsDoc, {
+      mutedEdgeSet: muted,
+      colors: COLORS,
+    });
     setNodes(n);
     setEdges(dedupeMutualBidirectionalEdges(e));
-  }, [roomsMap, positionsDoc, setNodes, setEdges]);
+  }, [roomsMap, positionsDoc, setNodes, setEdges, COLORS]);
 
   return (
     <ReactFlow
+      colorMode={colorScheme}
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
@@ -61,6 +69,7 @@ function StampPreviewInner({ roomsMap, positionsDoc }) {
 
 /** Read-only map-style preview for a stamp bundle (in-memory rooms + positions). */
 export default function StampPreviewMini({ roomsMap, positionsDoc }) {
+  const { colors: COLORS } = useTheme();
   return (
     <div
       style={{

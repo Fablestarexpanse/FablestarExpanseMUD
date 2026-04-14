@@ -20,13 +20,15 @@ import ExitEdge from "./ExitEdge.jsx";
 import { layoutGraph } from "./AutoLayout.js";
 import ValidationPanel, { runZoneValidation } from "./ValidationPanel.jsx";
 import RoomPropertyPanel from "./RoomPropertyPanel.jsx";
-import { COLORS, API_BASE } from "./builderConstants.js";
+import { API_BASE } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 import "./builder.css";
 
 const nodeTypes = { room: RoomNode };
 const edgeTypes = { exit: ExitEdge };
 
 function ShipEditorInner({ shipId, onSync }) {
+  const { colors: COLORS } = useAdminTheme();
   const rf = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -63,7 +65,7 @@ function ShipEditorInner({ shipId, onSync }) {
         setLoadErr(String(e.response?.data?.detail || e.message));
       }
     },
-    [shipId, setNodes, setEdges]
+    [shipId, setNodes, setEdges, COLORS]
   );
 
   useEffect(() => {
@@ -106,7 +108,7 @@ function ShipEditorInner({ shipId, onSync }) {
         window.alert(e.response?.data?.detail || e.message);
       }
     },
-    [rf, shipId, setEdges, loadGraph, onSync]
+    [rf, shipId, setEdges, loadGraph, onSync, COLORS]
   );
 
   const runLayout = async () => {

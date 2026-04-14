@@ -25,6 +25,10 @@ const MAP_DIAG = {
   southeast: { x: 1, y: 1 },
 };
 
+/** Pull ports slightly inside the outline so they do not sit on @xyflow/node-resizer corner/side handles. */
+const PORT_INSET_FROM_EDGE_PX = 14;
+const PORT_INSET_FROM_CORNER_PX = 22;
+
 /** Pick Top/Right/Bottom/Left for React Flow handle routing from outward normal (parent coords). */
 export function flowPositionFromOutwardNormal(nx, ny) {
   if (Math.abs(ny) >= Math.abs(nx)) return ny < 0 ? Position.Top : Position.Bottom;
@@ -68,7 +72,11 @@ export function canvasLayoutCardinal(W, H, rotationDeg, exitId) {
   const hw = W / 2;
   const hh = H / 2;
   const e = pickEdgeForMapNormal(hw, hh, rotationDeg, map.x, map.y);
-  const p = rotateCWCanvas(e.mid.x, e.mid.y, rotationDeg);
+  const midIn = {
+    x: e.mid.x - e.n.x * PORT_INSET_FROM_EDGE_PX,
+    y: e.mid.y - e.n.y * PORT_INSET_FROM_EDGE_PX,
+  };
+  const p = rotateCWCanvas(midIn.x, midIn.y, rotationDeg);
   const nr = rotateCWCanvas(e.n.x, e.n.y, rotationDeg);
   return {
     left: W / 2 + p.x,
@@ -102,7 +110,13 @@ export function canvasLayoutCorner(W, H, rotationDeg, exitId) {
       best = v;
     }
   }
-  const p = rotateCWCanvas(best.x, best.y, rotationDeg);
+  const len = Math.hypot(best.x, best.y) || 1;
+  const inset = PORT_INSET_FROM_CORNER_PX;
+  const midIn = {
+    x: best.x - (best.x / len) * inset,
+    y: best.y - (best.y / len) * inset,
+  };
+  const p = rotateCWCanvas(midIn.x, midIn.y, rotationDeg);
   const pos = flowPositionFromOutwardNormal(p.x, p.y);
   return {
     left: W / 2 + p.x,

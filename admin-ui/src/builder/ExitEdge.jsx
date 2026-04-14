@@ -1,5 +1,5 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath } from "@xyflow/react";
-import { COLORS } from "./builderConstants";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 export default function ExitEdge({
   id,
@@ -13,6 +13,7 @@ export default function ExitEdge({
   markerEnd,
   selected,
 }) {
+  const { colors: COLORS } = useAdminTheme();
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,

@@ -1,6 +1,7 @@
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 export function ValidationPanel({ issues, onPick }) {
+  const { colors: COLORS } = useTheme();
   if (!issues?.length) {
     return (
       <div style={{ fontSize: 12, color: COLORS.success, fontFamily: "'DM Sans', sans-serif" }}>No issues detected.</div>

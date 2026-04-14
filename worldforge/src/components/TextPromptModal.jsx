@@ -1,17 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { COLORS } from "../theme.js";
-
-const inp = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "10px 12px",
-  borderRadius: 8,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 13,
-  fontFamily: "'JetBrains Mono', monospace",
-};
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "../ThemeContext.jsx";
 
 /**
  * Centered themed prompt (replaces window.prompt) for Fablestar WorldForger.
@@ -28,6 +16,21 @@ export default function TextPromptModal({
   onConfirm,
   onCancel,
 }) {
+  const { colors: COLORS } = useTheme();
+  const inp = useMemo(
+    () => ({
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "10px 12px",
+      borderRadius: 8,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgInput,
+      color: COLORS.text,
+      fontSize: 13,
+      fontFamily: "'JetBrains Mono', monospace",
+    }),
+    [COLORS]
+  );
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState("");
   const inputRef = useRef(null);

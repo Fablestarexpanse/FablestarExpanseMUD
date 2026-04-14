@@ -18,7 +18,7 @@ import { layoutGraph } from "../utils/AutoLayout.js";
 import ShipRoomNode from "../nodes/ShipRoomNode.jsx";
 import ExitEdge from "../edges/ExitEdge.jsx";
 import RoomPanel from "../panels/RoomPanel.jsx";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 import * as fs from "../hooks/useFileSystem.js";
 import { useContent } from "../hooks/useContentStore.js";
 
@@ -26,6 +26,20 @@ const nodeTypes = { shipRoom: ShipRoomNode };
 const edgeTypes = { exit: ExitEdge };
 
 function Inner({ shipId, worldRoot, onShipId }) {
+  const { colors: COLORS, colorScheme } = useTheme();
+  const tb = useMemo(
+    () => ({
+      padding: "6px 10px",
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+      fontSize: 11,
+    }),
+    [COLORS]
+  );
+  const sel = useMemo(() => ({ ...tb, minWidth: 140 }), [tb]);
   const rf = useReactFlow();
   const { ships, shipIds, dispatch } = useContent();
   const layoutPath = useMemo(() => joinPaths(worldRoot, "ships", `${shipId}.layout.json`), [worldRoot, shipId]);
@@ -41,10 +55,10 @@ function Inner({ shipId, worldRoot, onShipId }) {
   const shipDoc = ships[shipId] || { ship: { id: shipId, rooms: [] } };
 
   const rebuild = useCallback(() => {
-    const { nodes: n, edges: e } = buildShipFlow(shipId, shipDoc, { positions: posMap });
+    const { nodes: n, edges: e } = buildShipFlow(shipId, shipDoc, { positions: posMap }, { colors: COLORS });
     setNodes(n);
     setEdges(e);
-  }, [shipId, shipDoc, posMap, setNodes, setEdges]);
+  }, [shipId, shipDoc, posMap, setNodes, setEdges, COLORS]);
 
   useEffect(() => {
     let c = false;
@@ -123,6 +137,7 @@ function Inner({ shipId, worldRoot, onShipId }) {
       </div>
       <div style={{ flex: 1, minHeight: 0 }}>
         <ReactFlow
+          colorMode={colorScheme}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
@@ -183,17 +198,6 @@ function Inner({ shipId, worldRoot, onShipId }) {
     </div>
   );
 }
-
-const tb = {
-  padding: "6px 10px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  cursor: "pointer",
-  fontSize: 11,
-};
-const sel = { ...tb, minWidth: 140 };
 
 export default function ShipEditor({ shipId, worldRoot, onShipId }) {
   return (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { T } from "../theme.js";
+import { usePlayTheme } from "../PlayThemeContext.jsx";
 
 const ROOMS = [
   { id: "cj", label: "Corroded\nJunction", x: 150, y: 120, type: "junction", visited: true, current: false },
@@ -11,6 +11,7 @@ const ROOMS = [
 const EDGES = [["cj","gca"],["cj","ms"],["cj","sl"],["gca","ds"]];
 
 export function MiniMap() {
+  const { T } = usePlayTheme();
   const [hov, setHov] = useState(null);
   const [zoom, setZoom] = useState(1);
   const roomCol = (r) => {

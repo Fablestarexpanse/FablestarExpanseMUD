@@ -13,6 +13,19 @@ from fablestar.llm.openai_util import normalize_openai_compatible_base
 logger = logging.getLogger(__name__)
 
 
+def chat_model_is_auto(chat_model: str, model_ids: List[str], backend: str) -> bool:
+    """True when Nexus should pick the model from the server list (not a fixed id)."""
+    raw = (chat_model or "").strip()
+    s = raw.lower()
+    if s in ("", "auto", "*"):
+        return True
+    b = (backend or "lm_studio").lower().strip()
+    # Legacy default: LM Studio rarely exposes id "local-model"; treat as auto when absent.
+    if b == "lm_studio" and raw == "local-model" and "local-model" not in model_ids:
+        return True
+    return False
+
+
 def infer_detected_chat_model(
     models: List[Dict[str, Any]],
     configured_id: str,
@@ -32,16 +45,23 @@ def infer_detected_chat_model(
     if not ids:
         return None, None
     cfg = (configured_id or "").strip()
+    cfg_lower = cfg.lower()
+    prefer_auto = cfg_lower in ("", "auto", "*")
     b = (backend or "lm_studio").lower().strip()
+
+    if prefer_auto:
+        if b == "lm_studio" and len(ids) == 1:
+            return ids[0], "loaded"
+        return ids[0], "listed"
 
     if b == "lm_studio":
         if len(ids) == 1:
             return ids[0], "loaded"
-        if cfg and cfg in ids:
+        if cfg in ids:
             return cfg, "listed"
         return ids[0], "listed"
 
-    if cfg and cfg in ids:
+    if cfg in ids:
         return cfg, "listed"
     if len(ids) == 1:
         return ids[0], "listed"
@@ -88,6 +108,23 @@ class LLMClient:
         self._status_cache = None
         self._status_cache_at = 0.0
         logger.info("LLM client reconfigured: backend=%s base=%s model=%s", config.primary_backend, self._openai_base_url(), config.chat_model)
+
+    async def effective_chat_model(self) -> str:
+        """Model id sent to the OpenAI-compatible API (resolves auto / legacy local-model)."""
+        st = await self.status_dict()
+        cfg = (self.config.chat_model or "").strip()
+        backend = (self.config.primary_backend or "lm_studio").lower().strip()
+        models = st.get("models") or []
+        ids = [str(m["id"]) for m in models if m.get("id")]
+        if chat_model_is_auto(cfg, ids, backend):
+            d, _ = infer_detected_chat_model(models, "auto", backend, bool(st.get("connected")))
+            if d:
+                return d
+            return cfg or "local-model"
+        if cfg:
+            return cfg
+        d, _ = infer_detected_chat_model(models, "auto", backend, bool(st.get("connected")))
+        return d or "local-model"
 
     async def probe_connection(self, list_timeout: float = 3.0) -> Tuple[bool, Optional[float], Optional[str], List[Dict[str, Any]], Optional[str]]:
         """
@@ -139,15 +176,23 @@ class LLMClient:
     async def _build_status_dict(self, list_timeout: float) -> Dict[str, Any]:
         ok, latency_ms, err, models, hint = await self.probe_connection(list_timeout=list_timeout)
         active = self.config.chat_model
+        ids = [str(m["id"]) for m in models if m.get("id")]
+        backend = self.config.primary_backend
+        auto = chat_model_is_auto(active, ids, backend)
         matched = next((m for m in models if m["id"] == active), None)
         detected_id, detected_src = infer_detected_chat_model(
-            models, active, self.config.primary_backend, ok
+            models, "auto" if auto else active, backend, ok
         )
-        models_align = (
-            bool(detected_id and active and detected_id == active)
-            if ok and detected_id
-            else None
-        )
+        if not ok:
+            models_align = None
+        elif auto:
+            models_align = True if detected_id else None
+        else:
+            models_align = (active in ids) if ids else None
+        if auto:
+            model_known = bool(detected_id) if models else None
+        else:
+            model_known = matched is not None if models else None
         return {
             "connected": ok,
             "latency_ms": round(latency_ms, 2) if latency_ms is not None else None,
@@ -155,10 +200,11 @@ class LLMClient:
             "primary_backend": self.config.primary_backend,
             "base_url": self._openai_base_url(),
             "chat_model": active,
+            "chat_model_auto": auto,
             "detected_model": detected_id,
             "detected_model_source": detected_src,
             "models_align": models_align,
-            "model_known": matched is not None if models else None,
+            "model_known": model_known,
             "temperature": self.config.temperature,
             "timeout_seconds": self.config.timeout_seconds,
             "models": models[:80],
@@ -197,7 +243,7 @@ class LLMClient:
         Generate text from the LLM.
         Returns a fallback string if the request fails or times out.
         """
-        model = self.config.chat_model or "local-model"
+        model = await self.effective_chat_model()
         try:
             logger.info("LLM request model=%s base=%s", model, self._openai_base_url())
 

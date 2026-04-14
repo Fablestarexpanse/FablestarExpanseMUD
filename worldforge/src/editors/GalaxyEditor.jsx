@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
@@ -13,7 +13,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { joinPaths } from "../utils/paths.js";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 import SystemNode from "../nodes/SystemNode.jsx";
 import ConnectionEdge from "../edges/ConnectionEdge.jsx";
 import SystemPanel from "../panels/SystemPanel.jsx";
@@ -25,6 +25,19 @@ const nodeTypes = { system: SystemNode };
 const edgeTypes = { connection: ConnectionEdge };
 
 function Inner({ worldRoot }) {
+  const { colors: COLORS, colorScheme } = useTheme();
+  const tb = useMemo(
+    () => ({
+      padding: "6px 10px",
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+      fontSize: 11,
+    }),
+    [COLORS]
+  );
   const rf = useReactFlow();
   const { systems, systemIds, galaxy, dispatch } = useContent();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -68,7 +81,7 @@ function Inner({ worldRoot }) {
     }
     setNodes(ns);
     setEdges(es);
-  }, [systems, systemIds, setNodes, setEdges]);
+  }, [systems, systemIds, setNodes, setEdges, COLORS]);
 
   useEffect(() => {
     rebuild();
@@ -111,6 +124,7 @@ function Inner({ worldRoot }) {
       </div>
       <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
         <ReactFlow
+          colorMode={colorScheme}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
@@ -146,16 +160,6 @@ function Inner({ worldRoot }) {
     </div>
   );
 }
-
-const tb = {
-  padding: "6px 10px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  cursor: "pointer",
-  fontSize: 11,
-};
 
 export default function GalaxyEditor({ worldRoot }) {
   return (

@@ -1,23 +1,40 @@
-# ComfyUI: player portraits (optional) + room area art for WorldForge (optional).
+# ComfyUI: player portraits + WorldForge room area art (optional).
 #
-# Area workflow: config/comfyui_area_workflow.json (Z-Image / LoRA stack + post chain). Prompt is injected
-# into node 34 (positive CLIPTextEncode); SaveImage is node 31. Custom nodes required (SeedVR2, rgthree, etc.).
-# Zone bundles: each generate adds zones/<z>/rooms/art/<room>/gen_<id>.png (older flat art/<room>.png still served).
+# Player portraits: config/comfyui_character_portrait_workflow.json
+# (positive CLIPTextEncode node 57, SaveImage node 40 after easy imageRemBg).
+# Scene / room area art (ComfyUI API graph only — not the character portrait graph):
+# config/comfyui_scene_workflow.json — positive CLIPTextEncode node 16, SaveImage node 17.
+# Legacy graph kept as config/comfyui_area_workflow.json if you switch area_workflow_path back.
+# Custom nodes (LoRA Manager, Resolution Master, easy imageRemBg, etc.) must match your ComfyUI install.
 #
-# For CheckpointLoaderSimple-only templates, set checkpoint_name to a filename in ComfyUI/models/checkpoints/.
+# Simple CheckpointLoaderSimple-only workflows: set checkpoint_name to a file under
+# ComfyUI/models/checkpoints/, or leave unset for Nexus to pick from object_info.
 # checkpoint_name = "your-model.safetensors"
 
 enabled = true
 base_url = "http://127.0.0.1:8188"
-workflow_path = "config/comfyui_portrait_workflow.example.json"
-positive_prompt_node_id = "6"
-output_node_id = "9"
 
-# Must NOT be *_example.json unless you set checkpoint_name (example uses model.safetensors on node 4).
-area_workflow_path = "config/comfyui_area_workflow.json"
-area_positive_prompt_node_id = "34"
-area_output_node_id = "31"
+# Player portraits + /play/characters/portrait — Z-Image + RemBg graph (not the area-art graph).
+# Target asset: ~square RGBA PNG, background removed in graph (node 59).
+workflow_path = "config/comfyui_character_portrait_workflow.json"
+positive_prompt_node_id = "57"
+output_node_id = "40"
+
+area_workflow_path = "config/comfyui_scene_workflow.json"
+area_positive_prompt_node_id = "16"
+area_output_node_id = "17"
 
 # Heavy graphs may need several minutes.
 timeout_seconds = 600.0
 poll_interval_seconds = 0.75
+
+# Player ComfyUI costs (account echo_credits). Set economy_enabled = false to skip debits (dev).
+economy_enabled = true
+starting_echo_credits = 50
+portrait_generation_cost = 3
+area_generation_cost = 3
+character_create_portrait_cost = 3
+# Display name for the art-generation balance (server.toml has game_currency_display_name for in-world money).
+currency_display_name = "pixels"
+# Reference: 100 pixels = $1 USD at list price (admin bundles + player help text use this).
+pixels_per_usd = 100

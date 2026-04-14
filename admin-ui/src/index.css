@@ -18,6 +18,25 @@
   --color-danger: #f87171;
 }
 
+:root[data-admin-theme="light"],
+[data-admin-theme="light"] {
+  --color-bg: #e8eaf2;
+  --color-bg-panel: #ffffff;
+  --color-bg-card: #f4f5fb;
+  --color-bg-hover: #e8e6ff;
+  --color-bg-input: #ffffff;
+  --color-border-base: #c9cfde;
+  --color-border-active: #8b93ad;
+  --color-text-base: #1a1d28;
+  --color-text-muted: #5a6172;
+  --color-text-dim: #7a8194;
+  --color-accent: #5b4cdb;
+  --color-accent-soft: #4338a8;
+  --color-success: #059669;
+  --color-warning: #b45309;
+  --color-danger: #dc2626;
+}
+
 @layer base {
   body {
     background-color: var(--color-bg);
@@ -50,6 +69,10 @@
 .glass {
   background-color: rgba(10, 11, 15, 0.8);
   backdrop-filter: blur(4px);
+}
+
+[data-admin-theme="light"] .glass {
+  background-color: rgba(255, 255, 255, 0.82);
 }
 
 .accent-glow {

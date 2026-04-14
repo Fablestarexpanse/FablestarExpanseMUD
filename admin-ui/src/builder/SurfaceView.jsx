@@ -1,23 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { COLORS, API_BASE } from "./builderConstants.js";
-
-const inp = {
-  padding: "8px 12px",
-  borderRadius: 8,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 13,
-  fontFamily: "'DM Sans', sans-serif",
-  width: "100%",
-  maxWidth: 360,
-  boxSizing: "border-box",
-};
+import { API_BASE } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 const ZONE_ID_RE = /^[a-zA-Z0-9_-]+$/;
 
 export default function SurfaceView({ onSelectZone }) {
+  const { colors: COLORS } = useAdminTheme();
+  const inp = {
+    padding: "8px 12px",
+    borderRadius: 8,
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.bgInput,
+    color: COLORS.text,
+    fontSize: 13,
+    fontFamily: "'DM Sans', sans-serif",
+    width: "100%",
+    maxWidth: 360,
+    boxSizing: "border-box",
+  };
   const [zones, setZones] = useState([]);
   const [err, setErr] = useState("");
   const [filter, setFilter] = useState("");

@@ -56,7 +56,7 @@ import {
   buildPlacementSlugMap,
   stampFolderPath,
 } from "../utils/stampBundle.js";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 import * as fs from "../hooks/useFileSystem.js";
 import { useContent } from "../hooks/useContentStore.js";
 import { writeSnapEnabled } from "../hooks/useLocalSettings.js";
@@ -168,6 +168,41 @@ function ZoneEditorInner({
   nexusToken,
   defaultRoomType,
 }) {
+  const { colors: COLORS, colorScheme } = useTheme();
+  const tbBtn = useMemo(
+    () => ({
+      padding: "6px 10px",
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+      fontSize: 11,
+    }),
+    [COLORS]
+  );
+  function MenuBtn({ onClick, children }) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          display: "block",
+          width: "100%",
+          textAlign: "left",
+          padding: "6px 8px",
+          border: "none",
+          background: "transparent",
+          color: COLORS.text,
+          fontSize: 12,
+          cursor: "pointer",
+          borderRadius: 4,
+        }}
+      >
+        {children}
+      </button>
+    );
+  }
   const rf = useReactFlow();
   const rfRef = useRef(rf);
   rfRef.current = rf;
@@ -860,7 +895,10 @@ function ZoneEditorInner({
   const rebuildGraph = useCallback(() => {
     const doc = positionsDoc;
     const muted = mutedEdgeSetFromDoc(doc);
-    const { nodes: rn, edges: re, externalExits } = buildZoneFlow(zoneId, roomsMap, doc, { mutedEdgeSet: muted });
+    const { nodes: rn, edges: re, externalExits } = buildZoneFlow(zoneId, roomsMap, doc, {
+      mutedEdgeSet: muted,
+      colors: COLORS,
+    });
     const selectedIds = new Set();
     for (const n of rf.getNodes()) {
       if (n.selected) selectedIds.add(n.id);
@@ -1053,6 +1091,7 @@ function ZoneEditorInner({
     setNodes,
     setEdges,
     removeLinkedExitPair,
+    COLORS,
   ]);
 
   useEffect(() => {
@@ -1960,6 +1999,7 @@ function ZoneEditorInner({
 
       <div ref={containerRef} style={{ flex: 1, position: "relative", minHeight: 0 }}>
         <ReactFlow
+          colorMode={colorScheme}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
@@ -2357,39 +2397,6 @@ function ZoneEditorInner({
     </div>
   );
 }
-
-function MenuBtn({ onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        display: "block",
-        width: "100%",
-        textAlign: "left",
-        padding: "6px 8px",
-        border: "none",
-        background: "transparent",
-        color: COLORS.text,
-        fontSize: 12,
-        cursor: "pointer",
-        borderRadius: 4,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-const tbBtn = {
-  padding: "6px 10px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  cursor: "pointer",
-  fontSize: 11,
-};
 
 export default function ZoneEditor(props) {
   return (

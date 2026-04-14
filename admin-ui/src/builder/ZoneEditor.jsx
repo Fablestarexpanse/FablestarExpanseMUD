@@ -21,13 +21,15 @@ import ExitEdge from "./ExitEdge.jsx";
 import { layoutGraph } from "./AutoLayout.js";
 import ValidationPanel, { runZoneValidation } from "./ValidationPanel.jsx";
 import RoomPropertyPanel from "./RoomPropertyPanel.jsx";
-import { COLORS, API_BASE } from "./builderConstants.js";
+import { API_BASE } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 import "./builder.css";
 
 const nodeTypes = { room: RoomNode };
 const edgeTypes = { exit: ExitEdge };
 
 function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNavigateRoomDone }) {
+  const { colors: COLORS } = useAdminTheme();
   const rf = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -69,7 +71,7 @@ function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNav
         setLoadErr(String(e.response?.data?.detail || e.message));
       }
     },
-    [zoneId, setNodes, setEdges]
+    [zoneId, setNodes, setEdges, COLORS]
   );
 
   const savePositions = useCallback(async () => {
@@ -164,7 +166,7 @@ function ZoneEditorInner({ zoneId, onSync, forwardedRef, navigateRoomSlug, onNav
         window.alert(e.response?.data?.detail || e.message);
       }
     },
-    [rf, zoneId, setEdges, loadGraph, onSync]
+    [rf, zoneId, setEdges, loadGraph, onSync, COLORS]
   );
 
   const runLayout = async () => {

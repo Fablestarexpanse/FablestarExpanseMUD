@@ -1,9 +1,24 @@
 import { useMemo, useState } from "react";
 import { joinPaths } from "../utils/paths.js";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 import * as fs from "../hooks/useFileSystem.js";
 
+const row = { display: "flex", alignItems: "center", gap: 8, fontSize: 12, marginTop: 4 };
+
 export default function ExportDialog({ worldRoot, contentRoot, zoneIds, systemIds, entityIds, itemIds, glyphIds, onClose }) {
+  const { colors: COLORS } = useTheme();
+  const btn = useMemo(
+    () => ({
+      padding: "8px 14px",
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+      fontSize: 12,
+    }),
+    [COLORS]
+  );
   const [z, setZ] = useState(() => Object.fromEntries(zoneIds.map((id) => [id, true])));
   const [s, setS] = useState(() => Object.fromEntries(systemIds.map((id) => [id, true])));
   const [e, setE] = useState(() => Object.fromEntries(entityIds.map((id) => [id, true])));
@@ -162,6 +177,3 @@ export default function ExportDialog({ worldRoot, contentRoot, zoneIds, systemId
     </div>
   );
 }
-
-const row = { display: "flex", alignItems: "center", gap: 8, fontSize: 12, marginTop: 4 };
-const btn = { padding: "8px 14px", borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.bgCard, color: COLORS.text, cursor: "pointer", fontSize: 12 };

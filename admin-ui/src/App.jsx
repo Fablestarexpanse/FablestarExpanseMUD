@@ -1,40 +1,14 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import WorldBuilderPage from "./builder/WorldBuilderPage.jsx";
+import PlayerAccountsTab from "./PlayerAccountsTab.jsx";
+import { useAdminTheme } from "./AdminThemeContext.jsx";
+import { ADMIN_THEME_DARK } from "./adminTheme.js";
 
 // ═══════════════════════════════════════════════════════════════
 // FABLESTAR MUD — WORLD ADMINISTRATION CONSOLE v2
 // Backend management interface with integrated AI Forge
 // ═══════════════════════════════════════════════════════════════
-
-const COLORS = {
-  bg: "#0a0b0f",
-  bgPanel: "#111318",
-  bgCard: "#161920",
-  bgHover: "#1c1f28",
-  bgInput: "#0d0e13",
-  border: "#252833",
-  borderActive: "#3d4158",
-  text: "#c8cad4",
-  textMuted: "#6b6f82",
-  textDim: "#454860",
-  accent: "#7c6aef",
-  accentGlow: "rgba(124,106,239,0.15)",
-  accentSoft: "#5a4bc7",
-  success: "#34d399",
-  successBg: "rgba(52,211,153,0.08)",
-  warning: "#fbbf24",
-  warningBg: "rgba(251,191,36,0.08)",
-  danger: "#f87171",
-  dangerBg: "rgba(248,113,113,0.08)",
-  info: "#60a5fa",
-  infoBg: "rgba(96,165,250,0.08)",
-  cyan: "#22d3ee",
-  cyanBg: "rgba(34,211,238,0.08)",
-  forge: "#e879f9",
-  forgeBg: "rgba(232,121,249,0.08)",
-  forgeGlow: "rgba(232,121,249,0.15)",
-};
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4001";
 const WS_BASE = import.meta.env.VITE_WS_BASE ?? "ws://localhost:4001";
@@ -43,7 +17,7 @@ const LS_ADMIN_TOKEN = "fablestar_admin_token";
 /** Tool ids enforced by Nexus (see fablestar.admin.admin_security.NAV_TOOL_IDS). */
 const ALL_ADMIN_TOOLS = [
   "dashboard", "forge", "operations", "players", "world", "entities",
-  "items", "glyphs", "locations", "builder", "server", "content", "settings",
+  "items", "glyphs", "locations", "builder", "server", "content", "settings", "team",
 ];
 
 function adminWsBase() {
@@ -271,13 +245,17 @@ const Icons = {
 };
 
 // ─── Utility Components ───
-const Badge = ({ children, color = COLORS.accent, bg }) => (
-  <span style={{
-    display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: "4px",
-    fontSize: "11px", fontWeight: 600, letterSpacing: "0.03em", color: color,
-    background: bg || `${color}18`, fontFamily: "'JetBrains Mono', monospace",
-  }}>{children}</span>
-);
+const Badge = ({ children, color, bg }) => {
+  const { colors: COLORS } = useAdminTheme();
+  const ac = color ?? COLORS.accent;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: "4px",
+      fontSize: "11px", fontWeight: 600, letterSpacing: "0.03em", color: ac,
+      background: bg || `${ac}18`, fontFamily: "'JetBrains Mono', monospace",
+    }}>{children}</span>
+  );
+};
 
 const StatusDot = ({ color, pulse }) => (
   <span style={{
@@ -287,17 +265,21 @@ const StatusDot = ({ color, pulse }) => (
   }} />
 );
 
-const Pill = ({ label, value, color }) => (
-  <div style={{
-    display: "flex", alignItems: "center", gap: 8, padding: "6px 12px",
-    background: COLORS.bgCard, borderRadius: 6, border: `1px solid ${COLORS.border}`,
-  }}>
-    <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif" }}>{label}</span>
-    <span style={{ fontSize: 13, color: color || COLORS.text, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{value}</span>
-  </div>
-);
+const Pill = ({ label, value, color }) => {
+  const { colors: COLORS } = useAdminTheme();
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8, padding: "6px 12px",
+      background: COLORS.bgCard, borderRadius: 6, border: `1px solid ${COLORS.border}`,
+    }}>
+      <span style={{ fontSize: 12, color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif" }}>{label}</span>
+      <span style={{ fontSize: 13, color: color || COLORS.text, fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>{value}</span>
+    </div>
+  );
+};
 
 const ActionButton = ({ children, variant = "default", small, onClick, icon, disabled, title }) => {
+  const { colors: COLORS } = useAdminTheme();
   const [hovered, setHovered] = useState(false);
   const variants = {
     default: { bg: COLORS.bgCard, border: COLORS.border, color: COLORS.text, hoverBg: COLORS.bgHover },
@@ -323,30 +305,37 @@ const ActionButton = ({ children, variant = "default", small, onClick, icon, dis
   );
 };
 
-const SearchBar = ({ placeholder, value, onChange }) => (
-  <div style={{
-    display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
-    background: COLORS.bgInput, border: `1px solid ${COLORS.border}`, borderRadius: 8, flex: 1, maxWidth: 320,
-  }}>
-    <Icons.Search />
-    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      style={{ border: "none", background: "none", outline: "none", color: COLORS.text, fontSize: 13, fontFamily: "'DM Sans', sans-serif", width: "100%" }} />
-  </div>
-);
+const SearchBar = ({ placeholder, value, onChange }) => {
+  const { colors: COLORS } = useAdminTheme();
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
+      background: COLORS.bgInput, border: `1px solid ${COLORS.border}`, borderRadius: 8, flex: 1, maxWidth: 320,
+    }}>
+      <Icons.Search />
+      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        style={{ border: "none", background: "none", outline: "none", color: COLORS.text, fontSize: 13, fontFamily: "'DM Sans', sans-serif", width: "100%" }} />
+    </div>
+  );
+};
 
-const TabBar = ({ tabs, active, onChange }) => (
-  <div style={{ display: "flex", gap: 2, padding: 3, background: COLORS.bgInput, borderRadius: 8, border: `1px solid ${COLORS.border}` }}>
-    {tabs.map(t => (
-      <button key={t.id} onClick={() => onChange(t.id)} style={{
-        padding: "6px 14px", fontSize: 12, fontWeight: active === t.id ? 600 : 400, fontFamily: "'DM Sans', sans-serif",
-        border: "none", borderRadius: 6, background: active === t.id ? COLORS.bgCard : "transparent",
-        color: active === t.id ? COLORS.text : COLORS.textMuted, cursor: "pointer", transition: "all 0.15s ease",
-      }}>{t.label}</button>
-    ))}
-  </div>
-);
+const TabBar = ({ tabs, active, onChange }) => {
+  const { colors: COLORS } = useAdminTheme();
+  return (
+    <div style={{ display: "flex", gap: 2, padding: 3, background: COLORS.bgInput, borderRadius: 8, border: `1px solid ${COLORS.border}` }}>
+      {tabs.map(t => (
+        <button key={t.id} onClick={() => onChange(t.id)} style={{
+          padding: "6px 14px", fontSize: 12, fontWeight: active === t.id ? 600 : 400, fontFamily: "'DM Sans', sans-serif",
+          border: "none", borderRadius: 6, background: active === t.id ? COLORS.bgCard : "transparent",
+          color: active === t.id ? COLORS.text : COLORS.textMuted, cursor: "pointer", transition: "all 0.15s ease",
+        }}>{t.label}</button>
+      ))}
+    </div>
+  );
+};
 
 const DataTable = ({ columns, rows, onRowClick }) => {
+  const { colors: COLORS } = useAdminTheme();
   const [hoveredRow, setHoveredRow] = useState(null);
   return (
     <div style={{ overflowX: "auto" }}>
@@ -380,7 +369,9 @@ const DataTable = ({ columns, rows, onRowClick }) => {
   );
 };
 
-const StatCard = ({ label, value, change, color, icon, sparkData, title }) => (
+const StatCard = ({ label, value, change, color, icon, sparkData, title }) => {
+  const { colors: COLORS } = useAdminTheme();
+  return (
   <div title={title || undefined} style={{
     padding: "18px 20px", background: COLORS.bgCard, border: `1px solid ${COLORS.border}`,
     borderRadius: 10, display: "flex", flexDirection: "column", gap: 8, position: "relative", overflow: "hidden",
@@ -407,9 +398,11 @@ const StatCard = ({ label, value, change, color, icon, sparkData, title }) => (
       </svg>
     )}
   </div>
-);
+  );
+};
 
-const HostMachinePanel = ({ host, llmDetected, llmConfigured, llmConnected, llmBackend }) => {
+const HostMachinePanel = ({ host, llmDetected, llmConfigured, llmConnected, llmBackend, llmModelsAlign }) => {
+  const { colors: COLORS } = useAdminTheme();
   if (!host) return null;
   const bar = (pct, color) => (
     <div style={{ width: "100%", height: 5, borderRadius: 5, background: COLORS.bgInput, overflow: "hidden" }}>
@@ -444,9 +437,9 @@ const HostMachinePanel = ({ host, llmDetected, llmConfigured, llmConnected, llmB
             <div style={{ fontSize: 12, color: COLORS.forge, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, wordBreak: "break-word" }}>
               {llmDetected || llmConfigured || "—"}
             </div>
-            {llmConfigured && llmDetected && llmDetected !== llmConfigured && (
+            {llmModelsAlign === false && llmConfigured && llmDetected && (
               <div style={{ fontSize: 10, color: COLORS.warning, marginTop: 4, fontFamily: "'JetBrains Mono', monospace" }}>
-                Configured id: {llmConfigured}
+                Chat model id not in server list: {llmConfigured}
               </div>
             )}
           </div>
@@ -554,6 +547,7 @@ const HostMachinePanel = ({ host, llmDetected, llmConfigured, llmConnected, llmB
 };
 
 const MiniMap = () => {
+  const { colors: COLORS } = useAdminTheme();
   const rooms = [
     { x: 50, y: 10, type: "hub", label: "Entry" }, { x: 30, y: 30, type: "chamber" },
     { x: 70, y: 30, type: "chamber" }, { x: 20, y: 50, type: "corridor" },
@@ -584,7 +578,7 @@ const MiniMap = () => {
 
 const FORGE_CATEGORIES = [
   {
-    id: "room", label: "Room / Location", icon: <Icons.Locations />, color: COLORS.info,
+    id: "room", label: "Room / Location", icon: <Icons.Locations />, color: ADMIN_THEME_DARK.info,
     desc: "Generate room descriptions, exits, ambient messages, and environmental details",
     fields: [
       { key: "zone", label: "Target Zone", type: "select", options: ["Outer Labyrinth", "Archive Depths", "The Crucible", "Shattered Gallery", "Resonance Caverns", "Tutorial Spire", "Pumpkin Fields"] },
@@ -601,7 +595,7 @@ const FORGE_CATEGORIES = [
     ],
   },
   {
-    id: "entity", label: "Entity / NPC", icon: <Icons.Entities />, color: COLORS.warning,
+    id: "entity", label: "Entity / NPC", icon: <Icons.Entities />, color: ADMIN_THEME_DARK.warning,
     desc: "Create NPCs with dialogue, behavior patterns, combat abilities, and memory templates",
     fields: [
       { key: "entity_type", label: "Entity Type", type: "select", options: ["Hunter", "Watcher", "Guide", "Archivist", "Boss", "Vendor", "Ambient", "Quest NPC"] },
@@ -618,7 +612,7 @@ const FORGE_CATEGORIES = [
     ],
   },
   {
-    id: "item", label: "Item", icon: <Icons.Items />, color: COLORS.success,
+    id: "item", label: "Item", icon: <Icons.Items />, color: ADMIN_THEME_DARK.success,
     desc: "Design equipment, consumables, lore objects, and key items with stats and flavor text",
     fields: [
       { key: "item_type", label: "Item Type", type: "select", options: ["Equipment", "Consumable", "Material", "Key", "Lore", "Currency", "Artifact"] },
@@ -634,7 +628,7 @@ const FORGE_CATEGORIES = [
     ],
   },
   {
-    id: "glyph", label: "Glyph / Ability", icon: <Icons.Glyphs />, color: COLORS.accent,
+    id: "glyph", label: "Glyph / Ability", icon: <Icons.Glyphs />, color: ADMIN_THEME_DARK.accent,
     desc: "Design glyph tattoos with mechanics, visual descriptions, and balance parameters",
     fields: [
       { key: "category", label: "Category", type: "select", options: ["Combat", "Defense", "Utility", "Perception", "Movement", "Social"] },
@@ -650,7 +644,7 @@ const FORGE_CATEGORIES = [
     ],
   },
   {
-    id: "quest", label: "Quest / Objective", icon: <Icons.Content />, color: COLORS.danger,
+    id: "quest", label: "Quest / Objective", icon: <Icons.Content />, color: ADMIN_THEME_DARK.danger,
     desc: "Create quest chains with objectives, branching paths, dialogue, and reward structures",
     fields: [
       { key: "quest_type", label: "Quest Type", type: "select", options: ["Main story", "Side quest", "Discovery", "Repeatable", "Event", "Hidden", "Tutorial"] },
@@ -666,7 +660,7 @@ const FORGE_CATEGORIES = [
     ],
   },
   {
-    id: "dialogue", label: "Dialogue Tree", icon: <Icons.Activity />, color: COLORS.cyan,
+    id: "dialogue", label: "Dialogue Tree", icon: <Icons.Activity />, color: ADMIN_THEME_DARK.cyan,
     desc: "Write NPC conversation flows with conditions, personality, and memory integration",
     fields: [
       { key: "npc_type", label: "NPC Type", type: "select", options: ["Guide", "Archivist", "Vendor", "Quest giver", "Lore keeper", "Antagonist", "Fellow Conduit"] },
@@ -682,7 +676,7 @@ const FORGE_CATEGORIES = [
     ],
   },
   {
-    id: "zone", label: "Zone / Region", icon: <Icons.World />, color: COLORS.forge,
+    id: "zone", label: "Zone / Region", icon: <Icons.World />, color: ADMIN_THEME_DARK.forge,
     desc: "Design entire zones with room layouts, entity populations, lore, and progression flow",
     fields: [
       { key: "zone_type", label: "Zone Type", type: "select", options: ["exploration", "dungeon", "boss", "safe", "tutorial", "puzzle", "gauntlet"] },
@@ -700,6 +694,7 @@ const FORGE_CATEGORIES = [
 ];
 
 const ForgePromptTemplateButton = ({ tmpl, cat, onPick }) => {
+  const { colors: COLORS } = useAdminTheme();
   const [h, setH] = useState(false);
   return (
     <button type="button" onClick={() => onPick(tmpl)}
@@ -720,6 +715,7 @@ const ForgePromptTemplateButton = ({ tmpl, cat, onPick }) => {
 };
 
 const ForgeChat = ({ category, onClose }) => {
+  const { colors: COLORS } = useAdminTheme();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -1106,6 +1102,7 @@ const ForgeChat = ({ category, onClose }) => {
 };
 
 const ForgeCategoryPickCard = ({ cat, onPick }) => {
+  const { colors: COLORS } = useAdminTheme();
   const [h, setH] = useState(false);
   return (
     <button
@@ -1148,6 +1145,7 @@ const ForgeCategoryPickCard = ({ cat, onPick }) => {
 };
 
 const AiForgePage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [activeCategory, setActiveCategory] = useState(null);
   const [historyFilter, setHistoryFilter] = useState("all");
   const [forgeHistoryRows] = useState([]);
@@ -1275,12 +1273,13 @@ const AiForgePage = () => {
 
 
 const LmStudioPanel = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [llmStatus, setLlmStatus] = useState(null);
   const [llmForm, setLlmForm] = useState({
     primary_backend: "lm_studio",
     lm_studio_url: "http://localhost:1234/v1",
     ollama_url: "http://localhost:11434/v1",
-    chat_model: "local-model",
+    chat_model: "auto",
     temperature: 0.7,
     timeout_seconds: 10,
     lm_studio_key: "",
@@ -1427,9 +1426,16 @@ const LmStudioPanel = () => {
               <span style={{ color: COLORS.textDim, fontWeight: 400 }}> (loaded)</span>
             )}
           </div>
-          <div><strong style={{ color: COLORS.textDim }}>Configured id</strong> {llmStatus?.chat_model || "—"}</div>
+          <div><strong style={{ color: COLORS.textDim }}>Chat model id</strong> {llmStatus?.chat_model || "—"}</div>
+          {llmStatus?.chat_model_auto && (
+            <div style={{ color: COLORS.textDim, marginTop: 4, fontSize: 11 }}>
+              Auto: Nexus sends the model the server lists (loaded / first entry). Set a specific id only if you use Ollama with several models or need to pin one name.
+            </div>
+          )}
           {llmStatus?.models_align === false && (
-            <div style={{ color: COLORS.warning, marginTop: 6 }}>Configured id does not match the model the server is listing. Update the chat model id or reload the model in LM Studio.</div>
+            <div style={{ color: COLORS.warning, marginTop: 6 }}>
+              That chat model id is not in the server&apos;s model list. Switch to <code style={{ color: COLORS.textMuted }}>auto</code> or type an id from the list below.
+            </div>
           )}
           {llmStatus?.model_count != null && (
             <div><strong style={{ color: COLORS.textDim }}>Models listed</strong> {llmStatus.model_count}</div>
@@ -1537,8 +1543,9 @@ const LmStudioPanel = () => {
           </div>
         )}
         <label style={{ fontSize: 11, color: COLORS.textMuted }}>Chat model id</label>
-        <input list="llm-model-ids-server" value={llmForm.chat_model} onChange={(e) => setLlmForm((p) => ({ ...p, chat_model: e.target.value }))} style={inp} placeholder="local-model or model name from server" />
+        <input list="llm-model-ids-server" value={llmForm.chat_model} onChange={(e) => setLlmForm((p) => ({ ...p, chat_model: e.target.value }))} style={inp} placeholder="auto — or exact model id from server" />
         <datalist id="llm-model-ids-server">
+          <option value="auto" />
           {(llmStatus?.models || []).map((m) => <option key={m.id} value={m.id} />)}
         </datalist>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -1569,6 +1576,7 @@ const LmStudioPanel = () => {
 // ═══════════════════════════════════════════════════════════════
 
 const DashboardPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [time, setTime] = useState(new Date());
   const [serverStatus, setServerStatus] = useState({
     is_running: false, tick_count: 0, active_sessions: 0, uptime_seconds: 0,
@@ -1743,9 +1751,12 @@ const DashboardPage = () => {
 };
 
 const PlayersPage = () => {
+  const { colors: COLORS } = useAdminTheme();
+  const accountsSectionRef = useRef(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [liveSessions, setLiveSessions] = useState(null);
+  const [accountsFocus, setAccountsFocus] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -1773,6 +1784,8 @@ const PlayersPage = () => {
   const tableRows = (liveSessions ?? []).map((p) => ({
     id: p.session_id,
     name: p.player_id || "guest",
+    accountId: p.account_id ?? null,
+    characterId: p.character_id ?? null,
     level: "—",
     class: p.state ?? "playing",
     status: "online",
@@ -1788,40 +1801,70 @@ const PlayersPage = () => {
   );
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: COLORS.text, fontFamily: "'Space Grotesk', sans-serif" }}>Player Management</h2>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <SearchBar placeholder="Search players..." value={search} onChange={setSearch} />
-          <TabBar tabs={[{ id: "all", label: "All" }, { id: "online", label: "Online" }, { id: "offline", label: "Offline" }]} active={filter} onChange={setFilter} />
+      <div>
+        <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 700, color: COLORS.text, fontFamily: "'Space Grotesk', sans-serif" }}>Player Management</h2>
+        <p style={{ margin: 0, fontSize: 13, color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.55, maxWidth: 920 }}>
+          <strong style={{ color: COLORS.info }}>Live sessions</strong> refresh every few seconds. <strong style={{ color: COLORS.forge }}>Game accounts</strong> below: pixels, bundles, in-game GM crown, <strong style={{ color: COLORS.text }}>Nexus console access</strong> for this play username, and characters. Team tab is for staff-only tools.
+        </p>
+      </div>
+
+      <section style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: COLORS.text, fontFamily: "'Space Grotesk', sans-serif" }}>Live sessions</h3>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <SearchBar placeholder="Search sessions..." value={search} onChange={setSearch} />
+            <TabBar tabs={[{ id: "all", label: "All" }, { id: "online", label: "Online" }, { id: "offline", label: "Offline" }]} active={filter} onChange={setFilter} />
+          </div>
         </div>
-      </div>
-      <div style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 10, overflow: "hidden" }}>
-        <DataTable columns={[
-          { label: "Status", render: row => <StatusDot color={row.status === "online" ? COLORS.success : row.status === "idle" ? COLORS.warning : COLORS.textDim} pulse={row.status === "online"} /> },
-          { label: "Name", render: row => <span style={{ fontWeight: 600 }}>{row.name}</span> },
-          { label: "State", key: "class", mono: true },
-          { label: "Location", key: "location", mono: true, title: "room_id from Redis" },
-          { label: "Level", key: "level", mono: true }, { label: "Glyphs", key: "glyphs", mono: true }, { label: "Peer", key: "zone", mono: true },
-          { label: "Adaptive", render: row => (<div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 60, height: 4, borderRadius: 2, background: COLORS.bgInput }}><div style={{ width: `${Math.min(100, (Number(row.adaptiveLevel) || 0) / 10 * 100)}%`, height: "100%", borderRadius: 2, background: row.adaptiveLevel > 7 ? COLORS.danger : row.adaptiveLevel > 4 ? COLORS.warning : COLORS.success }} /></div><span style={{ fontSize: 11, color: COLORS.textMuted, fontFamily: "'JetBrains Mono', monospace" }}>{typeof row.adaptiveLevel === "number" ? row.adaptiveLevel.toFixed(1) : "—"}</span></div>) },
-          { label: "Last Seen", key: "lastSeen", mono: true },
-          { label: "", render: row => (
-            <div style={{ display: "flex", gap: 4 }}>
-              <ActionButton small variant="ghost" title="Force disconnect" onClick={(e) => { e.stopPropagation(); disconnectSession(row.id, row.name); }}><Icons.Alert /></ActionButton>
-              <ActionButton small variant="ghost"><Icons.Eye /></ActionButton>
-            </div>
-          ) },
-        ]} rows={filtered} />
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
-        <StatCard label="Live sessions" value={String(tableRows.length)} color={COLORS.info} icon={<Icons.Players />} />
-        <StatCard label="Matches filter" value={String(filtered.length)} color={COLORS.accent} icon={<Icons.Search />} />
-        <StatCard label="Players API" value={liveSessions === null ? "offline" : "ok"} color={liveSessions === null ? COLORS.danger : COLORS.success} icon={<Icons.Server />} />
-      </div>
+        <div style={{ borderRadius: 8, overflow: "auto", maxHeight: 360, border: `1px solid ${COLORS.border}` }}>
+          <DataTable columns={[
+            { label: "Status", render: row => <StatusDot color={row.status === "online" ? COLORS.success : row.status === "idle" ? COLORS.warning : COLORS.textDim} pulse={row.status === "online"} /> },
+            { label: "Name", render: row => <span style={{ fontWeight: 600 }}>{row.name}</span> },
+            { label: "State", key: "class", mono: true },
+            { label: "Location", key: "location", mono: true, title: "room_id from Redis" },
+            { label: "Level", key: "level", mono: true }, { label: "Glyphs", key: "glyphs", mono: true }, { label: "Peer", key: "zone", mono: true },
+            { label: "Adaptive", render: row => (<div style={{ display: "flex", alignItems: "center", gap: 6 }}><div style={{ width: 60, height: 4, borderRadius: 2, background: COLORS.bgInput }}><div style={{ width: `${Math.min(100, (Number(row.adaptiveLevel) || 0) / 10 * 100)}%`, height: "100%", borderRadius: 2, background: row.adaptiveLevel > 7 ? COLORS.danger : row.adaptiveLevel > 4 ? COLORS.warning : COLORS.success }} /></div><span style={{ fontSize: 11, color: COLORS.textMuted, fontFamily: "'JetBrains Mono', monospace" }}>{typeof row.adaptiveLevel === "number" ? row.adaptiveLevel.toFixed(1) : "—"}</span></div>) },
+            { label: "Last Seen", key: "lastSeen", mono: true },
+            { label: "", render: row => (
+              <div style={{ display: "flex", gap: 4 }}>
+                <ActionButton small variant="ghost" title="Force disconnect" onClick={(e) => { e.stopPropagation(); disconnectSession(row.id, row.name); }}><Icons.Alert /></ActionButton>
+                <ActionButton
+                  small
+                  variant="ghost"
+                  title="Open game account"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (row.accountId == null) {
+                      window.alert("No Postgres account is linked to this session (guest, or character name not found in the database).");
+                      return;
+                    }
+                    setAccountsFocus({ accountId: row.accountId, nonce: Date.now() });
+                    accountsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  <Icons.Eye />
+                </ActionButton>
+              </div>
+            ) },
+          ]} rows={filtered} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+          <StatCard label="Live sessions" value={String(tableRows.length)} color={COLORS.info} icon={<Icons.Players />} />
+          <StatCard label="Matches filter" value={String(filtered.length)} color={COLORS.accent} icon={<Icons.Search />} />
+          <StatCard label="Players API" value={liveSessions === null ? "offline" : "ok"} color={liveSessions === null ? COLORS.danger : COLORS.success} icon={<Icons.Server />} />
+        </div>
+      </section>
+
+      <section ref={accountsSectionRef}>
+        <h3 style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 700, color: COLORS.text, fontFamily: "'Space Grotesk', sans-serif" }}>Game accounts</h3>
+        <PlayerAccountsTab focusTarget={accountsFocus} />
+      </section>
     </div>
   );
 };
 
 const WorldPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [filter, setFilter] = useState("all");
   const [zones, setZones] = useState([]);
   const typeColors = { tutorial: COLORS.success, exploration: COLORS.info, dungeon: COLORS.accent, boss: COLORS.danger, safe: COLORS.warning };
@@ -1895,6 +1938,7 @@ const WorldPage = () => {
 };
 
 const EntitiesPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState([]);
   const typeColors = { Hunter: COLORS.danger, Guide: COLORS.success, Watcher: COLORS.info, Boss: COLORS.warning, Vendor: COLORS.accent, spawn: COLORS.accent };
@@ -1938,6 +1982,7 @@ const EntitiesPage = () => {
 };
 
 const ItemsPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const rarityColors = { common: COLORS.textMuted, uncommon: COLORS.success, rare: COLORS.info, epic: COLORS.accent, legendary: COLORS.warning };
   const [items, setItems] = useState([]);
   useEffect(() => {
@@ -1984,6 +2029,7 @@ const ItemsPage = () => {
 };
 
 const GlyphsPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const catColors = { Combat: COLORS.danger, Defense: COLORS.info, Utility: COLORS.success };
   const [glyphs, setGlyphs] = useState([]);
   useEffect(() => {
@@ -2034,6 +2080,7 @@ const GlyphsPage = () => {
 };
 
 const LocationsPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [zones, setZones] = useState([]);
   const [selectedZone, setSelectedZone] = useState("");
   const [roomRows, setRoomRows] = useState([]);
@@ -2138,6 +2185,7 @@ const LocationsPage = () => {
 };
 
 const ServerPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [info, setInfo] = useState(null);
   useEffect(() => {
     const load = async () => {
@@ -2175,6 +2223,7 @@ const ServerPage = () => {
     { key: "llm_model", value: String(info.llm_model || "—") },
     { key: "llm_detected_model", value: String(info.llm_detected_model || "—") },
     { key: "llm_models_align", value: info.llm_models_align == null ? "—" : info.llm_models_align ? "yes" : "no" },
+    { key: "llm_chat_model_auto", value: info.llm_chat_model_auto == null ? "—" : info.llm_chat_model_auto ? "yes" : "no" },
     { key: "llm_connected", value: info.llm_connected ? "yes" : "no" },
     { key: "llm_list_ms", value: info.llm_latency_ms != null ? String(info.llm_latency_ms) : "—" },
     { key: "tick_count", value: String(info.tick_count) },
@@ -2193,6 +2242,7 @@ const ServerPage = () => {
           llmConfigured={info.llm_model}
           llmConnected={info.llm_connected}
           llmBackend={info.llm_backend}
+          llmModelsAlign={info.llm_models_align}
         />
       )}
       <LmStudioPanel />
@@ -2229,6 +2279,7 @@ const ServerPage = () => {
 };
 
 const ContentPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [overview, setOverview] = useState(null);
   const [reloadMsg, setReloadMsg] = useState("");
   useEffect(() => {
@@ -2303,6 +2354,7 @@ const ContentPage = () => {
 
 
 const OperationsPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [tab, setTab] = useState("sessions");
   const [players, setPlayers] = useState([]);
   const [worldLive, setWorldLive] = useState(null);
@@ -2510,6 +2562,7 @@ const OperationsPage = () => {
 // ═══════════════════════════════════════════════════════════════
 
 const LoginScreen = ({ onLoggedIn }) => {
+  const { colors: COLORS } = useAdminTheme();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
@@ -2564,19 +2617,23 @@ const LoginScreen = ({ onLoggedIn }) => {
   );
 };
 
-const PresenceStrip = ({ online }) => (
-  <div style={{
-    fontSize: 11, color: COLORS.textMuted, fontFamily: "'JetBrains Mono', monospace",
-    padding: "8px 12px", background: COLORS.bgInput, borderRadius: 8, border: `1px solid ${COLORS.border}`,
-    marginBottom: 12, lineHeight: 1.5,
-  }}>
-    <strong style={{ color: COLORS.textDim }}>Team online</strong>
-    {" · "}
-    {!online?.length ? "—" : online.map((p) => `${p.display_name || p.username} (${p.role})`).join(" · ")}
-  </div>
-);
+const PresenceStrip = ({ online }) => {
+  const { colors: COLORS } = useAdminTheme();
+  return (
+    <div style={{
+      fontSize: 11, color: COLORS.textMuted, fontFamily: "'JetBrains Mono', monospace",
+      padding: "8px 12px", background: COLORS.bgInput, borderRadius: 8, border: `1px solid ${COLORS.border}`,
+      marginBottom: 12, lineHeight: 1.5,
+    }}>
+      <strong style={{ color: COLORS.textDim }}>Team online</strong>
+      {" · "}
+      {!online?.length ? "—" : online.map((p) => `${p.display_name || p.username} (${p.role})`).join(" · ")}
+    </div>
+  );
+};
 
 const StaffTeamPage = () => {
+  const { colors: COLORS } = useAdminTheme();
   const [rows, setRows] = useState([]);
   const [loadErr, setLoadErr] = useState("");
   const [form, setForm] = useState({
@@ -2641,6 +2698,7 @@ const StaffTeamPage = () => {
       <p style={{ margin: "0 0 16px", fontSize: 13, color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif" }}>
         Head admins can add staff, assign roles (admin / GM), and restrict <strong>tools</strong> (sidebar areas) and <strong>zones</strong> (world regions for room edits / forge inject / live spawns).
         Use zones <code style={{ color: COLORS.textDim }}>*</code> for all zones, or comma-separated ids e.g. <code style={{ color: COLORS.textDim }}>test_zone</code>.
+        {" "}Staff accounts are for this admin console only. To give a <strong>play</strong> login the in-game pink <strong>GM</strong> crown, use <strong>Players → Game accounts</strong> and enable <em>Game Master play account</em> on that row.
       </p>
       {loadErr && <div style={{ color: COLORS.danger, marginBottom: 12 }}>{loadErr}</div>}
 
@@ -2696,11 +2754,42 @@ const StaffTeamPage = () => {
 // NAVIGATION & MAIN APP
 // ═══════════════════════════════════════════════════════════════
 
+function SettingsPlaceholderPage() {
+  const { colors: COLORS, toggleMode, mode } = useAdminTheme();
+  return (
+    <div style={{ fontFamily: "'DM Sans', sans-serif", padding: 40, maxWidth: 560 }}>
+      <h2 style={{ margin: "0 0 12px", fontSize: 18, color: COLORS.text, fontFamily: "'Space Grotesk', sans-serif" }}>Settings</h2>
+      <p style={{ margin: "0 0 20px", fontSize: 14, color: COLORS.textMuted, lineHeight: 1.55 }}>
+        Configure server, LLM, and permissions from other sidebar areas. Theme preference is stored in this browser.
+      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 13, color: COLORS.text }}>Appearance</span>
+        <button
+          type="button"
+          onClick={toggleMode}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            border: `1px solid ${COLORS.border}`,
+            background: COLORS.bgCard,
+            color: COLORS.text,
+            fontWeight: 600,
+            cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+        >
+          {mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: <Icons.Dashboard /> },
   { id: "forge", label: "AI Forge", icon: <Icons.Forge />, highlight: true },
   { id: "operations", label: "Operations", icon: <Icons.Alert /> },
-  { id: "players", label: "Players", icon: <Icons.Players /> },
+  { id: "players", label: "Players & accounts", icon: <Icons.Players /> },
   { id: "world", label: "World & Zones", icon: <Icons.World /> },
   { id: "entities", label: "Entities", icon: <Icons.Entities /> },
   { id: "items", label: "Items", icon: <Icons.Items /> },
@@ -2726,11 +2815,12 @@ const PAGES = {
   builder: WorldBuilderPage,
   server: ServerPage,
   content: ContentPage,
-  settings: () => <div style={{ color: COLORS.textMuted, fontFamily: "'DM Sans', sans-serif", padding: 40, textAlign: "center" }}>Settings panel — configure server, LLM, permissions, and theme preferences.</div>,
+  settings: SettingsPlaceholderPage,
   team: StaffTeamPage,
 };
 
 export default function App() {
+  const { colors: COLORS, toggleMode, mode } = useAdminTheme();
   const [activePage, setActivePage] = useState("dashboard");
   const [sidebarHovered, setSidebarHovered] = useState(null);
   const [serverInfo, setServerInfo] = useState(null);
@@ -2739,12 +2829,33 @@ export default function App() {
   const [presenceOnline, setPresenceOnline] = useState([]);
 
   useEffect(() => {
-    const id = axios.interceptors.request.use((cfg) => {
+    const onAuthLost = () => {
+      localStorage.removeItem(LS_ADMIN_TOKEN);
+      window.location.reload();
+    };
+    window.addEventListener("fablestar-admin-unauthorized", onAuthLost);
+    const reqId = axios.interceptors.request.use((cfg) => {
       const t = localStorage.getItem(LS_ADMIN_TOKEN);
       if (t) cfg.headers.Authorization = `Bearer ${t}`;
       return cfg;
     });
-    return () => axios.interceptors.request.eject(id);
+    const resId = axios.interceptors.response.use(
+      (r) => r,
+      (err) => {
+        if (err.response?.status === 401) {
+          const auth = err.config?.headers?.Authorization;
+          if (typeof auth === "string" && auth.startsWith("Bearer ") && localStorage.getItem(LS_ADMIN_TOKEN)) {
+            window.dispatchEvent(new Event("fablestar-admin-unauthorized"));
+          }
+        }
+        return Promise.reject(err);
+      }
+    );
+    return () => {
+      window.removeEventListener("fablestar-admin-unauthorized", onAuthLost);
+      axios.interceptors.request.eject(reqId);
+      axios.interceptors.response.eject(resId);
+    };
   }, []);
 
   const refreshMe = useCallback(async () => {
@@ -2761,10 +2872,10 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await axios.get(`${API_BASE}/server/info`);
-        setServerInfo(data);
+        const { data } = await axios.get(`${API_BASE}/admin/bootstrap`);
+        setServerInfo({ admin_auth_required: !!data.admin_auth_required });
       } catch {
-        setServerInfo({ admin_auth_required: false });
+        setServerInfo({ admin_auth_required: true });
       }
     })();
   }, []);
@@ -2952,7 +3063,17 @@ export default function App() {
             </div>
           </div>
           {(serverInfo?.admin_auth_required || localStorage.getItem(LS_ADMIN_TOKEN)) && (
-            <button type="button" onClick={logout} style={{ fontSize: 11, padding: "6px 10px", background: COLORS.bgHover, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.textMuted, cursor: "pointer" }}>Sign out</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <button
+                type="button"
+                onClick={toggleMode}
+                title={mode === "dark" ? "Use light theme" : "Use dark theme"}
+                style={{ fontSize: 11, padding: "6px 10px", background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.textMuted, cursor: "pointer" }}
+              >
+                {mode === "dark" ? "Light mode" : "Dark mode"}
+              </button>
+              <button type="button" onClick={logout} style={{ fontSize: 11, padding: "6px 10px", background: COLORS.bgHover, border: `1px solid ${COLORS.border}`, borderRadius: 6, color: COLORS.textMuted, cursor: "pointer" }}>Sign out</button>
+            </div>
           )}
         </div>
       </nav>

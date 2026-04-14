@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
-import { COLORS, ROOM_TYPE_COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 const CORNER_QUARTER_PX = 16;
 
@@ -50,6 +50,7 @@ const EXIT_CORNER_LABEL = { northwest: "NW", northeast: "NE", southwest: "SW", s
 
 /** @param {'edge' | 'corner' | 'stairs-up' | 'stairs-down'} variant */
 function Port({ position, id, style = {}, variant = "edge" }) {
+  const { colors: COLORS } = useTheme();
   const doorBorder = COLORS.borderActive;
   const doorBg = COLORS.bgPanel;
   const upBorder = COLORS.info;
@@ -142,6 +143,7 @@ function Port({ position, id, style = {}, variant = "edge" }) {
 }
 
 export default memo(function ShipRoomNode({ data, selected }) {
+  const { colors: COLORS, roomTypeColors: ROOM_TYPE_COLORS } = useTheme();
   const tc = ROOM_TYPE_COLORS[data.roomType] || ROOM_TYPE_COLORS["?"];
   const w = 160;
   return (

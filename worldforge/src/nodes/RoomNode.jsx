@@ -1,6 +1,6 @@
 import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Handle, NodeResizer, NodeToolbar, Position, useStore } from "@xyflow/react";
-import { COLORS, ROOM_TYPE_COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 import {
   canvasLayoutCardinal,
   canvasLayoutCorner,
@@ -17,6 +17,7 @@ const EXIT_CORNER_LABEL = { northwest: "NW", northeast: "NE", southwest: "SW", s
  * @param {{ left: number, top: number, position: import('@xyflow/react').Position }} [canvasPlacement] map/workspace-aligned position (parent = unrotated node box)
  */
 function DoorPort({ position, canvasPlacement, id, style = {}, linked, unlinked, variant = "edge" }) {
+  const { colors: COLORS } = useTheme();
   const doorBorder = unlinked ? COLORS.warning : linked ? COLORS.success : COLORS.borderActive;
   const doorBg = unlinked ? `${COLORS.warning}44` : linked ? `${COLORS.success}33` : COLORS.bgPanel;
 
@@ -131,21 +132,24 @@ function DoorPort({ position, canvasPlacement, id, style = {}, linked, unlinked,
   );
 }
 
-const btnStyle = {
-  fontSize: 10,
-  padding: "0 6px",
-  height: 22,
-  borderRadius: 4,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  cursor: "pointer",
-};
-
 /** Inset so door ports (≈18px) + 3px stripe never sit over text/tags */
 const CONTENT_INSET = { top: 22, right: 22, bottom: 22, left: 26 };
 
 export default memo(function RoomNode({ data, selected }) {
+  const { colors: COLORS, roomTypeColors: ROOM_TYPE_COLORS } = useTheme();
+  const btnStyle = useMemo(
+    () => ({
+      fontSize: 10,
+      padding: "0 6px",
+      height: 22,
+      borderRadius: 4,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+    }),
+    [COLORS]
+  );
   const tc = ROOM_TYPE_COLORS[data.roomType] || ROOM_TYPE_COLORS["?"];
   const gc = data.groupColor;
   const isPh = data.isPlaceholder;

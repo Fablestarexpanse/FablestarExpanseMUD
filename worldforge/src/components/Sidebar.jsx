@@ -1,4 +1,13 @@
-import { COLORS } from "../theme.js";
+import { useMemo } from "react";
+import { useTheme } from "../ThemeContext.jsx";
+
+const navBtn = {
+  textAlign: "left",
+  padding: "8px 10px",
+  borderRadius: 6,
+  fontSize: 12,
+  cursor: "pointer",
+};
 
 const EDITORS = [
   { id: "zone", label: "Zone" },
@@ -38,6 +47,19 @@ export default function Sidebar({
   onOpenSettings,
   onOpenExport,
 }) {
+  const { colors: COLORS } = useTheme();
+  const smallBtn = useMemo(
+    () => ({
+      padding: "6px 10px",
+      fontSize: 11,
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+    }),
+    [COLORS]
+  );
   const shortRoot = contentRoot ? (contentRoot.length > 36 ? "…" + contentRoot.slice(-34) : contentRoot) : "";
 
   const treeItems = () => {
@@ -170,21 +192,3 @@ export default function Sidebar({
     </div>
   );
 }
-
-const smallBtn = {
-  padding: "6px 10px",
-  fontSize: 11,
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  cursor: "pointer",
-};
-
-const navBtn = {
-  textAlign: "left",
-  padding: "8px 10px",
-  borderRadius: 6,
-  fontSize: 12,
-  cursor: "pointer",
-};

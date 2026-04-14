@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { T, clamp } from "../theme.js";
+import { clamp } from "../theme.js";
+import { usePlayTheme } from "../PlayThemeContext.jsx";
 
 export function ContextMenu({ x, y, items, onClose }) {
+  const { T } = usePlayTheme();
   const ref = useRef(null);
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
@@ -39,6 +41,7 @@ export function ContextMenu({ x, y, items, onClose }) {
 }
 
 export function Tooltip({ children, text, detail }) {
+  const { T } = usePlayTheme();
   const [show, setShow] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const ref = useRef(null);
@@ -65,6 +68,7 @@ export function Tooltip({ children, text, detail }) {
 }
 
 export function DraggablePanel({ id, title, icon, children, defaultPos, defaultSize, minW = 240, minH = 160, collapsed, onToggleCollapse, zIndex = 1, onFocus, accentColor, badge, resizable = true, locked = false }) {
+  const { T } = usePlayTheme();
   const [pos, setPos] = useState(defaultPos);
   const [size, setSize] = useState(defaultSize);
   const [dragging, setDragging] = useState(false);

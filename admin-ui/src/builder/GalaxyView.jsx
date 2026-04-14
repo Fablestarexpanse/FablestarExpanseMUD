@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
-import { COLORS, API_BASE } from "./builderConstants.js";
+import { API_BASE } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 const VB_W = 900;
 const VB_H = 520;
 const PAD = 72;
 
-function securityColor(sec) {
-  if (sec === "high") return COLORS.success;
-  if (sec === "medium") return COLORS.warning;
-  return COLORS.danger;
+function securityColor(sec, C) {
+  if (sec === "high") return C.success;
+  if (sec === "medium") return C.warning;
+  return C.danger;
 }
 
 /** Bounds + scale shared by layout and click-to-world mapping. */
@@ -93,17 +94,17 @@ function clientPointToSvg(svg, clientX, clientY) {
   return pt.matrixTransform(ctm.inverse());
 }
 
-const inp = {
-  padding: "6px 10px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 12,
-  fontFamily: "'DM Sans', sans-serif",
-};
-
 export default function GalaxyView({ onSelectSystem }) {
+  const { colors: COLORS } = useAdminTheme();
+  const inp = {
+    padding: "6px 10px",
+    borderRadius: 6,
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.bgInput,
+    color: COLORS.text,
+    fontSize: 12,
+    fontFamily: "'DM Sans', sans-serif",
+  };
   const svgRef = useRef(null);
   const [systems, setSystems] = useState([]);
   const [err, setErr] = useState("");
@@ -377,7 +378,7 @@ export default function GalaxyView({ onSelectSystem }) {
           })}
 
           {placed.map((sys) => {
-            const col = securityColor(sys.security);
+            const col = securityColor(sys.security, COLORS);
             const isH = hovered === sys.id;
             const dim = sys.dim;
             return (
@@ -448,7 +449,7 @@ export default function GalaxyView({ onSelectSystem }) {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10, fontSize: 12 }}>
               <div>
                 <div style={{ fontSize: 9, color: COLORS.textDim, textTransform: "uppercase" }}>Security</div>
-                <div style={{ fontWeight: 600, color: securityColor(hov.security) }}>{hov.security}</div>
+                <div style={{ fontWeight: 600, color: securityColor(hov.security, COLORS) }}>{hov.security}</div>
               </div>
               <div>
                 <div style={{ fontSize: 9, color: COLORS.textDim, textTransform: "uppercase" }}>Bodies</div>

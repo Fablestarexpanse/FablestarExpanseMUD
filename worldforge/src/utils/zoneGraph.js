@@ -1,5 +1,5 @@
 import { MarkerType } from "@xyflow/react";
-import { COLORS } from "../theme.js";
+import { COLORS_DARK } from "../theme.js";
 
 export const DEFAULT_ROOM_NODE_W = 176;
 export const DEFAULT_ROOM_NODE_H = 108;
@@ -38,7 +38,7 @@ export function resolveExitDestination(zoneId, dest, knownIds) {
  * @param {object} opts { mutedEdgeSet: Set<string> }
  */
 export function buildZoneFlow(zoneId, roomsMap, positionsDoc, opts = {}) {
-  const { mutedEdgeSet = new Set() } = opts;
+  const { mutedEdgeSet = new Set(), colors: COLORS = COLORS_DARK } = opts;
   const positions = positionsDoc.positions || {};
   const slugs = Object.keys(roomsMap).sort();
   const knownIds = new Set();

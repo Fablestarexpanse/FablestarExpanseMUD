@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import yaml from "js-yaml";
-import { COLORS, API_BASE } from "./builderConstants.js";
+import { API_BASE } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -52,6 +53,7 @@ function connType(c) {
 }
 
 function OrbitalSchematic({ detail, onSelectZone }) {
+  const { colors: COLORS } = useAdminTheme();
   const bodies = detail.bodies || [];
   const hasHints = bodies.some((b) => b.orbit != null || b.orbits);
   if (!bodies.length || !hasHints) return null;
@@ -149,16 +151,6 @@ function OrbitalSchematic({ detail, onSelectZone }) {
   );
 }
 
-const inp = {
-  padding: "6px 10px",
-  borderRadius: 6,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 12,
-  fontFamily: "'DM Sans', sans-serif",
-};
-
 function errDetail(e) {
   const d = e?.response?.data?.detail;
   if (d == null) return e?.message || String(e);
@@ -167,22 +159,32 @@ function errDetail(e) {
   return JSON.stringify(d);
 }
 
-function tabStyle(active) {
+function tabStyle(active, C) {
   return {
     padding: "8px 14px",
     fontSize: 12,
     fontWeight: 600,
     border: "none",
-    borderBottom: active ? `2px solid ${COLORS.accent}` : "2px solid transparent",
+    borderBottom: active ? `2px solid ${C.accent}` : "2px solid transparent",
     marginBottom: -1,
     background: "transparent",
-    color: active ? COLORS.accent : COLORS.textMuted,
+    color: active ? C.accent : C.textMuted,
     cursor: "pointer",
     fontFamily: "'DM Sans', sans-serif",
   };
 }
 
 export default function SystemView({ systemId, onSelectZone, onSelectShip }) {
+  const { colors: COLORS } = useAdminTheme();
+  const inp = {
+    padding: "6px 10px",
+    borderRadius: 6,
+    border: `1px solid ${COLORS.border}`,
+    background: COLORS.bgInput,
+    color: COLORS.text,
+    fontSize: 12,
+    fontFamily: "'DM Sans', sans-serif",
+  };
   const [activeTab, setActiveTab] = useState("overview");
   const [detail, setDetail] = useState(null);
   const [doc, setDoc] = useState(null);
@@ -404,7 +406,7 @@ export default function SystemView({ systemId, onSelectZone, onSelectShip }) {
         }}
       >
         {TABS.map((t) => (
-          <button key={t.id} type="button" style={tabStyle(activeTab === t.id)} onClick={() => goTab(t.id)}>
+          <button key={t.id} type="button" style={tabStyle(activeTab === t.id, COLORS)} onClick={() => goTab(t.id)}>
             {t.label}
             {t.id === "connections" && connections.length > 0 && (
               <span style={{ marginLeft: 6, fontSize: 10, color: COLORS.textDim, fontWeight: 500 }}>({connections.length})</span>

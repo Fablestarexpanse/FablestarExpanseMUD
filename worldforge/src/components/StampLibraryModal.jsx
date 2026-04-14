@@ -1,17 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
-import { COLORS } from "../theme.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTheme } from "../ThemeContext.jsx";
 import { deleteStampFolder, listStampSlugs, loadStampBundle, stampFolderPath } from "../utils/stampBundle.js";
 import StampPreviewMini from "./StampPreviewMini.jsx";
-
-const btn = {
-  padding: "6px 12px",
-  borderRadius: 8,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgCard,
-  color: COLORS.text,
-  fontSize: 12,
-  cursor: "pointer",
-};
 
 /**
  * @param {object} props
@@ -21,6 +11,19 @@ const btn = {
  * @param {() => void} props.onClose
  */
 export default function StampLibraryModal({ open, worldRoot, onPlaceInZone, onClose }) {
+  const { colors: COLORS } = useTheme();
+  const btn = useMemo(
+    () => ({
+      padding: "6px 12px",
+      borderRadius: 8,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      fontSize: 12,
+      cursor: "pointer",
+    }),
+    [COLORS]
+  );
   const [slugs, setSlugs] = useState([]);
   const [selected, setSelected] = useState(null);
   const [preview, setPreview] = useState(null);

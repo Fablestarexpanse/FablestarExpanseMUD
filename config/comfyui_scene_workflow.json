@@ -1,0 +1,240 @@
+{
+  "1": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Fablestar_Scenegen_NegativePrompt"
+    }
+  },
+  "2": {
+    "inputs": {
+      "unet_name": "z_image_bf16.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Fablestar_Scenegen_UNet_ModelLoader"
+    }
+  },
+  "3": {
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Fablestar_Scenegen_VAE_Decode"
+    }
+  },
+  "4": {
+    "inputs": {
+      "shift": 3,
+      "model": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingAuraFlow",
+    "_meta": {
+      "title": "Fablestar_Scenegen_AuraFlow_Sampling_Params"
+    }
+  },
+  "5": {
+    "inputs": {
+      "output_strength": 1,
+      "clip_strength_multiplier": 1,
+      "model": [
+        "2",
+        0
+      ],
+      "lora_stack": [
+        "15",
+        0
+      ],
+      "clip": [
+        "10",
+        0
+      ],
+      "settings": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "LoRAOptimizerSimple",
+    "_meta": {
+      "title": "Fablestar_Scenegen_LoRA_Optimizer"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": [
+        "5",
+        2
+      ]
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Fablestar_Scenegen_TriggerWord_Display"
+    }
+  },
+  "7": {
+    "inputs": {
+      "group_mode": true,
+      "default_active": true,
+      "allow_strength_adjustment": false,
+      "toggle_trigger_words": {
+        "__value__": []
+      },
+      "orinalMessage": "",
+      "trigger_words": [
+        "15",
+        1
+      ]
+    },
+    "class_type": "TriggerWord Toggle (LoraManager)",
+    "_meta": {
+      "title": "Fablestar_Scenegen_TriggerWord_Toggle"
+    }
+  },
+  "8": {
+    "inputs": {
+      "top_n": 5,
+      "scoring_svd": "disabled",
+      "scoring_device": "gpu",
+      "scoring_speed": "fast",
+      "scoring_formula": "v2",
+      "diff_cache_mode": "auto",
+      "diff_cache_ram_pct": 0.5,
+      "record_dataset": "disabled"
+    },
+    "class_type": "LoRAAutoTunerSettings",
+    "_meta": {
+      "title": "Fablestar_Scenegen_LoRA_AutoTuner_Settings"
+    }
+  },
+  "9": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Fablestar_Scenegen_VAE_Loader"
+    }
+  },
+  "10": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Fablestar_Scenegen_CLIP_Loader"
+    }
+  },
+  "11": {
+    "inputs": {
+      "seed": 890490722525634,
+      "steps": 15,
+      "cfg": 4,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "denoise": 1,
+      "model": [
+        "5",
+        0
+      ],
+      "positive": [
+        "16",
+        0
+      ],
+      "negative": [
+        "1",
+        0
+      ],
+      "latent_image": [
+        "13",
+        4
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "Fablestar_Scenegen_KSampler"
+    }
+  },
+  "13": {
+    "inputs": {
+      "mode": "Manual",
+      "latent_type": "latent_4x8",
+      "width": 1152,
+      "height": 864,
+      "auto_detect": false,
+      "rescale_mode": "megapixels",
+      "rescale_value": 1.4175287863328578,
+      "batch_size": 1
+    },
+    "class_type": "ResolutionMaster",
+    "_meta": {
+      "title": "Fablestar_Scenegen_Resolution_Latent"
+    }
+  },
+  "15": {
+    "inputs": {
+      "text": "<lora:Butternutcrunch_PolyPop_000001750:1.00>",
+      "loras": {
+        "__value__": [
+          {
+            "name": "Butternutcrunch_PolyPop_000001750",
+            "strength": 1,
+            "active": true,
+            "expanded": false,
+            "clipStrength": 1,
+            "locked": false
+          }
+        ]
+      }
+    },
+    "class_type": "Lora Stacker (LoraManager)",
+    "_meta": {
+      "title": "Fablestar_Scenegen_LoRA_Stacker"
+    }
+  },
+  "16": {
+    "inputs": {
+      "text": "Prompt Goes Here",
+      "clip": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "Fablestar_Scenegen_PositivePrompt"
+    }
+  },
+  "17": {
+    "inputs": {
+      "filename_prefix": "z-image",
+      "images": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Fablestar_Scenegen_SaveImage_Output"
+    }
+  }
+}

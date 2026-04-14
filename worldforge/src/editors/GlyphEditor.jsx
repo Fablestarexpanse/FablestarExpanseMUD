@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import yaml from "js-yaml";
 import { joinPaths } from "../utils/paths.js";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 import * as fs from "../hooks/useFileSystem.js";
 import { useContent } from "../hooks/useContentStore.js";
 
@@ -10,6 +10,51 @@ const SLOTS = ["forearm", "upper_arm", "chest", "back", "calf", "thigh", "palm",
 const EFFECT_TYPES = ["damage", "heal", "buff", "debuff", "movement", "utility"];
 
 export default function GlyphEditor({ worldRoot, selectedId, onSelect }) {
+  const { colors: COLORS } = useTheme();
+  const btn = useMemo(
+    () => ({
+      padding: "8px 12px",
+      margin: 8,
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgCard,
+      color: COLORS.text,
+      cursor: "pointer",
+      fontSize: 12,
+    }),
+    [COLORS]
+  );
+  const listBtn = useMemo(
+    () => ({
+      display: "block",
+      width: "100%",
+      textAlign: "left",
+      padding: "8px 10px",
+      border: "none",
+      color: COLORS.text,
+      cursor: "pointer",
+      fontSize: 12,
+    }),
+    [COLORS]
+  );
+  const lbl = useMemo(
+    () => ({ display: "block", fontSize: 10, color: COLORS.textMuted, marginTop: 10, marginBottom: 4 }),
+    [COLORS]
+  );
+  const inp = useMemo(
+    () => ({
+      width: "100%",
+      maxWidth: 480,
+      boxSizing: "border-box",
+      padding: 8,
+      borderRadius: 6,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgInput,
+      color: COLORS.text,
+      fontSize: 12,
+    }),
+    [COLORS]
+  );
   const { glyphs, glyphIds, dispatch } = useContent();
   const [draft, setDraft] = useState(null);
   const [dirty, setDirty] = useState(false);
@@ -140,8 +185,3 @@ export default function GlyphEditor({ worldRoot, selectedId, onSelect }) {
     </div>
   );
 }
-
-const btn = { padding: "8px 12px", margin: 8, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.bgCard, color: COLORS.text, cursor: "pointer", fontSize: 12 };
-const listBtn = { display: "block", width: "100%", textAlign: "left", padding: "8px 10px", border: "none", color: COLORS.text, cursor: "pointer", fontSize: 12 };
-const lbl = { display: "block", fontSize: 10, color: COLORS.textMuted, marginTop: 10, marginBottom: 4 };
-const inp = { width: "100%", maxWidth: 480, boxSizing: "border-box", padding: 8, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.bgInput, color: COLORS.text, fontSize: 12 };

@@ -1,9 +1,10 @@
 import { useState, useContext } from "react";
-import { T } from "../theme.js";
 import { Tooltip } from "./01-primitives.jsx";
 import { GameCmdContext } from "./00-ctx.jsx";
+import { usePlayTheme } from "../PlayThemeContext.jsx";
 
 export function AfflictionTracker() {
+  const { T } = usePlayTheme();
   const afflictions = [
     { name: "Fablestar Scrutiny", cat: "permanent", icon: "⊗", dur: "∞", desc: "The labyrinth is aware of you", color: T.glyph.crimson },
     { name: "Minor Fracture", cat: "physical", icon: "🦴", dur: "12s", desc: "Left arm mobility reduced", color: T.glyph.amber },
@@ -42,15 +43,16 @@ export function AfflictionTracker() {
   );
 }
 
-export function QuestJournal() {
+export function QuestJournal({ gameCurrencyLabel = "Digi" }) {
+  const { T } = usePlayTheme();
   const [filter, setFilter] = useState("active");
   const quests = [
     { id: 1, title: "The Sentinel's Memory", zone: "Sector 7", type: "main", status: "active",
       objectives: [{ text: "Locate the Corroded Sentinel", done: true }, { text: "Retrieve the glyph-shard", done: false }],
-      progress: 50, reward: "Glyph: Sentinel's Echo" },
+      progress: 50, reward: "Glyph: Sentinel's Echo", digiPayout: 250 },
     { id: 2, title: "Cartographer's Ambition", zone: "Sector 7", type: "exploration", status: "active",
       objectives: [{ text: "Discover 8 rooms", done: false, count: "5/8" }],
-      progress: 62, reward: "Map Fragment" },
+      progress: 62, reward: "Map Fragment", digiPayout: 120 },
   ];
   const typeIcon = { main: "⬡", side: "◇", exploration: "🗺", repeatable: "↻" };
   const typeColor = { main: T.glyph.violet, side: T.glyph.cyan, exploration: T.glyph.emerald, repeatable: T.glyph.amber };
@@ -88,7 +90,10 @@ export function QuestJournal() {
                 {obj.count && <span style={{ fontSize: 9, fontFamily: T.font.mono, color: T.text.accent }}>{obj.count}</span>}
               </div>
             ))}
-            <div style={{ fontSize: 9, fontFamily: T.font.mono, color: T.text.gold, padding: "4px 0 0 20px" }}>★ {q.reward}</div>
+            <div style={{ fontSize: 9, fontFamily: T.font.mono, color: T.currency.digi.fg, padding: "4px 0 0 20px" }}>
+              ★ {q.reward}
+              {q.digiPayout != null ? ` · ${q.digiPayout} ${gameCurrencyLabel}` : ""}
+            </div>
           </div>
         ))}
       </div>
@@ -97,6 +102,7 @@ export function QuestJournal() {
 }
 
 export function TargetPanel() {
+  const { T } = usePlayTheme();
   const target = { name: "Corroded Sentinel", type: "Construct", level: 16, hp: 68, hpMax: 100, status: "Suppressed", weaknesses: ["Resonance"], resistances: ["Physical"], afflictions: ["Ward of Stillness"] };
   const hpPct = (target.hp / target.hpMax) * 100;
   const hpColor = hpPct > 50 ? T.glyph.emerald : hpPct > 25 ? T.glyph.amber : T.glyph.crimson;
@@ -127,6 +133,7 @@ export function TargetPanel() {
 }
 
 export function SessionStats() {
+  const { T } = usePlayTheme();
   const stats = [
     { label: "Session Time", value: "1h 12m", icon: "⏱" },
     { label: "XP Gained", value: "4,280", icon: "★" },
@@ -147,6 +154,7 @@ export function SessionStats() {
 }
 
 export function KeybindManager() {
+  const { T } = usePlayTheme();
   const binds = [
     { key: "1–6", action: "Glyph slots", cat: "combat" },
     { key: "Ctrl+F", action: "Search scrollback", cat: "nav" },
@@ -180,6 +188,7 @@ export function KeybindManager() {
 }
 
 export function TriggerBuilder() {
+  const { T } = usePlayTheme();
   const triggers = [
     { name: "Auto-sip health", pattern: "health drops below 50%", action: "use tincture", enabled: true, type: "text" },
     { name: "Highlight tells", pattern: "^\\w+ tells you:", action: "Highlight cyan", enabled: true, type: "regex" },
@@ -211,6 +220,7 @@ export function TriggerBuilder() {
 }
 
 export function QuickActions() {
+  const { T } = usePlayTheme();
   const { sendCommand } = useContext(GameCmdContext);
   const actions = [
     { label: "Look", cmd: "look", icon: "👁", color: T.text.secondary },

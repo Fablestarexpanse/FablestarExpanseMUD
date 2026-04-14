@@ -2,6 +2,13 @@
   box-sizing: border-box;
 }
 
+:root {
+  --wf-bg: #0a0b0f;
+  --wf-text: #c8cad4;
+  --wf-panel: #111318;
+  --wf-border: #252833;
+}
+
 html,
 body,
 #root {
@@ -9,9 +16,21 @@ body,
   height: 100%;
 }
 
+html {
+  background-color: var(--wf-bg);
+  color: var(--wf-text);
+}
+
 body {
   font-family: "DM Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background-color: var(--wf-bg);
+  color: var(--wf-text);
+}
+
+#root {
+  min-height: 100%;
+  background-color: var(--wf-bg);
 }
 
 .react-flow__viewport {

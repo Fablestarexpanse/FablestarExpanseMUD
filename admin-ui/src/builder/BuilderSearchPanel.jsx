@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { COLORS, API_BASE } from "./builderConstants.js";
+import { API_BASE } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 export default function BuilderSearchPanel({
   onOpenZone,
@@ -8,6 +9,7 @@ export default function BuilderSearchPanel({
   onOpenShip,
   onOpenRoom,
 }) {
+  const { colors: COLORS } = useAdminTheme();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);

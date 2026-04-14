@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { COLORS } from "../theme.js";
+import { useTheme } from "../ThemeContext.jsx";
 
 const VARIANTS = {
   yellow: { fill: "rgba(251, 191, 36, 0.12)", border: "rgba(251, 191, 36, 0.45)" },
@@ -9,6 +9,7 @@ const VARIANTS = {
 };
 
 export default memo(function NoteNode({ id, data, selected }) {
+  const { colors: COLORS } = useTheme();
   const [editing, setEditing] = useState(false);
   const v = VARIANTS[data.color] || VARIANTS.yellow;
   return (

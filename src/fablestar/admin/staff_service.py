@@ -9,11 +9,14 @@ import bcrypt
 from fastapi import HTTPException
 from sqlalchemy import func, select
 
-from fablestar.state.models import AdminStaff
+from fablestar.state.models import Account, AdminStaff
 
 logger = logging.getLogger(__name__)
 
 VALID_ROLES = frozenset({"head_admin", "admin", "gm"})
+
+DEV_DEFAULT_STAFF_USERNAME = "staff"
+DEV_DEFAULT_STAFF_PASSWORD = "test"
 
 
 def _hash_password(pw: str) -> str:
@@ -39,6 +42,108 @@ def staff_public(row: AdminStaff) -> Dict[str, Any]:
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
+
+
+async def ensure_dev_default_staff(server: Any) -> None:
+    """If dev_mode, ensure admin_staff staff/test exists (head_admin). Create-only."""
+    if not getattr(server.config.server, "dev_mode", False):
+        return
+    async with server.db.session_factory() as session:
+        r = await session.execute(
+            select(AdminStaff).where(AdminStaff.username == DEV_DEFAULT_STAFF_USERNAME)
+        )
+        if r.scalar_one_or_none() is not None:
+            return
+    await create_staff(
+        server,
+        username=DEV_DEFAULT_STAFF_USERNAME,
+        password=DEV_DEFAULT_STAFF_PASSWORD,
+        display_name="Dev staff",
+        role="head_admin",
+        permissions={},
+    )
+    logger.warning(
+        "dev_mode: created default Nexus login %r / %r (head_admin)",
+        DEV_DEFAULT_STAFF_USERNAME,
+        DEV_DEFAULT_STAFF_PASSWORD,
+    )
+
+
+async def find_staff_by_play_username(server: Any, play_username: str) -> Optional[AdminStaff]:
+    u = (play_username or "").strip().lower()
+    if not u:
+        return None
+    async with server.db.session_factory() as session:
+        r = await session.execute(select(AdminStaff).where(AdminStaff.username == u))
+        return r.scalar_one_or_none()
+
+
+async def set_console_access_for_play_account(
+    server: Any,
+    account_id: int,
+    *,
+    password: str,
+    role: str,
+    permissions: Optional[Dict[str, Any]],
+) -> AdminStaff:
+    """Create or update admin_staff row whose username matches the play account (lowercased)."""
+    async with server.db.session_factory() as session:
+        acc = await session.get(Account, account_id)
+        if acc is None:
+            raise HTTPException(status_code=404, detail="account_not_found")
+        u = acc.username.strip().lower()
+        display_name = (acc.username or u).strip() or u
+        if not u:
+            raise HTTPException(status_code=400, detail="invalid_play_username")
+    rl = (role or "gm").lower().strip()
+    if rl not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail="invalid_role")
+    perms = permissions if isinstance(permissions, dict) else _default_console_permissions(rl)
+    existing = await find_staff_by_play_username(server, u)
+    if existing is not None:
+        patch: Dict[str, Any] = {
+            "password": password,
+            "role": rl,
+            "is_active": True,
+            "permissions": perms,
+        }
+        return await apply_staff_patch(server, existing.id, patch)
+    return await create_staff(
+        server,
+        username=u,
+        password=password,
+        display_name=display_name,
+        role=rl,
+        permissions=perms,
+    )
+
+
+def _default_console_permissions(role: str) -> Dict[str, Any]:
+    if role == "head_admin":
+        return {}
+    if role == "admin":
+        return {
+            "tools": [
+                "dashboard", "forge", "operations", "players", "world", "entities",
+                "items", "glyphs", "locations", "builder", "server", "content", "settings",
+            ],
+            "zones": ["*"],
+        }
+    return {"tools": ["dashboard", "players", "operations"], "zones": ["*"]}
+
+
+async def revoke_console_access_for_play_account(server: Any, account_id: int) -> bool:
+    """Deactivate admin_staff row keyed by same username as play account."""
+    async with server.db.session_factory() as session:
+        acc = await session.get(Account, account_id)
+        if acc is None:
+            return False
+        u = acc.username.strip().lower()
+    st = await find_staff_by_play_username(server, u)
+    if st is None or not st.is_active:
+        return False
+    await apply_staff_patch(server, st.id, {"is_active": False})
+    return True
 
 
 async def authenticate_staff(server: Any, username: str, password: str) -> AdminStaff:

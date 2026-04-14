@@ -1,13 +1,15 @@
 import { memo } from "react";
 import { Handle, Position } from "@xyflow/react";
-import { COLORS, ROOM_TYPE_COLORS } from "./builderConstants";
+import { adminRoomTypeColors } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
-function DualHandle({ position, id, style = {} }) {
+function DualHandle({ position, id, style = {}, colors }) {
+  const C = colors;
   const base = {
     width: 8,
     height: 8,
-    border: `1px solid ${COLORS.borderActive}`,
-    background: COLORS.bgPanel,
+    border: `1px solid ${C.borderActive}`,
+    background: C.bgPanel,
     ...style,
   };
   return (
@@ -19,6 +21,8 @@ function DualHandle({ position, id, style = {} }) {
 }
 
 export default memo(function RoomNode({ data, selected }) {
+  const { colors: COLORS } = useAdminTheme();
+  const ROOM_TYPE_COLORS = adminRoomTypeColors(COLORS);
   const tc = ROOM_TYPE_COLORS[data.roomType] || ROOM_TYPE_COLORS["?"];
   const w = 176;
 
@@ -37,12 +41,12 @@ export default memo(function RoomNode({ data, selected }) {
     >
       <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: tc, opacity: 0.85, borderRadius: "10px 0 0 10px" }} />
 
-      <DualHandle position={Position.Top} id="north" style={{ left: "50%" }} />
-      <DualHandle position={Position.Bottom} id="south" style={{ left: "50%" }} />
-      <DualHandle position={Position.Left} id="west" style={{ top: "50%" }} />
-      <DualHandle position={Position.Right} id="east" style={{ top: "50%" }} />
-      <DualHandle position={Position.Top} id="up" style={{ left: "18%", width: 7, height: 7, opacity: 0.9 }} />
-      <DualHandle position={Position.Bottom} id="down" style={{ left: "18%", width: 7, height: 7, opacity: 0.9 }} />
+      <DualHandle position={Position.Top} id="north" style={{ left: "50%" }} colors={COLORS} />
+      <DualHandle position={Position.Bottom} id="south" style={{ left: "50%" }} colors={COLORS} />
+      <DualHandle position={Position.Left} id="west" style={{ top: "50%" }} colors={COLORS} />
+      <DualHandle position={Position.Right} id="east" style={{ top: "50%" }} colors={COLORS} />
+      <DualHandle position={Position.Top} id="up" style={{ left: "18%", width: 7, height: 7, opacity: 0.9 }} colors={COLORS} />
+      <DualHandle position={Position.Bottom} id="down" style={{ left: "18%", width: 7, height: 7, opacity: 0.9 }} colors={COLORS} />
 
       <div style={{ padding: "10px 12px 10px 14px" }}>
         <div

@@ -1,16 +1,5 @@
-import { useEffect, useState } from "react";
-import { COLORS } from "../theme.js";
-
-const inp = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "10px 12px",
-  borderRadius: 8,
-  border: `1px solid ${COLORS.border}`,
-  background: COLORS.bgInput,
-  color: COLORS.text,
-  fontSize: 13,
-};
+import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "../ThemeContext.jsx";
 
 export function stampSlugFromDisplayName(name) {
   return (
@@ -44,6 +33,20 @@ export default function SaveStampModal({
   onSave,
   onCancel,
 }) {
+  const { colors: COLORS } = useTheme();
+  const inp = useMemo(
+    () => ({
+      width: "100%",
+      boxSizing: "border-box",
+      padding: "10px 12px",
+      borderRadius: 8,
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bgInput,
+      color: COLORS.text,
+      fontSize: 13,
+    }),
+    [COLORS]
+  );
   const slugValidate = validateSlug ?? validate ?? ((s) => /^[a-zA-Z0-9_-]+$/.test(String(s || "")));
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [stampSlug, setStampSlug] = useState(initialSlug);

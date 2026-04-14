@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import yaml from "js-yaml";
-import { COLORS, ROOM_TYPE_COLORS, API_BASE } from "./builderConstants.js";
+import { API_BASE, adminRoomTypeColors } from "./builderConstants.js";
+import { useAdminTheme } from "../AdminThemeContext.jsx";
 
 const FEATURE_INTERACTIONS = ["examine", "use", "take", "push", "pull", "read"];
 const HAZARD_TYPE_SUGGESTIONS = ["environmental", "trap", "magical", "structural", "biological"];
@@ -44,18 +45,6 @@ const ROOM_TYPES = [
 
 const EXIT_DIRS = ["north", "south", "east", "west", "up", "down"];
 
-const inp = {
-  width: "100%",
-  padding: "8px 10px",
-  background: COLORS.bgInput,
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 6,
-  color: COLORS.text,
-  fontSize: 12,
-  fontFamily: "'DM Sans', sans-serif",
-  boxSizing: "border-box",
-};
-
 function normalizeTags(tags) {
   if (tags == null) return [];
   if (Array.isArray(tags)) return tags.map(String).filter(Boolean);
@@ -73,6 +62,19 @@ export default function RoomPropertyPanel({
   onDeleted,
   onRevertRequest,
 }) {
+  const { colors: COLORS } = useAdminTheme();
+  const ROOM_TYPE_COLORS = adminRoomTypeColors(COLORS);
+  const inp = {
+    width: "100%",
+    padding: "8px 10px",
+    background: COLORS.bgInput,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: 6,
+    color: COLORS.text,
+    fontSize: 12,
+    fontFamily: "'DM Sans', sans-serif",
+    boxSizing: "border-box",
+  };
   const [raw, setRaw] = useState({});
   const [rawYaml, setRawYaml] = useState("");
   const [activeTab, setActiveTab] = useState("general");

@@ -187,6 +187,8 @@ def is_public_admin_path(path: str) -> bool:
         return True
     if path == "/admin/auth/login":
         return True
+    if path == "/admin/bootstrap":
+        return True
     return False
 
 

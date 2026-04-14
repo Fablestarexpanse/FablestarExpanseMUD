@@ -12,6 +12,10 @@ class ServerConfig(BaseModel):
     max_connections: int = 100
     tick_rate: float = 0.25  # 4 ticks per second
     dev_mode: bool = False
+    # Shown in client UI for in-world economy (wallet / vendors); not the ComfyUI art balance.
+    game_currency_display_name: str = "Digi"
+    # Starting in-world balance for each new character (existing rows default 0 until granted in-game).
+    starting_digi_balance: int = 100
     # When True, Nexus admin/content/forge/llm routes require a staff JWT (see /admin/auth/login).
     admin_auth_required: bool = False
     # HS256 secret; prefer env FABLESTAR_ADMIN_JWT_SECRET in production.
@@ -36,18 +40,27 @@ class ComfyUIConfig(BaseModel):
 
     enabled: bool = False
     base_url: str = "http://127.0.0.1:8188"
-    workflow_path: str = "config/comfyui_portrait_workflow.json"
-    # Node id (string) in the API-format workflow JSON
-    positive_prompt_node_id: str = "6"
-    output_node_id: str = "9"
-    # Optional separate workflow for wide / environmental room shots (defaults to portrait workflow if blank)
-    area_workflow_path: str = ""
-    area_positive_prompt_node_id: str = ""
-    area_output_node_id: str = ""
+    # Defaults match shipped graphs: character portrait (CLIP 57 + SaveImage 40) vs area (34 + 31).
+    # If comfyui.toml omits keys, we must NOT fall back to legacy SDXL example workflows.
+    workflow_path: str = "config/comfyui_character_portrait_workflow.json"
+    positive_prompt_node_id: str = "57"
+    output_node_id: str = "40"
+    area_workflow_path: str = "config/comfyui_scene_workflow.json"
+    area_positive_prompt_node_id: str = "16"
+    area_output_node_id: str = "17"
     # If set, replaces inputs.ckpt_name on every CheckpointLoaderSimple node (avoids editing JSON).
     checkpoint_name: str = ""
-    timeout_seconds: float = 120.0
+    timeout_seconds: float = 600.0
     poll_interval_seconds: float = 0.75
+    # Player image generation economy (account echo_credits); label is the art currency (e.g. pixels).
+    economy_enabled: bool = True
+    starting_echo_credits: int = 50
+    portrait_generation_cost: int = 3
+    area_generation_cost: int = 3
+    character_create_portrait_cost: int = 3
+    currency_display_name: str = "pixels"
+    # Reference rate for storefront / admin bundle math (not enforced server-side).
+    pixels_per_usd: int = 100
 
 
 class LLMConfig(BaseModel):
@@ -58,8 +71,8 @@ class LLMConfig(BaseModel):
     anthropic_key: Optional[SecretStr] = None
     timeout_seconds: float = 10.0
     cache_ttl: int = 3600
-    # OpenAI-compatible chat model id (LM Studio often ignores; Ollama uses this name)
-    chat_model: str = "local-model"
+    # OpenAI-compatible chat id, or "auto" / "*" / "" to use the loaded model (first listed).
+    chat_model: str = "auto"
     temperature: float = 0.7
 
     @field_validator("lm_studio_url", "ollama_url")
@@ -101,3 +114,34 @@ def load_config(config_dir: str = "config") -> Config:
                 data[section][field] = value
 
     return Config(**data)
+
+
+def resolve_project_root() -> Path:
+    """
+    Base directory for repo-relative paths (config/*.json, content/, data/).
+
+    Order: FABLESTAR_PROJECT_ROOT env, cwd if it contains config/, else walk upward
+    from this package until a config/ directory is found, else cwd.
+    """
+    env = (os.environ.get("FABLESTAR_PROJECT_ROOT") or "").strip()
+    if env:
+        return Path(env).expanduser().resolve()
+    cwd = Path.cwd().resolve()
+    if (cwd / "config").is_dir():
+        return cwd
+    start = Path(__file__).resolve().parent
+    for anc in [start, *start.parents]:
+        if (anc / "config").is_dir():
+            return anc
+    return cwd
+
+
+def resolve_config_asset_path(relative_or_absolute: str) -> Path:
+    """Resolve a path from comfyui.toml (or defaults) against the project root when relative."""
+    s = (relative_or_absolute or "").strip()
+    if not s:
+        return Path(s)
+    p = Path(s)
+    if p.is_absolute():
+        return p.resolve()
+    return (resolve_project_root() / p).resolve()
