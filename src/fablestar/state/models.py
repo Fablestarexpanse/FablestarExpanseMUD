@@ -5,6 +5,29 @@ from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON, Boolean, Tex
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from fablestar.state.postgres import Base
 
+
+def default_character_stats() -> dict:
+    return {
+        "strength": 10,
+        "dexterity": 10,
+        "intelligence": 10,
+        "perception": 10,
+        "conduit": {
+            "version": 1,
+            "conduit_attributes": {
+                "FRT": 10,
+                "RFX": 10,
+                "ACU": 10,
+                "RSV": 10,
+                "PRS": 10,
+            },
+            "proficiencies": {},
+            "archive_domain_spent": {},
+            "combat_hybrid_legacy": True,
+        },
+    }
+
+
 class Account(Base):
     """Player account credentials and metadata."""
     __tablename__ = "accounts"
@@ -69,12 +92,7 @@ class Character(Base):
     
     # Generic stats/data stored as JSON for "Vibe Coding" flexibility
     # This allows us to add stats without frequent schema migrations
-    stats: Mapped[dict] = mapped_column(JSON, default=lambda: {
-        "strength": 10,
-        "dexterity": 10,
-        "intelligence": 10,
-        "perception": 10
-    })
+    stats: Mapped[dict] = mapped_column(JSON, default=default_character_stats)
     
     inventory: Mapped[list] = mapped_column(JSON, default=list)
     

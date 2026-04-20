@@ -1,0 +1,35 @@
+commerce.agriculture.soil_farming | Soil Farming | Traditional dirt farming on planetary surfaces | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+commerce.agriculture.hydroponics | Hydroponics | Water-based growing systems for stations and ships | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+commerce.agriculture.bio_cultivation | Bio Cultivation | Protein vats, tissue cultures, algae farms | FRT:0.2 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.0
+commerce.agriculture.arboriculture | Arboriculture | Trees, orchards, long-cycle crops, forestry | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+commerce.agriculture.pest_management | Pest Management | Insects, invasive species, crop disease, labyrinth organisms in grow-zones | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+commerce.agriculture.harvest_processing | Harvest Processing | Convert raw crops to stored food and materials | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+commerce.agriculture.soil_science | Soil Science | Analyze and improve growing conditions, nutrient management | FRT:0.2 RFX:0.0 ACU:0.6 RSV:0.2 PRS:0.0
+commerce.agriculture.climate_adaptation | Climate Adaptation | Adjust techniques per planet conditions — alien environments | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+commerce.animal_husbandry.livestock_mgmt | Livestock Mgmt | Raise food animals in station or planetary conditions | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.0 PRS:0.3
+commerce.animal_husbandry.creature_breeding | Creature Breeding | Selective breeding programs for useful traits | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+commerce.animal_husbandry.veterinary | Veterinary | Animal health, treatment, and surgery | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+commerce.animal_husbandry.aquaculture | Aquaculture | Fish farming, marine cultivation, aquatic resource management | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+commerce.trading.appraisal | Appraisal | Accurately value goods and materials — detect counterfeits | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.2 PRS:0.3
+commerce.trading.negotiation | Negotiation | Get better prices in transactions, haggle, close deals | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.2 PRS:0.5
+commerce.trading.market_analysis | Market Analysis | Track supply and demand across planets, predict price shifts | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+commerce.trading.smuggling | Smuggling | Move restricted goods past checkpoints and authorities | FRT:0.0 RFX:0.3 ACU:0.3 RSV:0.2 PRS:0.2
+commerce.trading.contracts | Contracts | Draft and enforce trade agreements, legal commerce | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+commerce.trading.speculation | Speculation | Futures trading, commodity betting, market manipulation | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+commerce.resource_extraction.mining | Mining | Planetary mineral extraction — ores, crystals, rare earths | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+commerce.resource_extraction.deep_mining | Deep Mining | Fablestar structure mining — exotic and alien materials | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+commerce.resource_extraction.fluid_harvesting | Fluid Harvesting | Collect coolant, lubricant, biological fluids | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+commerce.resource_extraction.energy_tapping | Energy Tapping | Siphon power from labyrinth conduits and planetary sources | FRT:0.2 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.0
+commerce.resource_extraction.forestry | Forestry | Sustainable timber and biofuel harvest on colonized worlds | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+commerce.logistics.cargo_handling | Cargo Handling | Load, store, transport goods efficiently | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+commerce.logistics.route_planning | Route Planning | Optimize trade routes — planetary and interstellar | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+commerce.logistics.inventory_mgmt | Inventory Mgmt | Track stock, prevent spoilage and loss, warehouse operations | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+commerce.logistics.supply_chain | Supply Chain | Coordinate multi-step production chains across locations | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+commerce.enterprise.shop_management | Shop Management | Run a vendor stall or permanent shop — pricing, display, service | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+commerce.enterprise.venture_planning | Venture Planning | Organize multi-person commercial operations | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+commerce.enterprise.franchise_ops | Franchise Ops | Multi-location business management across settlements | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+commerce.enterprise.real_estate | Real Estate | Buy, sell, evaluate, and manage properties — planetary and orbital | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+commerce.property.interior_design | Interior Design | Customize housing layout, furnishings, functional upgrades | FRT:0.0 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.4
+commerce.property.property_management | Property Management | Maintain multiple properties efficiently, track condition | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+commerce.property.landlording | Landlording | Rent property to other players for income — tenant relations | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+commerce.property.development | Development | Improve land value, upgrade structures, plan expansions | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3

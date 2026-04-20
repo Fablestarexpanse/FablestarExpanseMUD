@@ -1,0 +1,30 @@
+culture.governance.administration | Administration | Manage settlement resources, personnel, and budgets | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+culture.governance.legislation | Legislation | Draft and propose rules and laws for settlements | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+culture.governance.diplomacy | Diplomacy | Negotiate between factions, settlements, and worlds | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.2 PRS:0.5
+culture.governance.public_policy | Public Policy | Design systems that affect population welfare and behavior | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+culture.governance.colonial_admin | Colonial Admin | Govern new settlements specifically — pioneer challenges | FRT:0.2 RFX:0.0 ACU:0.3 RSV:0.2 PRS:0.3
+culture.governance.interplanetary_law | Interplanetary Law | Legislation and treaties spanning multiple worlds | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+culture.law.investigation | Investigation | Crime scene examination, evidence gathering, witness interviews | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+culture.law.prosecution | Prosecution | Build cases, present arguments, seek conviction | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+culture.law.defense_advocacy | Defense Advocacy | Represent the accused, challenge evidence, protect rights | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+culture.law.arbitration | Arbitration | Mediate disputes between parties, find compromise | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+culture.law.regulatory_compliance | Regulatory Compliance | Ensure organizations follow rules, audit operations | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.2 PRS:0.3
+culture.performance.music | Music | Instruments, composition, live musical performance | FRT:0.0 RFX:0.3 ACU:0.2 RSV:0.2 PRS:0.3
+culture.performance.storytelling | Storytelling | Oral tradition, narrative performance, dramatic recitation | FRT:0.0 RFX:0.0 ACU:0.2 RSV:0.3 PRS:0.5
+culture.performance.acting | Acting | Theatrical and improvisational performance, character portrayal | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+culture.performance.visual_art | Visual Art | Painting, sculpture, holographic art, installation | FRT:0.0 RFX:0.3 ACU:0.3 RSV:0.2 PRS:0.2
+culture.performance.digital_media | Digital Media | Video, interactive media, VR experiences, immersive art | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.3
+culture.education.instruction | Instruction | Teach others effectively — boosts mentoring proficiency | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+culture.education.curriculum_design | Curriculum Design | Create training programs and structured learning materials | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.2 PRS:0.3
+culture.education.research_methods | Research Methods | Systematic inquiry, hypothesis testing, experimental design | FRT:0.0 RFX:0.2 ACU:0.6 RSV:0.2 PRS:0.0
+culture.education.archival_science | Archival Science | Organize, preserve, and retrieve records and knowledge stores | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+culture.media.journalism | Journalism | Investigate and report on events — interviewing, fact-checking | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+culture.media.propaganda | Propaganda | Craft persuasive messaging for factions or causes | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+culture.media.publishing | Publishing | Produce and distribute written and digital content | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.3
+culture.media.public_relations | Public Relations | Manage organizational reputation, crisis communications | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.2 PRS:0.5
+culture.community.event_planning | Event Planning | Organize gatherings, festivals, ceremonies, tournaments | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+culture.community.counseling | Counseling | Personal guidance, life coaching (non-medical) | FRT:0.0 RFX:0.0 ACU:0.2 RSV:0.4 PRS:0.4
+culture.community.chaplaincy | Chaplaincy | Spiritual and philosophical support, existential guidance | FRT:0.0 RFX:0.0 ACU:0.2 RSV:0.4 PRS:0.4
+culture.community.recruitment | Recruitment | Attract people to organizations, factions, and causes | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.2 PRS:0.5
+culture.community.morale_management | Morale Management | Keep populations functional and motivated under stress | FRT:0.0 RFX:0.0 ACU:0.2 RSV:0.4 PRS:0.4
+culture.community.conflict_resolution | Conflict Resolution | De-escalate interpersonal and group tensions before they break | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4

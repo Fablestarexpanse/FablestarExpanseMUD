@@ -1,0 +1,18 @@
+medicine.trauma.wound_closure | Wound Closure | Stop bleeding, seal injuries, emergency stabilization | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+medicine.trauma.bone_setting | Bone Setting | Fracture repair, joint stabilization, skeletal reconstruction | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+medicine.trauma.burn_treatment | Burn Treatment | Thermal, chemical, and radiation burn care | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+medicine.trauma.toxin_purge | Toxin Purge | Poison extraction, antidote administration, decontamination | FRT:0.2 RFX:0.3 ACU:0.5 RSV:0.0 PRS:0.0
+medicine.surgery.field_surgery | Field Surgery | Emergency operations without full facilities — makeshift medicine | FRT:0.0 RFX:0.4 ACU:0.3 RSV:0.3 PRS:0.0
+medicine.surgery.implant_work | Implant Work | Neural interface repair and modification — Conduit-specific | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+medicine.surgery.glyph_excision | Glyph Excision | Remove corrupted glyph tissue — rare, dangerous, experimental | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+medicine.surgery.reconstructive | Reconstructive | Repair severe physical damage — rebuild what's broken | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+medicine.psychiatry.drift_therapy | Drift Therapy | Treat neural drift and madness symptoms from glyph overload | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.4 PRS:0.3
+medicine.psychiatry.trauma_counseling | Trauma Counseling | PTSD from labyrinth exposure, survivor guilt, loss processing | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+medicine.psychiatry.addiction_treatment | Addiction Treatment | Stim dependency, resonance addiction, behavioral compulsion | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.4 PRS:0.3
+medicine.psychiatry.cognitive_rehab | Cognitive Rehab | Restore function after neural damage, rebuild mental pathways | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.4 PRS:0.2
+medicine.pharmacology.dosing | Dosing | Correct medication administration, interaction awareness | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+medicine.pharmacology.compound_analysis | Compound Analysis | Identify unknown substances, analyze chemical composition | FRT:0.0 RFX:0.2 ACU:0.6 RSV:0.2 PRS:0.0
+medicine.pharmacology.custom_formulation | Custom Formulation | Design patient-specific treatments — bespoke medicine | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+medicine.diagnostics.patient_assessment | Patient Assessment | Full physical and mental evaluation — find what's wrong | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+medicine.diagnostics.epidemiology | Epidemiology | Track disease patterns across populations, identify outbreaks | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.2 PRS:0.3
+medicine.diagnostics.forensic_analysis | Forensic Analysis | Determine cause of death, examine remains, toxicology | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2

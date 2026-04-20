@@ -2,22 +2,22 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import WorldBuilderPage from "./builder/WorldBuilderPage.jsx";
 import PlayerAccountsTab from "./PlayerAccountsTab.jsx";
+import ProficienciesPage from "./ProficienciesPage.jsx";
 import { useAdminTheme } from "./AdminThemeContext.jsx";
 import { ADMIN_THEME_DARK } from "./adminTheme.js";
+import { API_BASE, WS_BASE } from "./apiConfig.js";
 
 // ═══════════════════════════════════════════════════════════════
 // FABLESTAR MUD — WORLD ADMINISTRATION CONSOLE v2
 // Backend management interface with integrated AI Forge
 // ═══════════════════════════════════════════════════════════════
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:4001";
-const WS_BASE = import.meta.env.VITE_WS_BASE ?? "ws://localhost:4001";
 const LS_ADMIN_TOKEN = "fablestar_admin_token";
 
 /** Tool ids enforced by Nexus (see fablestar.admin.admin_security.NAV_TOOL_IDS). */
 const ALL_ADMIN_TOOLS = [
   "dashboard", "forge", "operations", "players", "world", "entities",
-  "items", "glyphs", "locations", "builder", "server", "content", "settings", "team",
+  "items", "glyphs", "skills", "locations", "builder", "server", "content", "settings", "team",
 ];
 
 function adminWsBase() {
@@ -84,6 +84,12 @@ const Icons = {
   Glyphs: () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  ),
+  Skills: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2l2.4 7.2L22 9.3l-6 4.6 2.3 7.1L12 17.8l-6.3 3.2L8 13.9 2 9.3l7.6-0.1L12 2z" />
+      <path d="M8 12h8M12 8v8" opacity="0.35" />
     </svg>
   ),
   Locations: () => (
@@ -2579,7 +2585,16 @@ const LoginScreen = ({ onLoggedIn }) => {
       localStorage.setItem(LS_ADMIN_TOKEN, data.access_token);
       onLoggedIn(data.staff);
     } catch (ex) {
-      setErr(ex.response?.data?.detail || ex.message || "Login failed");
+      const status = ex.response?.status;
+      if (status === 502 || status === 503) {
+        setErr(
+          "Cannot reach Nexus (HTTP " +
+            status +
+            "). Start Docker Desktop, then from the repo root: docker compose up -d redis postgres — then: python -m fablestar (port 8001 must match this UI)."
+        );
+      } else {
+        setErr(ex.response?.data?.detail || ex.message || "Login failed");
+      }
     } finally {
       setBusy(false);
     }
@@ -2603,7 +2618,7 @@ const LoginScreen = ({ onLoggedIn }) => {
         background: COLORS.bgCard, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 32, width: "min(400px, 92vw)",
       }}>
         <h1 style={{ margin: "0 0 8px", fontSize: 20, color: COLORS.accent, fontFamily: "'Space Grotesk', sans-serif" }}>Fablestar Admin</h1>
-        <p style={{ margin: "0 0 20px", fontSize: 13, color: COLORS.textMuted }}>Sign in with a staff account. Ask a head admin for credentials.</p>
+        <p style={{ margin: "0 0 20px", fontSize: 13, color: COLORS.textMuted }}>Sign in with a staff account. Ask a head admin for credentials. Username and password are case-sensitive.</p>
         <label style={{ display: "block", fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>Username</label>
         <input autoComplete="username" value={user} onChange={(e) => setUser(e.target.value)} style={{ ...inp, marginBottom: 14 }} />
         <label style={{ display: "block", fontSize: 11, color: COLORS.textMuted, marginBottom: 6 }}>Password</label>
@@ -2794,6 +2809,7 @@ const NAV_ITEMS = [
   { id: "entities", label: "Entities", icon: <Icons.Entities /> },
   { id: "items", label: "Items", icon: <Icons.Items /> },
   { id: "glyphs", label: "Glyphs", icon: <Icons.Glyphs /> },
+  { id: "skills", label: "Skills catalog", icon: <Icons.Skills /> },
   { id: "locations", label: "Locations", icon: <Icons.Locations /> },
   { id: "builder", label: "World Builder", icon: <Icons.Map /> },
   { id: "server", label: "Server", icon: <Icons.Server /> },
@@ -2811,6 +2827,7 @@ const PAGES = {
   entities: EntitiesPage,
   items: ItemsPage,
   glyphs: GlyphsPage,
+  skills: ProficienciesPage,
   locations: LocationsPage,
   builder: WorldBuilderPage,
   server: ServerPage,
@@ -2973,6 +2990,7 @@ export default function App() {
 
   const navFiltered = useMemo(() => NAV_ITEMS.filter((item) => {
     if (item.headOnly) return staffProfile?.role === "head_admin";
+    if (item.id === "skills") return allowedSet.has("skills") || allowedSet.has("content");
     return allowedSet.has(item.id);
   }), [staffProfile, allowedSet]);
 

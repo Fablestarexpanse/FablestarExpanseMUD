@@ -1,0 +1,37 @@
+fabrication.weaponsmithing.blade_forging | Blade Forging | Edged weapon construction — mono-edge, vibro, plasma | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+fabrication.weaponsmithing.ballistics | Ballistics Fab | Projectile weapon assembly — flechette launchers, railguns | FRT:0.2 RFX:0.3 ACU:0.5 RSV:0.0 PRS:0.0
+fabrication.weaponsmithing.energy_weapons | Energy Weapon Fab | Beam emitter, pulse projector, arc weapon construction | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+fabrication.weaponsmithing.glyph_integration | Glyph Integration | Embed glyph channels into weapons for resonance-enhanced output | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+fabrication.armorcraft.plating | Plating | Hard-shell armor construction — ceramic, composite, reactive | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+fabrication.armorcraft.weave | Weave | Flexible protective layers — ballistic fabric, flex-armor | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.armorcraft.shield_systems | Shield Systems Fab | Deployable barrier hardware — kinetic, energy, ward projectors | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+fabrication.armorcraft.environmental_seal | Environmental Seal | Vacuum suits, toxic atmosphere gear, hazard protection | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.devices.sensors | Sensors Fab | Build detection, scanning, and analysis equipment | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+fabrication.devices.comm_gear | Comm Gear Fab | Communication device construction and calibration | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.0 PRS:0.2
+fabrication.devices.medical_equipment | Medical Equip Fab | Surgical tools, diagnostic units, trauma kits | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+fabrication.devices.utility_tools | Utility Tools Fab | Multi-tools, breaching kits, clamps, specialized instruments | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.chemistry.stimulants | Stimulants | Combat drugs, neural boosters, performance enhancers | FRT:0.2 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.0
+fabrication.chemistry.reagents | Reagents | Glyph fuel, resonance catalysts, activation compounds | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+fabrication.chemistry.compounds | Compounds | Adhesives, solvents, explosives, industrial chemicals | FRT:0.3 RFX:0.2 ACU:0.5 RSV:0.0 PRS:0.0
+fabrication.chemistry.pharmaceuticals | Pharmaceuticals | Medicines, antitoxins, stabilizers, long-term treatments | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+fabrication.salvage.disassembly | Disassembly | Break down labyrinth materials and equipment into components | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.salvage.reclamation | Reclamation | Recover useful components from wreckage and debris | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.salvage.repurposing | Repurposing | Convert hostile tech and alien materials into useful gear | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+fabrication.materials.metallurgy | Metallurgy | Alloy knowledge, smelting, tempering, quality control | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.materials.composites | Composites | Synthetic material fabrication, polymer science, ceramics | FRT:0.2 RFX:0.3 ACU:0.5 RSV:0.0 PRS:0.0
+fabrication.shipbuilding.hull_construction | Hull Construction | Build ship frames and structure — determines HP and integrity | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.shipbuilding.drive_systems | Drive Systems | Engines, thrusters, FTL components — speed, range, fuel economy | FRT:0.2 RFX:0.3 ACU:0.5 RSV:0.0 PRS:0.0
+fabrication.shipbuilding.weapons_installation | Weapons Install | Mount and calibrate ship-scale weapons on hardpoints | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.shipbuilding.avionics | Avionics | Navigation computers, flight systems, sensor arrays | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+fabrication.shipbuilding.interior_fitting | Interior Fitting | Quarters, cargo bays, workspaces, life support integration | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.3
+fabrication.vehicle_construction.frame_assembly | Frame Assembly | Mech / vehicle chassis construction and structural work | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+fabrication.vehicle_construction.drive_train | Drive Train | Propulsion for ground and atmospheric vehicles | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.vehicle_construction.weapon_mounting | Weapon Mounting | Vehicle weapon installation and targeting calibration | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.vehicle_construction.armor_plating | Armor Plating | Vehicle armor application — layering, reactive panels | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+fabrication.robotics.drone_construction | Drone Construction | Build scout, combat, utility, and medical drones | FRT:0.2 RFX:0.3 ACU:0.5 RSV:0.0 PRS:0.0
+fabrication.robotics.drone_programming | Drone Programming | AI behavior scripts, patrol patterns, targeting logic | FRT:0.0 RFX:0.2 ACU:0.6 RSV:0.2 PRS:0.0
+fabrication.robotics.android_construction | Android Construction | Humanoid robots — advanced frames with human-like capability | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+fabrication.robotics.autonomous_systems | Autonomous Systems | Self-directing machine intelligence, adaptive behavior | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+fabrication.repair.weapons_armor | Weapons & Armor Repair | Restore damaged personal weapons and protective gear | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+fabrication.repair.electronics | Electronics Repair | Fix sensors, comm gear, medical equipment, computers | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+fabrication.repair.structural | Structural Repair | Patch hull breaches, repair walls, restore infrastructure | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0

@@ -9,7 +9,18 @@ function base() {
   return `http://127.0.0.1:${import.meta.env.VITE_NEXUS_PORT || "8001"}`.replace(/\/$/, "");
 }
 
+/** Resolved Nexus HTTP origin (for UI hints). Empty string means same-origin / Vite proxy in dev. */
+export function playApiBaseUrl() {
+  const b = base();
+  return b || "(this origin — dev proxy to Nexus)";
+}
+
 async function handlePlayResponse(r) {
+  if (r.status === 502 || r.status === 503) {
+    throw new Error(
+      `HTTP ${r.status}: Nexus is not running or not reachable. On Windows: start Docker Desktop and wait until it is ready, then in the repo root run: docker compose up -d redis postgres — then: python -m fablestar (Nexus on port 8001).`
+    );
+  }
   if (r.status === 404) {
     let detail = "";
     try {
@@ -85,6 +96,23 @@ export async function playComfyuiStatus() {
   return handlePlayResponse(r);
 }
 
+/**
+ * Public leaf catalog for chargen (budget, caps, domain list). No auth.
+ * Checks /play/health first so older Nexus builds (no GET /play/proficiencies/catalog)
+ * fail with a short message instead of HTTP 404 from the catalog route.
+ */
+export async function playFetchProficiencyCatalog() {
+  const hr = await fetch(`${base()}/play/health`);
+  const health = await handlePlayResponse(hr);
+  if (!health || health.proficiency_catalog !== true) {
+    throw new Error(
+      "The skill picker is not available on this Nexus build. Stop the server and start it again from this project: python -m fablestar."
+    );
+  }
+  const r = await fetch(`${base()}/play/proficiencies/catalog`);
+  return handlePlayResponse(r);
+}
+
 export async function playGeneratePortrait(username, password, appearance_prompt) {
   const r = await fetch(`${base()}/play/characters/portrait`, {
     method: "POST",
@@ -109,17 +137,26 @@ export async function playSuggestPortraitPrompt(username, password, character_na
   return handlePlayResponse(r);
 }
 
-export async function playCreateCharacter(username, password, name, portrait_prompt, portrait_url) {
+export async function playCreateCharacter(username, password, name, portrait_prompt, portrait_url, starter_proficiencies) {
+  const payload = {
+    username,
+    password,
+    name,
+    portrait_prompt: portrait_prompt || "",
+    portrait_url: portrait_url || "",
+  };
+  if (starter_proficiencies && typeof starter_proficiencies === "object") {
+    const cleaned = {};
+    for (const [k, v] of Object.entries(starter_proficiencies)) {
+      const n = Number(v);
+      if (Number.isFinite(n) && n > 0) cleaned[String(k)] = Math.floor(n);
+    }
+    if (Object.keys(cleaned).length) payload.starter_proficiencies = cleaned;
+  }
   const r = await fetch(`${base()}/play/characters/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      username,
-      password,
-      name,
-      portrait_prompt: portrait_prompt || "",
-      portrait_url: portrait_url || "",
-    }),
+    body: JSON.stringify(payload),
   });
   return handlePlayResponse(r);
 }

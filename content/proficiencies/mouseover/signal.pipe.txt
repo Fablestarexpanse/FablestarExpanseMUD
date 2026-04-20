@@ -1,0 +1,16 @@
+signal.communication.tactical_relay | Tactical Relay | Real-time team comms under interference and jamming | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+signal.communication.encoding | Encoding | Encrypted messages, dead drops, secure channels | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+signal.communication.translation | Translation | Interpret entity signals, labyrinth transmissions, alien data | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+signal.communication.broadcasting | Broadcasting | Wide-area announcements, distress calls, propaganda signals | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+signal.influence.persuasion | Persuasion | Negotiate with sentient entities and NPCs, convince and cajole | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.2 PRS:0.5
+signal.influence.intimidation | Intimidation | Force compliance through presence, threat, and force of will | FRT:0.2 RFX:0.0 ACU:0.1 RSV:0.3 PRS:0.4
+signal.influence.deception | Deception | Misdirect hostiles, false signals, bluffing, disguise | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+signal.influence.rapport | Rapport | Build trust, establish relationships, earn loyalty over time | FRT:0.0 RFX:0.0 ACU:0.2 RSV:0.3 PRS:0.5
+signal.coordination.squad_command | Squad Command | Direct group actions, assign roles, manage tactical flow | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+signal.coordination.mentoring | Mentoring | Accelerate other Conduits' learning — teacher proficiency | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+signal.coordination.rallying | Rallying | Morale boost, fear resistance for group, inspire under fire | FRT:0.2 RFX:0.0 ACU:0.0 RSV:0.3 PRS:0.5
+signal.coordination.logistics_direction | Logistics Direction | Coordinate supply chains, personnel assignments, resource flow | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+signal.intelligence.labyrinth_history | Labyrinth History | Knowledge of past Conduit expeditions and labyrinth events | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+signal.intelligence.entity_taxonomy | Entity Taxonomy | Classification of labyrinth creatures — types, behaviors, weaknesses | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+signal.intelligence.glyph_archaeology | Glyph Archaeology | Study dead Conduits' inscription patterns, recover lost techniques | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+signal.intelligence.network_analysis | Network Analysis | Map social, political, and economic power structures | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3

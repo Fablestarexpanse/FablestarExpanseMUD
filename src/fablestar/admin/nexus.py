@@ -6,7 +6,7 @@ from typing import Annotated, Any, Dict, List, Optional
 
 import uvicorn
 import yaml
-from fastapi import Depends, FastAPI, Query, Request, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import Body, Depends, FastAPI, Query, Request, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
@@ -114,6 +114,8 @@ class PlayCreateCharacterBody(BaseModel):
     name: str
     portrait_prompt: str = ""
     portrait_url: str = ""
+    # Optional chargen: leaf_id -> levels, sum <= 15, each <= 5 (see /play/proficiencies/catalog).
+    starter_proficiencies: Optional[Dict[str, Any]] = None
 
 
 class PlayDeleteCharacterBody(BaseModel):
@@ -248,6 +250,7 @@ class PlayerCharacterPatchBody(BaseModel):
     room_id: Optional[str] = None
     portrait_url: Optional[str] = None
     portrait_prompt: Optional[str] = None
+    stats: Optional[Dict[str, Any]] = None
 
 
 class ConsoleAccessBody(BaseModel):
@@ -530,7 +533,7 @@ class NexusApp:
         @self.app.get("/play/health")
         async def play_health():
             """Cheap check that player REST routes are live (no DB)."""
-            return {"ok": True, "play_api": "v1"}
+            return {"ok": True, "play_api": "v1", "proficiency_catalog": True}
 
         @self.app.get("/media/room-art/{zone_id}/{room_slug}/v/{filename}")
         async def media_room_art_variant(zone_id: str, room_slug: str, filename: str):
@@ -627,13 +630,38 @@ class NexusApp:
         @self.app.post("/play/characters/create")
         async def play_character_create(body: PlayCreateCharacterBody):
             """Create a new character for the account."""
+            starter = body.starter_proficiencies
+            if isinstance(starter, dict):
+                coerced: Dict[str, Any] = {str(k): v for k, v in starter.items()}
+            else:
+                coerced = {}
             return await self.server.play_create_character(
                 body.username,
                 body.password,
                 body.name,
                 portrait_prompt=body.portrait_prompt,
                 portrait_url=body.portrait_url,
+                starter_proficiencies=coerced if coerced else None,
             )
+
+        @self.app.get("/play/proficiencies/catalog")
+        async def play_proficiencies_catalog():
+            """Public read-only leaf list for chargen skill picker."""
+            from fablestar.proficiencies.starter import (
+                STARTER_MAX_PER_LEAF,
+                STARTER_POINTS_BUDGET,
+                catalog_leaves_for_client,
+            )
+
+            reg = self.server.content_loader.get_proficiency_registry()
+            leaves = catalog_leaves_for_client(reg)
+            domains = sorted({x["domain"] for x in leaves})
+            return {
+                "budget": STARTER_POINTS_BUDGET,
+                "max_per_leaf": STARTER_MAX_PER_LEAF,
+                "domains": domains,
+                "leaves": leaves,
+            }
 
         @self.app.post("/play/characters/delete")
         async def play_character_delete(body: PlayDeleteCharacterBody):
@@ -813,6 +841,28 @@ class NexusApp:
             _ctx: Annotated[AdminContext, Depends(require_tool("glyphs"))],
         ):
             return content_browser.list_glyphs()
+
+        @self.app.get("/content/proficiencies/catalog")
+        async def content_proficiencies_catalog_get(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("content", "skills"))],
+        ):
+            try:
+                return content_browser.read_proficiency_catalog_document()
+            except FileNotFoundError:
+                raise HTTPException(status_code=404, detail="proficiency_catalog_missing")
+
+        @self.app.put("/content/proficiencies/catalog")
+        async def content_proficiencies_catalog_put(
+            _ctx: Annotated[AdminContext, Depends(require_any_tool("content", "skills"))],
+            body: Dict[str, Any] = Body(...),
+        ):
+            try:
+                out = content_browser.write_proficiency_catalog_document(body)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+            self.server.content_loader.invalidate(Path("content/proficiencies/catalog.json").resolve())
+            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            return out
 
         @self.app.get("/content/room/{zone_id}/{room_slug}/yaml")
         async def content_room_yaml(

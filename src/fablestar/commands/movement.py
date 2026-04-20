@@ -1,3 +1,5 @@
+import random
+
 from fablestar.commands.registry import command
 from fablestar.network.session import Session
 
@@ -28,7 +30,25 @@ def move_to(direction: str):
         
         # 3. Update location
         await app_instance.redis.set_player_location(player_id, target_room_id)
-        
+
+        # Optional field gain: traversal (low chance per move to avoid spam).
+        if random.random() < 0.12:
+            try:
+                from fablestar.proficiencies.engine import ProficiencyEngine
+                from fablestar.proficiencies.state_helpers import ensure_proficiency_block
+
+                stats = await app_instance.redis.get_player_stats(player_id)
+                ensure_proficiency_block(stats)
+                eng = ProficiencyEngine(app_instance.content_loader.get_proficiency_registry())
+                eng.try_field_gain(
+                    stats,
+                    "traversal.navigation.pathfinding",
+                    context={"vr": False},
+                )
+                await app_instance.redis.set_player_stats(player_id, stats)
+            except Exception:
+                pass
+
         # 4. Describe new room
         await session.send(f"You move {direction}.")
         # Re-dispatch look to describe the new room

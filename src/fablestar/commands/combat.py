@@ -50,8 +50,18 @@ async def attack(session: Session, args: list[str]):
         return
 
     # --- Player attacks entity ---
+    from fablestar.proficiencies.engine import ProficiencyEngine
+    from fablestar.proficiencies.state_helpers import (
+        combat_attack_defense_from_stats,
+        ensure_proficiency_block,
+    )
+
     player_stats = await app_instance.redis.get_player_stats(player_id)
-    player_attack = player_stats.get("strength", 10) // 3
+    ensure_proficiency_block(player_stats)
+    hybrid = bool(app_instance.config.server.proficiency_combat_hybrid)
+    player_attack, player_defense_rating = combat_attack_defense_from_stats(
+        player_stats, hybrid_legacy=hybrid
+    )
     damage_dealt = _roll_damage(player_attack, target_state["defense"])
 
     target_state["hp"] = target_state["hp"] - damage_dealt
@@ -66,12 +76,25 @@ async def attack(session: Session, args: list[str]):
     counter_damage = 0
     if not entity_dead:
         entity_attack = target_state.get("attack", 3)
-        player_defense = player_stats.get("dexterity", 10) // 5
-        counter_damage = _roll_damage(entity_attack, player_defense)
+        counter_damage = _roll_damage(entity_attack, player_defense_rating)
         player_stats["hp"] = player_stats.get("hp", 20) - counter_damage
         if player_stats["hp"] < 0:
             player_stats["hp"] = 0
-        await app_instance.redis.set_player_stats(player_id, player_stats)
+
+    # Field proficiency: meaningful combat use (best-effort; roll may fail).
+    try:
+        eng = ProficiencyEngine(app_instance.content_loader.get_proficiency_registry())
+        pool = [
+            "combat.melee.blades",
+            "combat.melee.impact",
+            "combat.ballistic.sidearms",
+            "combat.tactics.threat_assessment",
+        ]
+        eng.try_field_gain(player_stats, random.choice(pool), context={"vr": False})
+    except Exception as exc:
+        logger.debug("Combat proficiency gain skipped: %s", exc)
+
+    await app_instance.redis.set_player_stats(player_id, player_stats)
 
     # --- LLM narrates the exchange ---
     entity_name = target_state["name"]

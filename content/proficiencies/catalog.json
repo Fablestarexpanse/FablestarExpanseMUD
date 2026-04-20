@@ -1,0 +1,3628 @@
+{
+  "version": 1,
+  "expected_leaf_count": 278,
+  "leaves": [
+    {
+      "id": "combat.melee.blades",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.5,
+        "FRT": 0.3,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.melee.impact",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "FRT": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.melee.polearms",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "FRT": 0.4,
+        "RFX": 0.4,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.melee.unarmed",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.4,
+        "FRT": 0.3,
+        "RSV": 0.2,
+        "ACU": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.ballistic.sidearms",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.5,
+        "ACU": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.ballistic.longarms",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.ballistic.heavy_weapons",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "FRT": 0.4,
+        "RFX": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.ballistic.specialty_weapons",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.energy_weapons.beam",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.energy_weapons.pulse",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.energy_weapons.arc",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.energy_weapons.resonance_arms",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RSV": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.explosives.grenades",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.explosives.mines_traps",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.explosives.rockets",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.explosives.demolitions",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.5,
+        "FRT": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.defense.parry",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.5,
+        "FRT": 0.3,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.defense.evasion",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.5,
+        "ACU": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.defense.armor_systems",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.defense.field_barriers",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.tactics.threat_assessment",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.tactics.positioning",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.tactics.squad_doctrine",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.tactics.ambush",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.specialist.entity_hunting",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.specialist.breaching",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.specialist.suppression",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "PRS": 0.3,
+        "FRT": 0.3,
+        "ACU": 0.2,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.vehicle_combat.mech_piloting",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.vehicle_combat.mech_weapons",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.vehicle_combat.ground_vehicle",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.vehicle_combat.atmospheric",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "RFX": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "combat.vehicle_combat.drone_command",
+      "name": "",
+      "description": "",
+      "domain": "combat",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.thermal.ignition",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "RFX": 0.2,
+        "FRT": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.thermal.extraction",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.thermal.thermal_shaping",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.4,
+        "ACU": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.kinetic.force_projection",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.4,
+        "FRT": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.kinetic.binding",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.kinetic.acceleration",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.spatial.warding",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.4,
+        "ACU": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.spatial.displacement",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.spatial.folding",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.4,
+        "RFX": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.temporal.dilation",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.4,
+        "RFX": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.temporal.reversion",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.5,
+        "ACU": 0.4,
+        "FRT": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.temporal.echo",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.neural.suppression",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.4,
+        "ACU": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.neural.domination",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.4,
+        "PRS": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.neural.communion",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.harmonics.amplification",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.4,
+        "PRS": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.harmonics.dampening",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.5,
+        "ACU": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.harmonics.synchronization",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "PRS": 0.4,
+        "RSV": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.inscription.etching",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RFX": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.inscription.substrate_prep",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.inscription.stabilization",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.attunement.channeling_efficiency",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "RSV": 0.5,
+        "ACU": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.attunement.recovery",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "FRT": 0.4,
+        "RSV": 0.4,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "resonance.attunement.overload_tolerance",
+      "name": "",
+      "description": "",
+      "domain": "resonance",
+      "stat_weights": {
+        "FRT": 0.4,
+        "RSV": 0.4,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.perception.threat_detection",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.perception.anomaly_scan",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.perception.entity_analysis",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.neural_link.bandwidth",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.neural_link.latency",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.neural_link.stability",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "RSV": 0.5,
+        "FRT": 0.3,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.data_integration.pattern_memory",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.data_integration.glyph_theory",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.3,
+        "RFX": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.data_integration.archive_access",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.diagnostics.self_assessment",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.diagnostics.field_triage",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.diagnostics.system_analysis",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "interface.diagnostics.resonance_reading",
+      "name": "",
+      "description": "",
+      "domain": "interface",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.navigation.pathfinding",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.navigation.orientation",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "RSV": 0.4,
+        "ACU": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.navigation.depth_reading",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.movement.climbing",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "FRT": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.movement.crawling",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "RFX": 0.4,
+        "FRT": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.movement.freefall",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "RFX": 0.5,
+        "FRT": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.movement.swimming",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "FRT": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.labyrinth_sense.shift_prediction",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.4,
+        "RFX": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.labyrinth_sense.resonance_trail",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.labyrinth_sense.dead_zone_nav",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "RSV": 0.4,
+        "FRT": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.survival.resource_mgmt",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.survival.hazard_resist",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "FRT": 0.5,
+        "RSV": 0.3,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.survival.emergency_evac",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.wilderness.tracking",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "traversal.wilderness.terrain_adaptation",
+      "name": "",
+      "description": "",
+      "domain": "traversal",
+      "stat_weights": {
+        "FRT": 0.4,
+        "RFX": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.weaponsmithing.blade_forging",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.weaponsmithing.ballistics",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.weaponsmithing.energy_weapons",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.weaponsmithing.glyph_integration",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.armorcraft.plating",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.armorcraft.weave",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.armorcraft.shield_systems",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.armorcraft.environmental_seal",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.devices.sensors",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.devices.comm_gear",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.devices.medical_equipment",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.devices.utility_tools",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.chemistry.stimulants",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.chemistry.reagents",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.chemistry.compounds",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "FRT": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.chemistry.pharmaceuticals",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.salvage.disassembly",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.salvage.reclamation",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.salvage.repurposing",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.materials.metallurgy",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.materials.composites",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.shipbuilding.hull_construction",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.shipbuilding.drive_systems",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.shipbuilding.weapons_installation",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.shipbuilding.avionics",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.shipbuilding.interior_fitting",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.vehicle_construction.frame_assembly",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.vehicle_construction.drive_train",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.vehicle_construction.weapon_mounting",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.vehicle_construction.armor_plating",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.robotics.drone_construction",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.robotics.drone_programming",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.2,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.robotics.android_construction",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.robotics.autonomous_systems",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.repair.weapons_armor",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.repair.electronics",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "fabrication.repair.structural",
+      "name": "",
+      "description": "",
+      "domain": "fabrication",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.communication.tactical_relay",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.communication.encoding",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.communication.translation",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.communication.broadcasting",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.influence.persuasion",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "PRS": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.influence.intimidation",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "PRS": 0.4,
+        "FRT": 0.2,
+        "RSV": 0.3,
+        "ACU": 0.1
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.influence.deception",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.influence.rapport",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "PRS": 0.5,
+        "RSV": 0.3,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.coordination.squad_command",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.coordination.mentoring",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.coordination.rallying",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "PRS": 0.5,
+        "RSV": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.coordination.logistics_direction",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.intelligence.labyrinth_history",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.intelligence.entity_taxonomy",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.intelligence.glyph_archaeology",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "signal.intelligence.network_analysis",
+      "name": "",
+      "description": "",
+      "domain": "signal",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.trauma.wound_closure",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.trauma.bone_setting",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.trauma.burn_treatment",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.trauma.toxin_purge",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.surgery.field_surgery",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.surgery.implant_work",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.surgery.glyph_excision",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.surgery.reconstructive",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.psychiatry.drift_therapy",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "RSV": 0.4,
+        "ACU": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.psychiatry.trauma_counseling",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "PRS": 0.4,
+        "RSV": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.psychiatry.addiction_treatment",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "RSV": 0.4,
+        "PRS": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.psychiatry.cognitive_rehab",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.pharmacology.dosing",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.pharmacology.compound_analysis",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.2,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.pharmacology.custom_formulation",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.diagnostics.patient_assessment",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.diagnostics.epidemiology",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.5,
+        "PRS": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "medicine.diagnostics.forensic_analysis",
+      "name": "",
+      "description": "",
+      "domain": "medicine",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.soil_farming",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.hydroponics",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.bio_cultivation",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.arboriculture",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.pest_management",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.harvest_processing",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.soil_science",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.2,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.agriculture.climate_adaptation",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.animal_husbandry.livestock_mgmt",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.animal_husbandry.creature_breeding",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.animal_husbandry.veterinary",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.animal_husbandry.aquaculture",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.trading.appraisal",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "PRS": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.trading.negotiation",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "PRS": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.trading.market_analysis",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.trading.smuggling",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.3,
+        "RFX": 0.3,
+        "PRS": 0.2,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.trading.contracts",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.trading.speculation",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.resource_extraction.mining",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.resource_extraction.deep_mining",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.resource_extraction.fluid_harvesting",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.resource_extraction.energy_tapping",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.resource_extraction.forestry",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.logistics.cargo_handling",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.logistics.route_planning",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.logistics.inventory_mgmt",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.logistics.supply_chain",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.enterprise.shop_management",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.enterprise.venture_planning",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.enterprise.franchise_ops",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.enterprise.real_estate",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.property.interior_design",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.3,
+        "PRS": 0.4,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.property.property_management",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.property.landlording",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "commerce.property.development",
+      "name": "",
+      "description": "",
+      "domain": "commerce",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.structural.construction",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.structural.reinforcement",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "FRT": 0.4,
+        "ACU": 0.4,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.structural.demolition",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.structural.architecture",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.2,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.structural.urban_planning",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.power.generation",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "FRT": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.power.distribution",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.power.storage",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "FRT": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.power.emergency",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.life_support.atmosphere",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "FRT": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.life_support.water_systems",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "FRT": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.life_support.temperature",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.life_support.waste_management",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.computing.programming",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.2,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.computing.network_admin",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.computing.data_recovery",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.computing.security_systems",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.computing.glyphstream_tech",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.mechanical.maintenance",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.3,
+        "RFX": 0.4,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.mechanical.hydraulics",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.mechanical.robotics_maintenance",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.mechanical.vehicle_maintenance",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.civil.road_systems",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.civil.water_infrastructure",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "FRT": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.civil.communications_grid",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.civil.public_transit",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.defense.fortification",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "FRT": 0.3,
+        "ACU": 0.4,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.defense.turret_systems",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.defense.barrier_tech",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.defense.planetary_defense",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.environmental.contamination_control",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.environmental.ecosystem_mgmt",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "PRS": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "systems.environmental.terraforming_basics",
+      "name": "",
+      "description": "",
+      "domain": "systems",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.governance.administration",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.governance.legislation",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.governance.diplomacy",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.governance.public_policy",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.governance.colonial_admin",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.3,
+        "PRS": 0.3,
+        "RSV": 0.2,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.governance.interplanetary_law",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.law.investigation",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.law.prosecution",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.law.defense_advocacy",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.law.arbitration",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "RSV": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.law.regulatory_compliance",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.5,
+        "PRS": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.performance.music",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "RFX": 0.3,
+        "PRS": 0.3,
+        "RSV": 0.2,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.performance.storytelling",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.5,
+        "RSV": 0.3,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.performance.acting",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "RSV": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.performance.visual_art",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.3,
+        "RFX": 0.3,
+        "PRS": 0.2,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.performance.digital_media",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.education.instruction",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.education.curriculum_design",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.5,
+        "PRS": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.education.research_methods",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.2,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.education.archival_science",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.media.journalism",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.3,
+        "PRS": 0.4,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.media.propaganda",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.media.publishing",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.media.public_relations",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.community.event_planning",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.community.counseling",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "RSV": 0.4,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.community.chaplaincy",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "RSV": 0.4,
+        "PRS": 0.4,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.community.recruitment",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.community.morale_management",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "RSV": 0.4,
+        "ACU": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "culture.community.conflict_resolution",
+      "name": "",
+      "description": "",
+      "domain": "culture",
+      "stat_weights": {
+        "PRS": 0.4,
+        "RSV": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.piloting.small_craft",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "RFX": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.piloting.medium_vessels",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.piloting.large_vessels",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.piloting.capital_ships",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "PRS": 0.4,
+        "ACU": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.piloting.docking",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.astrogation.route_calculation",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.6,
+        "RSV": 0.2,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.astrogation.hazard_avoidance",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.astrogation.fuel_optimization",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_combat.gunnery",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "RFX": 0.4,
+        "ACU": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_combat.missile_systems",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RFX": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_combat.point_defense",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "RFX": 0.5,
+        "ACU": 0.3,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_combat.electronic_warfare",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_combat.tactical_maneuvering",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_systems.propulsion",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_systems.life_support_ship",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_systems.weapons_maintenance",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.4,
+        "FRT": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_systems.shields",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RSV": 0.3,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.ship_systems.sensors",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.5,
+        "RSV": 0.3,
+        "RFX": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.eva.hull_work",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "FRT": 0.3,
+        "RFX": 0.4,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.eva.salvage_ops",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "FRT": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.eva.zero_g_combat",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "RFX": 0.4,
+        "FRT": 0.3,
+        "ACU": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.cargo.loading",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.3,
+        "FRT": 0.4,
+        "RFX": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.cargo.hazmat_handling",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "FRT": 0.3,
+        "RSV": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.cargo.customs_procedures",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "PRS": 0.4,
+        "RSV": 0.2
+      },
+      "tree_depth": 0,
+      "tags": []
+    },
+    {
+      "id": "astronautics.cargo.contraband",
+      "name": "",
+      "description": "",
+      "domain": "astronautics",
+      "stat_weights": {
+        "ACU": 0.4,
+        "RFX": 0.3,
+        "PRS": 0.3
+      },
+      "tree_depth": 0,
+      "tags": []
+    }
+  ]
+}

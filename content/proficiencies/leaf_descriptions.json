@@ -1,0 +1,1114 @@
+{
+  "astronautics.piloting.small_craft": {
+    "name": "Small Craft",
+    "description": "Fighters, couriers, personal ships, pods"
+  },
+  "astronautics.piloting.medium_vessels": {
+    "name": "Medium Vessels",
+    "description": "Freighters, corvettes, exploration ships"
+  },
+  "astronautics.piloting.large_vessels": {
+    "name": "Large Vessels",
+    "description": "Frigates, bulk haulers, colony ships"
+  },
+  "astronautics.piloting.capital_ships": {
+    "name": "Capital Ships",
+    "description": "Carriers, battleships, station ships — requires full crew"
+  },
+  "astronautics.piloting.docking": {
+    "name": "Docking",
+    "description": "Station and planet approach, landing procedures, berth management"
+  },
+  "astronautics.astrogation.route_calculation": {
+    "name": "Route Calculation",
+    "description": "Plot interplanetary courses, calculate transit times"
+  },
+  "astronautics.astrogation.hazard_avoidance": {
+    "name": "Hazard Avoidance",
+    "description": "Navigate debris fields, anomalies, interdiction zones"
+  },
+  "astronautics.astrogation.fuel_optimization": {
+    "name": "Fuel Optimization",
+    "description": "Maximize range, minimize consumption, efficient burns"
+  },
+  "astronautics.ship_combat.gunnery": {
+    "name": "Gunnery",
+    "description": "Aim and fire ship-scale weapons — cannons, beams"
+  },
+  "astronautics.ship_combat.missile_systems": {
+    "name": "Missile Systems",
+    "description": "Torpedo and missile lock, launch, guidance"
+  },
+  "astronautics.ship_combat.point_defense": {
+    "name": "Point Defense",
+    "description": "Anti-fighter, anti-missile intercept systems"
+  },
+  "astronautics.ship_combat.electronic_warfare": {
+    "name": "Electronic Warfare",
+    "description": "Jamming, sensor spoofing, signal disruption"
+  },
+  "astronautics.ship_combat.tactical_maneuvering": {
+    "name": "Tactical Maneuvering",
+    "description": "Combat positioning, evasion patterns, pursuit, disengagement"
+  },
+  "astronautics.ship_systems.propulsion": {
+    "name": "Propulsion",
+    "description": "Engine maintenance, repair, performance tuning"
+  },
+  "astronautics.ship_systems.life_support_ship": {
+    "name": "Ship Life Support",
+    "description": "Air, water, gravity management aboard vessels"
+  },
+  "astronautics.ship_systems.weapons_maintenance": {
+    "name": "Weapons Maintenance",
+    "description": "Keep ship weapons functional, calibrated, and supplied"
+  },
+  "astronautics.ship_systems.shields": {
+    "name": "Shields",
+    "description": "Ship shield management, recharge cycles, damage response"
+  },
+  "astronautics.ship_systems.sensors": {
+    "name": "Ship Sensors",
+    "description": "Long-range detection, scanning, signature analysis"
+  },
+  "astronautics.eva.hull_work": {
+    "name": "Hull Work",
+    "description": "External repair in vacuum, hull patching, component replacement"
+  },
+  "astronautics.eva.salvage_ops": {
+    "name": "Salvage Ops",
+    "description": "Strip derelicts, recover cargo from wrecks, space retrieval"
+  },
+  "astronautics.eva.zero_g_combat": {
+    "name": "Zero-G Combat",
+    "description": "Fighting in space — rare, extremely dangerous"
+  },
+  "astronautics.cargo.loading": {
+    "name": "Loading",
+    "description": "Efficient cargo placement, weight distribution, securing"
+  },
+  "astronautics.cargo.hazmat_handling": {
+    "name": "Hazmat Handling",
+    "description": "Dangerous materials transport — explosives, chemicals, bio"
+  },
+  "astronautics.cargo.customs_procedures": {
+    "name": "Customs Procedures",
+    "description": "Legal import/export documentation, tariff compliance"
+  },
+  "astronautics.cargo.contraband": {
+    "name": "Contraband",
+    "description": "Concealing illegal goods, false manifests, compartment design"
+  },
+  "combat.melee.blades": {
+    "name": "Blades",
+    "description": "Mono-edge, vibro-blade, plasma-edge, glyph-etched edged weapons"
+  },
+  "combat.melee.impact": {
+    "name": "Impact",
+    "description": "Stun batons, gravity hammers, shock mauls, kinetic amplifiers"
+  },
+  "combat.melee.polearms": {
+    "name": "Polearms",
+    "description": "Energy glaives, arc pikes, resonance lances, reach weapons"
+  },
+  "combat.melee.unarmed": {
+    "name": "Unarmed",
+    "description": "Neural-enhanced CQC, powered gauntlets, martial techniques"
+  },
+  "combat.ballistic.sidearms": {
+    "name": "Sidearms",
+    "description": "Flechette pistols, caseless handguns, needle guns"
+  },
+  "combat.ballistic.longarms": {
+    "name": "Longarms",
+    "description": "Assault rifles, marksman rifles, scatter guns"
+  },
+  "combat.ballistic.heavy_weapons": {
+    "name": "Heavy Weapons",
+    "description": "Rotary cannons, grenade launchers, rail cannons"
+  },
+  "combat.ballistic.specialty_weapons": {
+    "name": "Specialty Weapons",
+    "description": "Dart guns (tranq/poison), net launchers, taser lines"
+  },
+  "combat.energy_weapons.beam": {
+    "name": "Beam",
+    "description": "Laser rifles, cutting beams, sustained-fire emitters"
+  },
+  "combat.energy_weapons.pulse": {
+    "name": "Pulse",
+    "description": "Plasma bolts, ion bursts, concussion projectors"
+  },
+  "combat.energy_weapons.arc": {
+    "name": "Arc",
+    "description": "Lightning weapons, chain discharge, EMP emitters"
+  },
+  "combat.energy_weapons.resonance_arms": {
+    "name": "Resonance Arms",
+    "description": "Glyph-powered weapons — channels inscribed glyphs into focused weapon output"
+  },
+  "combat.explosives.grenades": {
+    "name": "Grenades",
+    "description": "Frag, flash, EMP, cryo, incendiary throwables"
+  },
+  "combat.explosives.mines_traps": {
+    "name": "Mines & Traps",
+    "description": "Proximity, tripwire, remote-detonated devices"
+  },
+  "combat.explosives.rockets": {
+    "name": "Rockets",
+    "description": "Dumb-fire, guided, and swarm missile launchers"
+  },
+  "combat.explosives.demolitions": {
+    "name": "Demolitions",
+    "description": "Breaching charges, structural charges, shaped explosives"
+  },
+  "combat.defense.parry": {
+    "name": "Parry",
+    "description": "Active weapon deflection, blade locks, redirects"
+  },
+  "combat.defense.evasion": {
+    "name": "Evasion",
+    "description": "Spatial awareness, dodge patterns, rolling, diving"
+  },
+  "combat.defense.armor_systems": {
+    "name": "Armor Systems",
+    "description": "Effective use of light through powered armor, damage angling"
+  },
+  "combat.defense.field_barriers": {
+    "name": "Field Barriers",
+    "description": "Portable shield generators, deployable cover, barricade use"
+  },
+  "combat.tactics.threat_assessment": {
+    "name": "Threat Assessment",
+    "description": "Read enemy patterns, identify weaknesses, assess danger"
+  },
+  "combat.tactics.positioning": {
+    "name": "Positioning",
+    "description": "Flanking, choke points, elevation advantage, cover use"
+  },
+  "combat.tactics.squad_doctrine": {
+    "name": "Squad Doctrine",
+    "description": "Group combat coordination, fire teams, suppression patterns"
+  },
+  "combat.tactics.ambush": {
+    "name": "Ambush",
+    "description": "Surprise attacks, trap-setting for hostiles, kill zones"
+  },
+  "combat.specialist.entity_hunting": {
+    "name": "Entity Hunting",
+    "description": "Techniques specific to labyrinth creatures — weak points, behavior patterns"
+  },
+  "combat.specialist.breaching": {
+    "name": "Breaching",
+    "description": "Forced entry through sealed, defended, or reinforced areas"
+  },
+  "combat.specialist.suppression": {
+    "name": "Suppression",
+    "description": "Area denial, crowd control, pinning fire, intimidation"
+  },
+  "combat.vehicle_combat.mech_piloting": {
+    "name": "Mech Piloting",
+    "description": "Operating utility and combat mech frames"
+  },
+  "combat.vehicle_combat.mech_weapons": {
+    "name": "Mech Weapons",
+    "description": "Mech-mounted weapon systems — autocannons, missile pods, energy arrays"
+  },
+  "combat.vehicle_combat.ground_vehicle": {
+    "name": "Ground Vehicle",
+    "description": "Tanks, IFVs, armed transports — driving and fighting"
+  },
+  "combat.vehicle_combat.atmospheric": {
+    "name": "Atmospheric",
+    "description": "Gunship / fighter dogfighting in planetary atmosphere"
+  },
+  "combat.vehicle_combat.drone_command": {
+    "name": "Drone Command",
+    "description": "Deploying and directing scout, combat, and swarm drones"
+  },
+  "commerce.agriculture.soil_farming": {
+    "name": "Soil Farming",
+    "description": "Traditional dirt farming on planetary surfaces"
+  },
+  "commerce.agriculture.hydroponics": {
+    "name": "Hydroponics",
+    "description": "Water-based growing systems for stations and ships"
+  },
+  "commerce.agriculture.bio_cultivation": {
+    "name": "Bio Cultivation",
+    "description": "Protein vats, tissue cultures, algae farms"
+  },
+  "commerce.agriculture.arboriculture": {
+    "name": "Arboriculture",
+    "description": "Trees, orchards, long-cycle crops, forestry"
+  },
+  "commerce.agriculture.pest_management": {
+    "name": "Pest Management",
+    "description": "Insects, invasive species, crop disease, labyrinth organisms in grow-zones"
+  },
+  "commerce.agriculture.harvest_processing": {
+    "name": "Harvest Processing",
+    "description": "Convert raw crops to stored food and materials"
+  },
+  "commerce.agriculture.soil_science": {
+    "name": "Soil Science",
+    "description": "Analyze and improve growing conditions, nutrient management"
+  },
+  "commerce.agriculture.climate_adaptation": {
+    "name": "Climate Adaptation",
+    "description": "Adjust techniques per planet conditions — alien environments"
+  },
+  "commerce.animal_husbandry.livestock_mgmt": {
+    "name": "Livestock Mgmt",
+    "description": "Raise food animals in station or planetary conditions"
+  },
+  "commerce.animal_husbandry.creature_breeding": {
+    "name": "Creature Breeding",
+    "description": "Selective breeding programs for useful traits"
+  },
+  "commerce.animal_husbandry.veterinary": {
+    "name": "Veterinary",
+    "description": "Animal health, treatment, and surgery"
+  },
+  "commerce.animal_husbandry.aquaculture": {
+    "name": "Aquaculture",
+    "description": "Fish farming, marine cultivation, aquatic resource management"
+  },
+  "commerce.trading.appraisal": {
+    "name": "Appraisal",
+    "description": "Accurately value goods and materials — detect counterfeits"
+  },
+  "commerce.trading.negotiation": {
+    "name": "Negotiation",
+    "description": "Get better prices in transactions, haggle, close deals"
+  },
+  "commerce.trading.market_analysis": {
+    "name": "Market Analysis",
+    "description": "Track supply and demand across planets, predict price shifts"
+  },
+  "commerce.trading.smuggling": {
+    "name": "Smuggling",
+    "description": "Move restricted goods past checkpoints and authorities"
+  },
+  "commerce.trading.contracts": {
+    "name": "Contracts",
+    "description": "Draft and enforce trade agreements, legal commerce"
+  },
+  "commerce.trading.speculation": {
+    "name": "Speculation",
+    "description": "Futures trading, commodity betting, market manipulation"
+  },
+  "commerce.resource_extraction.mining": {
+    "name": "Mining",
+    "description": "Planetary mineral extraction — ores, crystals, rare earths"
+  },
+  "commerce.resource_extraction.deep_mining": {
+    "name": "Deep Mining",
+    "description": "Fablestar structure mining — exotic and alien materials"
+  },
+  "commerce.resource_extraction.fluid_harvesting": {
+    "name": "Fluid Harvesting",
+    "description": "Collect coolant, lubricant, biological fluids"
+  },
+  "commerce.resource_extraction.energy_tapping": {
+    "name": "Energy Tapping",
+    "description": "Siphon power from labyrinth conduits and planetary sources"
+  },
+  "commerce.resource_extraction.forestry": {
+    "name": "Forestry",
+    "description": "Sustainable timber and biofuel harvest on colonized worlds"
+  },
+  "commerce.logistics.cargo_handling": {
+    "name": "Cargo Handling",
+    "description": "Load, store, transport goods efficiently"
+  },
+  "commerce.logistics.route_planning": {
+    "name": "Route Planning",
+    "description": "Optimize trade routes — planetary and interstellar"
+  },
+  "commerce.logistics.inventory_mgmt": {
+    "name": "Inventory Mgmt",
+    "description": "Track stock, prevent spoilage and loss, warehouse operations"
+  },
+  "commerce.logistics.supply_chain": {
+    "name": "Supply Chain",
+    "description": "Coordinate multi-step production chains across locations"
+  },
+  "commerce.enterprise.shop_management": {
+    "name": "Shop Management",
+    "description": "Run a vendor stall or permanent shop — pricing, display, service"
+  },
+  "commerce.enterprise.venture_planning": {
+    "name": "Venture Planning",
+    "description": "Organize multi-person commercial operations"
+  },
+  "commerce.enterprise.franchise_ops": {
+    "name": "Franchise Ops",
+    "description": "Multi-location business management across settlements"
+  },
+  "commerce.enterprise.real_estate": {
+    "name": "Real Estate",
+    "description": "Buy, sell, evaluate, and manage properties — planetary and orbital"
+  },
+  "commerce.property.interior_design": {
+    "name": "Interior Design",
+    "description": "Customize housing layout, furnishings, functional upgrades"
+  },
+  "commerce.property.property_management": {
+    "name": "Property Management",
+    "description": "Maintain multiple properties efficiently, track condition"
+  },
+  "commerce.property.landlording": {
+    "name": "Landlording",
+    "description": "Rent property to other players for income — tenant relations"
+  },
+  "commerce.property.development": {
+    "name": "Development",
+    "description": "Improve land value, upgrade structures, plan expansions"
+  },
+  "culture.governance.administration": {
+    "name": "Administration",
+    "description": "Manage settlement resources, personnel, and budgets"
+  },
+  "culture.governance.legislation": {
+    "name": "Legislation",
+    "description": "Draft and propose rules and laws for settlements"
+  },
+  "culture.governance.diplomacy": {
+    "name": "Diplomacy",
+    "description": "Negotiate between factions, settlements, and worlds"
+  },
+  "culture.governance.public_policy": {
+    "name": "Public Policy",
+    "description": "Design systems that affect population welfare and behavior"
+  },
+  "culture.governance.colonial_admin": {
+    "name": "Colonial Admin",
+    "description": "Govern new settlements specifically — pioneer challenges"
+  },
+  "culture.governance.interplanetary_law": {
+    "name": "Interplanetary Law",
+    "description": "Legislation and treaties spanning multiple worlds"
+  },
+  "culture.law.investigation": {
+    "name": "Investigation",
+    "description": "Crime scene examination, evidence gathering, witness interviews"
+  },
+  "culture.law.prosecution": {
+    "name": "Prosecution",
+    "description": "Build cases, present arguments, seek conviction"
+  },
+  "culture.law.defense_advocacy": {
+    "name": "Defense Advocacy",
+    "description": "Represent the accused, challenge evidence, protect rights"
+  },
+  "culture.law.arbitration": {
+    "name": "Arbitration",
+    "description": "Mediate disputes between parties, find compromise"
+  },
+  "culture.law.regulatory_compliance": {
+    "name": "Regulatory Compliance",
+    "description": "Ensure organizations follow rules, audit operations"
+  },
+  "culture.performance.music": {
+    "name": "Music",
+    "description": "Instruments, composition, live musical performance"
+  },
+  "culture.performance.storytelling": {
+    "name": "Storytelling",
+    "description": "Oral tradition, narrative performance, dramatic recitation"
+  },
+  "culture.performance.acting": {
+    "name": "Acting",
+    "description": "Theatrical and improvisational performance, character portrayal"
+  },
+  "culture.performance.visual_art": {
+    "name": "Visual Art",
+    "description": "Painting, sculpture, holographic art, installation"
+  },
+  "culture.performance.digital_media": {
+    "name": "Digital Media",
+    "description": "Video, interactive media, VR experiences, immersive art"
+  },
+  "culture.education.instruction": {
+    "name": "Instruction",
+    "description": "Teach others effectively — boosts mentoring proficiency"
+  },
+  "culture.education.curriculum_design": {
+    "name": "Curriculum Design",
+    "description": "Create training programs and structured learning materials"
+  },
+  "culture.education.research_methods": {
+    "name": "Research Methods",
+    "description": "Systematic inquiry, hypothesis testing, experimental design"
+  },
+  "culture.education.archival_science": {
+    "name": "Archival Science",
+    "description": "Organize, preserve, and retrieve records and knowledge stores"
+  },
+  "culture.media.journalism": {
+    "name": "Journalism",
+    "description": "Investigate and report on events — interviewing, fact-checking"
+  },
+  "culture.media.propaganda": {
+    "name": "Propaganda",
+    "description": "Craft persuasive messaging for factions or causes"
+  },
+  "culture.media.publishing": {
+    "name": "Publishing",
+    "description": "Produce and distribute written and digital content"
+  },
+  "culture.media.public_relations": {
+    "name": "Public Relations",
+    "description": "Manage organizational reputation, crisis communications"
+  },
+  "culture.community.event_planning": {
+    "name": "Event Planning",
+    "description": "Organize gatherings, festivals, ceremonies, tournaments"
+  },
+  "culture.community.counseling": {
+    "name": "Counseling",
+    "description": "Personal guidance, life coaching (non-medical)"
+  },
+  "culture.community.chaplaincy": {
+    "name": "Chaplaincy",
+    "description": "Spiritual and philosophical support, existential guidance"
+  },
+  "culture.community.recruitment": {
+    "name": "Recruitment",
+    "description": "Attract people to organizations, factions, and causes"
+  },
+  "culture.community.morale_management": {
+    "name": "Morale Management",
+    "description": "Keep populations functional and motivated under stress"
+  },
+  "culture.community.conflict_resolution": {
+    "name": "Conflict Resolution",
+    "description": "De-escalate interpersonal and group tensions before they break"
+  },
+  "fabrication.weaponsmithing.blade_forging": {
+    "name": "Blade Forging",
+    "description": "Edged weapon construction — mono-edge, vibro, plasma"
+  },
+  "fabrication.weaponsmithing.ballistics": {
+    "name": "Ballistics Fab",
+    "description": "Projectile weapon assembly — flechette launchers, railguns"
+  },
+  "fabrication.weaponsmithing.energy_weapons": {
+    "name": "Energy Weapon Fab",
+    "description": "Beam emitter, pulse projector, arc weapon construction"
+  },
+  "fabrication.weaponsmithing.glyph_integration": {
+    "name": "Glyph Integration",
+    "description": "Embed glyph channels into weapons for resonance-enhanced output"
+  },
+  "fabrication.armorcraft.plating": {
+    "name": "Plating",
+    "description": "Hard-shell armor construction — ceramic, composite, reactive"
+  },
+  "fabrication.armorcraft.weave": {
+    "name": "Weave",
+    "description": "Flexible protective layers — ballistic fabric, flex-armor"
+  },
+  "fabrication.armorcraft.shield_systems": {
+    "name": "Shield Systems Fab",
+    "description": "Deployable barrier hardware — kinetic, energy, ward projectors"
+  },
+  "fabrication.armorcraft.environmental_seal": {
+    "name": "Environmental Seal",
+    "description": "Vacuum suits, toxic atmosphere gear, hazard protection"
+  },
+  "fabrication.devices.sensors": {
+    "name": "Sensors Fab",
+    "description": "Build detection, scanning, and analysis equipment"
+  },
+  "fabrication.devices.comm_gear": {
+    "name": "Comm Gear Fab",
+    "description": "Communication device construction and calibration"
+  },
+  "fabrication.devices.medical_equipment": {
+    "name": "Medical Equip Fab",
+    "description": "Surgical tools, diagnostic units, trauma kits"
+  },
+  "fabrication.devices.utility_tools": {
+    "name": "Utility Tools Fab",
+    "description": "Multi-tools, breaching kits, clamps, specialized instruments"
+  },
+  "fabrication.chemistry.stimulants": {
+    "name": "Stimulants",
+    "description": "Combat drugs, neural boosters, performance enhancers"
+  },
+  "fabrication.chemistry.reagents": {
+    "name": "Reagents",
+    "description": "Glyph fuel, resonance catalysts, activation compounds"
+  },
+  "fabrication.chemistry.compounds": {
+    "name": "Compounds",
+    "description": "Adhesives, solvents, explosives, industrial chemicals"
+  },
+  "fabrication.chemistry.pharmaceuticals": {
+    "name": "Pharmaceuticals",
+    "description": "Medicines, antitoxins, stabilizers, long-term treatments"
+  },
+  "fabrication.salvage.disassembly": {
+    "name": "Disassembly",
+    "description": "Break down labyrinth materials and equipment into components"
+  },
+  "fabrication.salvage.reclamation": {
+    "name": "Reclamation",
+    "description": "Recover useful components from wreckage and debris"
+  },
+  "fabrication.salvage.repurposing": {
+    "name": "Repurposing",
+    "description": "Convert hostile tech and alien materials into useful gear"
+  },
+  "fabrication.materials.metallurgy": {
+    "name": "Metallurgy",
+    "description": "Alloy knowledge, smelting, tempering, quality control"
+  },
+  "fabrication.materials.composites": {
+    "name": "Composites",
+    "description": "Synthetic material fabrication, polymer science, ceramics"
+  },
+  "fabrication.shipbuilding.hull_construction": {
+    "name": "Hull Construction",
+    "description": "Build ship frames and structure — determines HP and integrity"
+  },
+  "fabrication.shipbuilding.drive_systems": {
+    "name": "Drive Systems",
+    "description": "Engines, thrusters, FTL components — speed, range, fuel economy"
+  },
+  "fabrication.shipbuilding.weapons_installation": {
+    "name": "Weapons Install",
+    "description": "Mount and calibrate ship-scale weapons on hardpoints"
+  },
+  "fabrication.shipbuilding.avionics": {
+    "name": "Avionics",
+    "description": "Navigation computers, flight systems, sensor arrays"
+  },
+  "fabrication.shipbuilding.interior_fitting": {
+    "name": "Interior Fitting",
+    "description": "Quarters, cargo bays, workspaces, life support integration"
+  },
+  "fabrication.vehicle_construction.frame_assembly": {
+    "name": "Frame Assembly",
+    "description": "Mech / vehicle chassis construction and structural work"
+  },
+  "fabrication.vehicle_construction.drive_train": {
+    "name": "Drive Train",
+    "description": "Propulsion for ground and atmospheric vehicles"
+  },
+  "fabrication.vehicle_construction.weapon_mounting": {
+    "name": "Weapon Mounting",
+    "description": "Vehicle weapon installation and targeting calibration"
+  },
+  "fabrication.vehicle_construction.armor_plating": {
+    "name": "Armor Plating",
+    "description": "Vehicle armor application — layering, reactive panels"
+  },
+  "fabrication.robotics.drone_construction": {
+    "name": "Drone Construction",
+    "description": "Build scout, combat, utility, and medical drones"
+  },
+  "fabrication.robotics.drone_programming": {
+    "name": "Drone Programming",
+    "description": "AI behavior scripts, patrol patterns, targeting logic"
+  },
+  "fabrication.robotics.android_construction": {
+    "name": "Android Construction",
+    "description": "Humanoid robots — advanced frames with human-like capability"
+  },
+  "fabrication.robotics.autonomous_systems": {
+    "name": "Autonomous Systems",
+    "description": "Self-directing machine intelligence, adaptive behavior"
+  },
+  "fabrication.repair.weapons_armor": {
+    "name": "Weapons & Armor Repair",
+    "description": "Restore damaged personal weapons and protective gear"
+  },
+  "fabrication.repair.electronics": {
+    "name": "Electronics Repair",
+    "description": "Fix sensors, comm gear, medical equipment, computers"
+  },
+  "fabrication.repair.structural": {
+    "name": "Structural Repair",
+    "description": "Patch hull breaches, repair walls, restore infrastructure"
+  },
+  "interface.perception.threat_detection": {
+    "name": "Threat Detection",
+    "description": "Sense hostiles, ambush warning, danger awareness"
+  },
+  "interface.perception.anomaly_scan": {
+    "name": "Anomaly Scan",
+    "description": "Hidden passages, traps, glyph traces, environmental anomalies"
+  },
+  "interface.perception.entity_analysis": {
+    "name": "Entity Analysis",
+    "description": "Read enemy stats, behavior patterns, weakness identification"
+  },
+  "interface.neural_link.bandwidth": {
+    "name": "Bandwidth",
+    "description": "Simultaneous glyph channel capacity — more active glyphs"
+  },
+  "interface.neural_link.latency": {
+    "name": "Latency",
+    "description": "Reaction speed, cast time reduction, faster interface response"
+  },
+  "interface.neural_link.stability": {
+    "name": "Stability",
+    "description": "Resist madness, maintain coherence under neural drift"
+  },
+  "interface.data_integration.pattern_memory": {
+    "name": "Pattern Memory",
+    "description": "Map recall, layout recognition, architectural analysis"
+  },
+  "interface.data_integration.glyph_theory": {
+    "name": "Glyph Theory",
+    "description": "Understand inscription mechanics, predict glyph interactions"
+  },
+  "interface.data_integration.archive_access": {
+    "name": "Archive Access",
+    "description": "Interface with labyrinth knowledge stores and databases"
+  },
+  "interface.diagnostics.self_assessment": {
+    "name": "Self Assessment",
+    "description": "Read own status accurately — health, energy, drift level"
+  },
+  "interface.diagnostics.field_triage": {
+    "name": "Field Triage",
+    "description": "Assess ally conditions remotely, prioritize treatment"
+  },
+  "interface.diagnostics.system_analysis": {
+    "name": "System Analysis",
+    "description": "Evaluate environmental mechanics, machinery, infrastructure"
+  },
+  "interface.diagnostics.resonance_reading": {
+    "name": "Resonance Reading",
+    "description": "Sense other Conduits' proficiency signatures and glyph load"
+  },
+  "medicine.trauma.wound_closure": {
+    "name": "Wound Closure",
+    "description": "Stop bleeding, seal injuries, emergency stabilization"
+  },
+  "medicine.trauma.bone_setting": {
+    "name": "Bone Setting",
+    "description": "Fracture repair, joint stabilization, skeletal reconstruction"
+  },
+  "medicine.trauma.burn_treatment": {
+    "name": "Burn Treatment",
+    "description": "Thermal, chemical, and radiation burn care"
+  },
+  "medicine.trauma.toxin_purge": {
+    "name": "Toxin Purge",
+    "description": "Poison extraction, antidote administration, decontamination"
+  },
+  "medicine.surgery.field_surgery": {
+    "name": "Field Surgery",
+    "description": "Emergency operations without full facilities — makeshift medicine"
+  },
+  "medicine.surgery.implant_work": {
+    "name": "Implant Work",
+    "description": "Neural interface repair and modification — Conduit-specific"
+  },
+  "medicine.surgery.glyph_excision": {
+    "name": "Glyph Excision",
+    "description": "Remove corrupted glyph tissue — rare, dangerous, experimental"
+  },
+  "medicine.surgery.reconstructive": {
+    "name": "Reconstructive",
+    "description": "Repair severe physical damage — rebuild what's broken"
+  },
+  "medicine.psychiatry.drift_therapy": {
+    "name": "Drift Therapy",
+    "description": "Treat neural drift and madness symptoms from glyph overload"
+  },
+  "medicine.psychiatry.trauma_counseling": {
+    "name": "Trauma Counseling",
+    "description": "PTSD from labyrinth exposure, survivor guilt, loss processing"
+  },
+  "medicine.psychiatry.addiction_treatment": {
+    "name": "Addiction Treatment",
+    "description": "Stim dependency, resonance addiction, behavioral compulsion"
+  },
+  "medicine.psychiatry.cognitive_rehab": {
+    "name": "Cognitive Rehab",
+    "description": "Restore function after neural damage, rebuild mental pathways"
+  },
+  "medicine.pharmacology.dosing": {
+    "name": "Dosing",
+    "description": "Correct medication administration, interaction awareness"
+  },
+  "medicine.pharmacology.compound_analysis": {
+    "name": "Compound Analysis",
+    "description": "Identify unknown substances, analyze chemical composition"
+  },
+  "medicine.pharmacology.custom_formulation": {
+    "name": "Custom Formulation",
+    "description": "Design patient-specific treatments — bespoke medicine"
+  },
+  "medicine.diagnostics.patient_assessment": {
+    "name": "Patient Assessment",
+    "description": "Full physical and mental evaluation — find what's wrong"
+  },
+  "medicine.diagnostics.epidemiology": {
+    "name": "Epidemiology",
+    "description": "Track disease patterns across populations, identify outbreaks"
+  },
+  "medicine.diagnostics.forensic_analysis": {
+    "name": "Forensic Analysis",
+    "description": "Determine cause of death, examine remains, toxicology"
+  },
+  "resonance.thermal.ignition": {
+    "name": "Ignition",
+    "description": "Fire generation, thermal lance, heat projection"
+  },
+  "resonance.thermal.extraction": {
+    "name": "Extraction",
+    "description": "Heat drain, cryo effects, flash-freeze"
+  },
+  "resonance.thermal.thermal_shaping": {
+    "name": "Thermal Shaping",
+    "description": "Walls of flame, heat mirages, thermal barriers"
+  },
+  "resonance.kinetic.force_projection": {
+    "name": "Force Projection",
+    "description": "Repulsion blasts, shockwaves, concussive force"
+  },
+  "resonance.kinetic.binding": {
+    "name": "Binding",
+    "description": "Gravity wells, motion locks, pinning fields"
+  },
+  "resonance.kinetic.acceleration": {
+    "name": "Acceleration",
+    "description": "Projectile boost, speed augmentation, momentum transfer"
+  },
+  "resonance.spatial.warding": {
+    "name": "Warding",
+    "description": "Barrier glyphs, exclusion zones, defensive perimeters"
+  },
+  "resonance.spatial.displacement": {
+    "name": "Displacement",
+    "description": "Short-range teleport, phase shift, positional swap"
+  },
+  "resonance.spatial.folding": {
+    "name": "Folding",
+    "description": "Room compression, passage creation, spatial shortcuts"
+  },
+  "resonance.temporal.dilation": {
+    "name": "Dilation",
+    "description": "Local time slow / haste effects in a limited area"
+  },
+  "resonance.temporal.reversion": {
+    "name": "Reversion",
+    "description": "Undo recent state changes — heal recent damage, restore broken objects"
+  },
+  "resonance.temporal.echo": {
+    "name": "Echo",
+    "description": "After-images, temporal duplicates, delayed action replay"
+  },
+  "resonance.neural.suppression": {
+    "name": "Suppression",
+    "description": "Stun, confusion, sensory overload on targets"
+  },
+  "resonance.neural.domination": {
+    "name": "Domination",
+    "description": "Entity control, behavior override, puppeteering"
+  },
+  "resonance.neural.communion": {
+    "name": "Communion",
+    "description": "Information extraction, memory reading, empathic sensing"
+  },
+  "resonance.harmonics.amplification": {
+    "name": "Amplification",
+    "description": "Boost other Conduits' glyph output in proximity"
+  },
+  "resonance.harmonics.dampening": {
+    "name": "Dampening",
+    "description": "Nullify hostile resonance effects, suppress enemy glyphs"
+  },
+  "resonance.harmonics.synchronization": {
+    "name": "Synchronization",
+    "description": "Multi-Conduit glyph linking — combined attacks, shared shields"
+  },
+  "resonance.inscription.etching": {
+    "name": "Etching",
+    "description": "Physical glyph carving precision — on skin, weapons, surfaces"
+  },
+  "resonance.inscription.substrate_prep": {
+    "name": "Substrate Prep",
+    "description": "Prepare surfaces for inscription — skin treatment, material conditioning"
+  },
+  "resonance.inscription.stabilization": {
+    "name": "Stabilization",
+    "description": "Prevent glyph degradation and corruption over time"
+  },
+  "resonance.attunement.channeling_efficiency": {
+    "name": "Channeling Efficiency",
+    "description": "Reduce resonance cost of glyph activations"
+  },
+  "resonance.attunement.recovery": {
+    "name": "Recovery",
+    "description": "Faster resonance energy regeneration after glyph use"
+  },
+  "resonance.attunement.overload_tolerance": {
+    "name": "Overload Tolerance",
+    "description": "Safely push glyphs past normal limits without self-damage"
+  },
+  "signal.communication.tactical_relay": {
+    "name": "Tactical Relay",
+    "description": "Real-time team comms under interference and jamming"
+  },
+  "signal.communication.encoding": {
+    "name": "Encoding",
+    "description": "Encrypted messages, dead drops, secure channels"
+  },
+  "signal.communication.translation": {
+    "name": "Translation",
+    "description": "Interpret entity signals, labyrinth transmissions, alien data"
+  },
+  "signal.communication.broadcasting": {
+    "name": "Broadcasting",
+    "description": "Wide-area announcements, distress calls, propaganda signals"
+  },
+  "signal.influence.persuasion": {
+    "name": "Persuasion",
+    "description": "Negotiate with sentient entities and NPCs, convince and cajole"
+  },
+  "signal.influence.intimidation": {
+    "name": "Intimidation",
+    "description": "Force compliance through presence, threat, and force of will"
+  },
+  "signal.influence.deception": {
+    "name": "Deception",
+    "description": "Misdirect hostiles, false signals, bluffing, disguise"
+  },
+  "signal.influence.rapport": {
+    "name": "Rapport",
+    "description": "Build trust, establish relationships, earn loyalty over time"
+  },
+  "signal.coordination.squad_command": {
+    "name": "Squad Command",
+    "description": "Direct group actions, assign roles, manage tactical flow"
+  },
+  "signal.coordination.mentoring": {
+    "name": "Mentoring",
+    "description": "Accelerate other Conduits' learning — teacher proficiency"
+  },
+  "signal.coordination.rallying": {
+    "name": "Rallying",
+    "description": "Morale boost, fear resistance for group, inspire under fire"
+  },
+  "signal.coordination.logistics_direction": {
+    "name": "Logistics Direction",
+    "description": "Coordinate supply chains, personnel assignments, resource flow"
+  },
+  "signal.intelligence.labyrinth_history": {
+    "name": "Labyrinth History",
+    "description": "Knowledge of past Conduit expeditions and labyrinth events"
+  },
+  "signal.intelligence.entity_taxonomy": {
+    "name": "Entity Taxonomy",
+    "description": "Classification of labyrinth creatures — types, behaviors, weaknesses"
+  },
+  "signal.intelligence.glyph_archaeology": {
+    "name": "Glyph Archaeology",
+    "description": "Study dead Conduits' inscription patterns, recover lost techniques"
+  },
+  "signal.intelligence.network_analysis": {
+    "name": "Network Analysis",
+    "description": "Map social, political, and economic power structures"
+  },
+  "systems.structural.construction": {
+    "name": "Construction",
+    "description": "Build new structures and expand settlements"
+  },
+  "systems.structural.reinforcement": {
+    "name": "Reinforcement",
+    "description": "Strengthen existing buildings and infrastructure"
+  },
+  "systems.structural.demolition": {
+    "name": "Demolition",
+    "description": "Controlled teardown of structures — safe removal"
+  },
+  "systems.structural.architecture": {
+    "name": "Architecture",
+    "description": "Design efficient layouts, load-bearing calculations"
+  },
+  "systems.structural.urban_planning": {
+    "name": "Urban Planning",
+    "description": "City-scale development decisions, zoning, growth management"
+  },
+  "systems.power.generation": {
+    "name": "Generation",
+    "description": "Reactor operation, solar arrays, wind turbines, geothermal"
+  },
+  "systems.power.distribution": {
+    "name": "Distribution",
+    "description": "Grid management, load balancing, power routing"
+  },
+  "systems.power.storage": {
+    "name": "Storage",
+    "description": "Battery banks, capacitor arrays, energy buffering"
+  },
+  "systems.power.emergency": {
+    "name": "Emergency Power",
+    "description": "Backup systems, crisis power rationing, failover protocols"
+  },
+  "systems.life_support.atmosphere": {
+    "name": "Atmosphere",
+    "description": "Air recycling, oxygen generation, gas balance"
+  },
+  "systems.life_support.water_systems": {
+    "name": "Water Systems",
+    "description": "Purification, distribution, waste water treatment"
+  },
+  "systems.life_support.temperature": {
+    "name": "Temperature",
+    "description": "HVAC, climate management, thermal regulation"
+  },
+  "systems.life_support.waste_management": {
+    "name": "Waste Management",
+    "description": "Sanitation, recycling, disposal, contamination control"
+  },
+  "systems.computing.programming": {
+    "name": "Programming",
+    "description": "Write and modify software systems"
+  },
+  "systems.computing.network_admin": {
+    "name": "Network Admin",
+    "description": "Maintain communication networks, routers, relays"
+  },
+  "systems.computing.data_recovery": {
+    "name": "Data Recovery",
+    "description": "Retrieve corrupted or ancient data stores"
+  },
+  "systems.computing.security_systems": {
+    "name": "Security Systems",
+    "description": "Firewalls, access control, intrusion detection"
+  },
+  "systems.computing.glyphstream_tech": {
+    "name": "Glyphstream Tech",
+    "description": "VR network maintenance and operation — immersion tank upkeep"
+  },
+  "systems.mechanical.maintenance": {
+    "name": "Maintenance",
+    "description": "Routine equipment upkeep, preventive servicing"
+  },
+  "systems.mechanical.hydraulics": {
+    "name": "Hydraulics",
+    "description": "Fluid power systems — doors, lifts, presses, industrial machinery"
+  },
+  "systems.mechanical.robotics_maintenance": {
+    "name": "Robotics Maintenance",
+    "description": "Repair and reprogram automated systems and service bots"
+  },
+  "systems.mechanical.vehicle_maintenance": {
+    "name": "Vehicle Maintenance",
+    "description": "Ground, air, and ship vehicle routine repair"
+  },
+  "systems.civil.road_systems": {
+    "name": "Road Systems",
+    "description": "Transportation networks on planetary surfaces"
+  },
+  "systems.civil.water_infrastructure": {
+    "name": "Water Infrastructure",
+    "description": "Aqueducts, sewage, irrigation at settlement scale"
+  },
+  "systems.civil.communications_grid": {
+    "name": "Comms Grid",
+    "description": "Planetary and local comms infrastructure"
+  },
+  "systems.civil.public_transit": {
+    "name": "Public Transit",
+    "description": "Mass transport systems — trains, trams, shuttle networks"
+  },
+  "systems.defense.fortification": {
+    "name": "Fortification",
+    "description": "Build defensive structures — walls, bunkers, checkpoints"
+  },
+  "systems.defense.turret_systems": {
+    "name": "Turret Systems",
+    "description": "Automated weapon emplacements — targeting, power, maintenance"
+  },
+  "systems.defense.barrier_tech": {
+    "name": "Barrier Tech",
+    "description": "Energy shields, bulkhead reinforcement, blast doors"
+  },
+  "systems.defense.planetary_defense": {
+    "name": "Planetary Defense",
+    "description": "Anti-orbital and anti-invasion systems at settlement scale"
+  },
+  "systems.environmental.contamination_control": {
+    "name": "Contamination Control",
+    "description": "Manage toxic spills, radiation cleanup, chemical containment"
+  },
+  "systems.environmental.ecosystem_mgmt": {
+    "name": "Ecosystem Mgmt",
+    "description": "Maintain biodiversity in closed systems, manage habitat balance"
+  },
+  "systems.environmental.terraforming_basics": {
+    "name": "Terraforming Basics",
+    "description": "Modify planetary conditions for habitability — long-term projects"
+  },
+  "traversal.navigation.pathfinding": {
+    "name": "Pathfinding",
+    "description": "Optimal route calculation through known and unknown terrain"
+  },
+  "traversal.navigation.orientation": {
+    "name": "Orientation",
+    "description": "Maintain bearings in shifting geometry, resist disorientation"
+  },
+  "traversal.navigation.depth_reading": {
+    "name": "Depth Reading",
+    "description": "Sense current labyrinth depth/sector, gauge proximity to zones"
+  },
+  "traversal.movement.climbing": {
+    "name": "Climbing",
+    "description": "Vertical surfaces, cable traversal, wall scaling"
+  },
+  "traversal.movement.crawling": {
+    "name": "Crawling",
+    "description": "Tight passages, vent systems, low-profile movement"
+  },
+  "traversal.movement.freefall": {
+    "name": "Freefall",
+    "description": "Controlled descent, zero-g maneuvering, drop operations"
+  },
+  "traversal.movement.swimming": {
+    "name": "Swimming",
+    "description": "Flooded sections, coolant channels, submerged environments"
+  },
+  "traversal.labyrinth_sense.shift_prediction": {
+    "name": "Shift Prediction",
+    "description": "Anticipate corridor reconfiguration before it happens"
+  },
+  "traversal.labyrinth_sense.resonance_trail": {
+    "name": "Resonance Trail",
+    "description": "Follow glyph energy signatures left by others"
+  },
+  "traversal.labyrinth_sense.dead_zone_nav": {
+    "name": "Dead Zone Nav",
+    "description": "Navigate areas of null resonance where glyphs fail"
+  },
+  "traversal.survival.resource_mgmt": {
+    "name": "Resource Mgmt",
+    "description": "Oxygen, power cells, supplies — stretch what you carry"
+  },
+  "traversal.survival.hazard_resist": {
+    "name": "Hazard Resist",
+    "description": "Radiation, toxins, pressure variance, extreme temperature"
+  },
+  "traversal.survival.emergency_evac": {
+    "name": "Emergency Evac",
+    "description": "Rapid extraction protocols, escape routes, panic moves"
+  },
+  "traversal.wilderness.tracking": {
+    "name": "Tracking",
+    "description": "Follow creatures, people, or vehicles across terrain"
+  },
+  "traversal.wilderness.terrain_adaptation": {
+    "name": "Terrain Adaptation",
+    "description": "Navigate diverse planetary biomes — jungle, desert, tundra, swamp"
+  }
+}

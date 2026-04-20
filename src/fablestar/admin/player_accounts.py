@@ -214,6 +214,12 @@ async def patch_character(
         if "portrait_prompt" in patch:
             pp = patch["portrait_prompt"]
             char.portrait_prompt = pp if isinstance(pp, str) and pp.strip() else None
+        if "stats" in patch and isinstance(patch["stats"], dict):
+            from fablestar.proficiencies.state_helpers import ensure_proficiency_block, migrate_legacy_stats
+
+            merged = migrate_legacy_stats(dict(patch["stats"]))
+            ensure_proficiency_block(merged)
+            char.stats = merged
         await session.commit()
         await session.refresh(char)
         out = _character_admin_dict(char)
@@ -229,6 +235,8 @@ async def patch_character(
         lines.append(f"Character {char_name}: PVP {'on' if out['pvp_enabled'] else 'off'}.")
     if "portrait_url" in patch or "portrait_prompt" in patch:
         lines.append(f"Character {char_name}: Portrait updated.")
+    if "stats" in patch:
+        lines.append(f"Character {char_name}: Stats / proficiency JSON updated.")
 
     if actor and lines:
         await server.notify_play_clients_staff_audit(

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { usePlayTheme } from "../PlayThemeContext.jsx";
+import { ThemeToggleButton } from "../ThemeToggleButton.jsx";
 import { GameCmdContext } from "./00-ctx.jsx";
 import { ContextMenu, DraggablePanel } from "./01-primitives.jsx";
 import { NarrativePanel, CommandInput, lastRoomTitleHint } from "./03-narrative.jsx";
@@ -10,6 +11,7 @@ import { MiniMap } from "./05-minimap.jsx";
 import {
   CharacterPanel, GlyphBar, InventoryPanel, SocialPanel, ScenePanel,
 } from "./06-panels-b.jsx";
+import { ProficienciesPanel } from "./07-proficiencies-panel.jsx";
 import { PORTRAIT_ASPECT_RATIO_CSS } from "../portraitProfile.js";
 import { GmBadge } from "../GmBadge.jsx";
 
@@ -44,13 +46,13 @@ function useWorkspaceScale() {
 
 const PRESETS = {
   standard: { name: "Standard", desc: "Balanced layout",
-    panels: { narrative:{x:260,y:0,w:580,h:470}, scene:{x:840,y:0,w:340,h:260}, character:{x:0,y:0,w:260,h:360}, map:{x:840,y:260,w:340,h:210}, glyphs:{x:260,y:470,w:580,h:90}, inventory:{x:0,y:360,w:260,h:200}, social:{x:840,y:470,w:340,h:90}, afflictions:{x:100,y:100,w:240,h:280}, quests:{x:200,y:100,w:320,h:350}, target:{x:100,y:100,w:260,h:240}, stats:{x:100,y:100,w:240,h:280}, keybinds:{x:200,y:50,w:280,h:360}, triggers:{x:200,y:50,w:320,h:360}, quickactions:{x:0,y:560,w:260,h:70} },
+    panels: { narrative:{x:260,y:0,w:580,h:470}, scene:{x:840,y:0,w:340,h:260}, character:{x:0,y:0,w:260,h:360}, map:{x:840,y:260,w:340,h:210}, glyphs:{x:260,y:470,w:580,h:90}, inventory:{x:0,y:360,w:260,h:200}, social:{x:840,y:470,w:340,h:90}, afflictions:{x:100,y:100,w:240,h:280}, quests:{x:200,y:100,w:320,h:350}, target:{x:100,y:100,w:260,h:240}, stats:{x:100,y:100,w:240,h:280}, proficiencies:{x:300,y:70,w:420,h:420}, keybinds:{x:200,y:50,w:280,h:360}, triggers:{x:200,y:50,w:320,h:360}, quickactions:{x:0,y:560,w:260,h:70} },
     visible: ["narrative","scene","character","map","glyphs","inventory","social"] },
   combat: { name: "Combat", desc: "Effects & target",
-    panels: { narrative:{x:280,y:0,w:560,h:400}, scene:{x:0,y:360,w:280,h:200}, character:{x:0,y:0,w:280,h:360}, map:{x:840,y:360,w:340,h:200}, glyphs:{x:280,y:400,w:560,h:80}, inventory:{x:100,y:100,w:260,h:200}, social:{x:840,y:480,w:340,h:80}, afflictions:{x:840,y:0,w:340,h:200}, quests:{x:200,y:100,w:320,h:350}, target:{x:840,y:200,w:340,h:160}, stats:{x:100,y:100,w:240,h:280}, keybinds:{x:200,y:50,w:280,h:360}, triggers:{x:200,y:50,w:320,h:360}, quickactions:{x:280,y:480,w:560,h:80} },
+    panels: { narrative:{x:280,y:0,w:560,h:400}, scene:{x:0,y:360,w:280,h:200}, character:{x:0,y:0,w:280,h:360}, map:{x:840,y:360,w:340,h:200}, glyphs:{x:280,y:400,w:560,h:80}, inventory:{x:100,y:100,w:260,h:200}, social:{x:840,y:480,w:340,h:80}, afflictions:{x:840,y:0,w:340,h:200}, quests:{x:200,y:100,w:320,h:350}, target:{x:840,y:200,w:340,h:160}, stats:{x:100,y:100,w:240,h:280}, proficiencies:{x:120,y:70,w:400,h:400}, keybinds:{x:200,y:50,w:280,h:360}, triggers:{x:200,y:50,w:320,h:360}, quickactions:{x:280,y:480,w:560,h:80} },
     visible: ["narrative","character","glyphs","afflictions","target","map","quickactions"] },
   classic: { name: "Classic MUD", desc: "Text-forward",
-    panels: { narrative:{x:0,y:0,w:860,h:520}, scene:{x:100,y:100,w:380,h:300}, character:{x:860,y:0,w:320,h:260}, map:{x:860,y:260,w:320,h:200}, glyphs:{x:0,y:520,w:580,h:60}, inventory:{x:860,y:460,w:320,h:100}, social:{x:580,y:520,w:280,h:60}, afflictions:{x:100,y:100,w:240,h:280}, quests:{x:200,y:100,w:320,h:350}, target:{x:100,y:100,w:260,h:240}, stats:{x:100,y:100,w:240,h:280}, keybinds:{x:200,y:50,w:280,h:360}, triggers:{x:200,y:50,w:320,h:360}, quickactions:{x:100,y:100,w:260,h:100} },
+    panels: { narrative:{x:0,y:0,w:860,h:520}, scene:{x:100,y:100,w:380,h:300}, character:{x:860,y:0,w:320,h:260}, map:{x:860,y:260,w:320,h:200}, glyphs:{x:0,y:520,w:580,h:60}, inventory:{x:860,y:460,w:320,h:100}, social:{x:580,y:520,w:280,h:60}, afflictions:{x:100,y:100,w:240,h:280}, quests:{x:200,y:100,w:320,h:350}, target:{x:100,y:100,w:260,h:240}, stats:{x:100,y:100,w:240,h:280}, proficiencies:{x:120,y:120,w:400,h:380}, keybinds:{x:200,y:50,w:280,h:360}, triggers:{x:200,y:50,w:320,h:360}, quickactions:{x:100,y:100,w:260,h:100} },
     visible: ["narrative","character","map","glyphs","inventory","social"] },
 };
 
@@ -74,13 +76,15 @@ export default function FablestarClient({
   /** Optional: narrative toolbar → ComfyUI scene generation (credentials + callbacks). */
   sceneGen,
 }) {
-  const { T, toggleMode, mode } = usePlayTheme();
+  const { T } = usePlayTheme();
   const [layout, setLayout] = useState("standard");
   const [collapsed, setCollapsed] = useState({});
   const [focusStack, setFocusStack] = useState([]);
   const [showLayoutPicker, setShowLayoutPicker] = useState(false);
   const [ctxMenu, setCtxMenu] = useState(null);
   const [notifications] = useState({ tells: 1, guild: 0 });
+  const [narrativeBackdropSource, setNarrativeBackdropSource] = useState("portrait");
+  const [openSceneGallerySignal, setOpenSceneGallerySignal] = useState(0);
   const { sx, sy, layoutKey } = useWorkspaceScale();
 
   const preset = PRESETS[layout];
@@ -103,6 +107,17 @@ export default function FablestarClient({
     onSendCommand?.(cmd);
   }, [onSendCommand]);
 
+  const focusProficienciesPanel = useCallback(() => {
+    const pid = "proficiencies";
+    const lp = PRESETS[layout];
+    if (!lp?.panels?.[pid]) return;
+    const nextVis = lp.visible.includes(pid) ? lp.visible : [...lp.visible, pid];
+    PRESETS[layout] = { ...lp, visible: nextVis };
+    setLayout((l) => l);
+    setCollapsed((c) => ({ ...c, [pid]: false }));
+    bringToFront(pid);
+  }, [layout]);
+
   const onArtCreditsInfo = useCallback(() => {
     const art = echoEconomy?.label || "pixels";
     const game = gameCurrencyDisplayName || "Digi";
@@ -121,6 +136,17 @@ export default function FablestarClient({
     );
   }, [gameCurrencyDisplayName, echoEconomy?.label]);
 
+  const narrativeBackdropUrl =
+    narrativeBackdropSource === "scene" && sceneImageUrl
+      ? sceneImageUrl
+      : (session?.portraitImageUrl || null);
+
+  useEffect(() => {
+    if (narrativeBackdropSource === "scene" && !sceneImageUrl) {
+      setNarrativeBackdropSource("portrait");
+    }
+  }, [narrativeBackdropSource, sceneImageUrl]);
+
   const panels = useMemo(() => [
     { id: "narrative", title: "Narrative", icon: "📜", accent: T.text.narrative, minW: 340, minH: 260, content: (
       <div style={{display:"flex",flexDirection:"column",height:"100%"}}>
@@ -129,7 +155,8 @@ export default function FablestarClient({
             lines={narrativeLines}
             onContextMenu={openCtx}
             sceneGen={sceneGen}
-            portraitBackdropUrl={session?.portraitImageUrl || null}
+            portraitBackdropUrl={narrativeBackdropUrl}
+            openSceneGallerySignal={openSceneGallerySignal}
           />
         </div>
         <CommandInput onSubmitCommand={sendCommand} />
@@ -141,6 +168,14 @@ export default function FablestarClient({
         roomLabel={sceneRoomLabel}
         downloadBaseName={sceneDownloadBaseName}
         generating={sceneGenerating}
+        usingSceneAsNarrativeBackdrop={narrativeBackdropSource === "scene"}
+        onUseSceneAsNarrativeBackdrop={() => setNarrativeBackdropSource("scene")}
+        onResetNarrativeBackdropToCharacter={() => setNarrativeBackdropSource("portrait")}
+        onOpenSceneGallery={
+          sceneGen
+            ? () => setOpenSceneGallerySignal((n) => n + 1)
+            : undefined
+        }
       />
     ) },
     { id: "character", title: "Conduit", icon: "◈", accent: T.glyph.violet, minW: 200, minH: 240, content: (
@@ -150,7 +185,9 @@ export default function FablestarClient({
         showHeroPortrait={!session?.portraitImageUrl}
         accountName={session?.username}
         locationLabel={conduitLocation}
-        level={null}
+        level={session?.resonanceLevelsTotal != null ? session.resonanceLevelsTotal : null}
+        characterStats={session?.characterStats ?? null}
+        resonanceLevelsTotal={session?.resonanceLevelsTotal ?? null}
         digiBalance={session?.digiBalance}
         gameCurrencyLabel={gameCurrencyDisplayName}
         pvpEnabled={session?.pvpEnabled}
@@ -165,13 +202,27 @@ export default function FablestarClient({
     { id: "quests", title: "Quest Journal", icon: "📖", accent: T.glyph.emerald, minW: 260, minH: 250, content: <QuestJournal gameCurrencyLabel={gameCurrencyDisplayName} /> },
     { id: "target", title: "Target", icon: "⎯", accent: T.glyph.amber, minW: 220, minH: 180, content: <TargetPanel/> },
     { id: "stats", title: "Session Stats", icon: "📊", accent: T.text.info, minW: 200, minH: 200, content: <SessionStats/> },
+    {
+      id: "proficiencies",
+      title: "Skills",
+      icon: "◇",
+      accent: T.glyph.violet,
+      minW: 320,
+      minH: 280,
+      content: (
+        <ProficienciesPanel
+          characterStats={session?.characterStats ?? null}
+          resonanceLevelsTotal={session?.resonanceLevelsTotal ?? null}
+        />
+      ),
+    },
     { id: "keybinds", title: "Keybinds", icon: "⌨", accent: T.text.muted, minW: 240, minH: 280, content: <KeybindManager/> },
     { id: "triggers", title: "Triggers", icon: "⚡", accent: T.glyph.amber, minW: 260, minH: 260, content: <TriggerBuilder/> },
     { id: "quickactions", title: "Quick Actions", icon: "▶", accent: T.glyph.cyan, minW: 200, minH: 60, content: <QuickActions/> },
-  ], [narrativeLines, openCtx, sendCommand, notifications, session?.characterName, session?.username, session?.portraitImageUrl, session?.digiBalance, session?.pvpEnabled, session?.reputation, sceneImageUrl, sceneGenerating, sceneRoomLabel, sceneDownloadBaseName, sceneGen, conduitLocation, gameCurrencyDisplayName]);
+  ], [narrativeLines, openCtx, sendCommand, focusProficienciesPanel, notifications, session?.characterName, session?.username, session?.portraitImageUrl, session?.digiBalance, session?.pvpEnabled, session?.reputation, session?.characterStats, session?.resonanceLevelsTotal, sceneImageUrl, sceneGenerating, sceneRoomLabel, sceneDownloadBaseName, sceneGen, conduitLocation, gameCurrencyDisplayName, narrativeBackdropUrl, narrativeBackdropSource, openSceneGallerySignal]);
 
   return (
-    <GameCmdContext.Provider value={{ sendCommand }}>
+    <GameCmdContext.Provider value={{ sendCommand, focusProficienciesPanel }}>
     <div style={{
       flex: 1,
       width: "100%",
@@ -366,14 +417,9 @@ export default function FablestarClient({
                 </button>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={toggleMode}
-              title={mode === "dark" ? "Light mode" : "Dark mode"}
-              style={{ marginLeft: 6, padding: "2px 8px", borderRadius: T.radius.sm, border: `1px solid ${T.border.medium}`, background: T.bg.surface, color: T.text.muted, fontSize: 9, cursor: "pointer", fontFamily: T.font.body }}
-            >
-              {mode === "dark" ? "Light" : "Dark"}
-            </button>
+            <span style={{ marginLeft: 6, display: "inline-block" }}>
+              <ThemeToggleButton compact style={{ padding: "2px 8px", fontSize: 9, borderRadius: T.radius.sm }} />
+            </span>
             <button type="button" onClick={onSignOut} style={{ marginLeft: 4, padding: "2px 8px", borderRadius: T.radius.sm, border: `1px solid ${T.border.medium}`, background: T.bg.surface, color: T.text.muted, fontSize: 9, cursor: "pointer", fontFamily: T.font.body }}>
               Sign out
             </button>

@@ -11,6 +11,7 @@ import {
 const LS_PORTRAIT_BACKDROP_ON = "fablestar_narrative_portrait_backdrop_on";
 const LS_PORTRAIT_BACKDROP_OPACITY = "fablestar_narrative_portrait_backdrop_opacity";
 const LS_PORTRAIT_BACKDROP_SCALE = "fablestar_narrative_portrait_backdrop_scale";
+const LS_PORTRAIT_BACKDROP_X_OFFSET = "fablestar_narrative_portrait_backdrop_x_offset";
 
 function readPortraitBackdropOnFromLs() {
   try {
@@ -51,6 +52,21 @@ function readPortraitBackdropScaleFromLs() {
   return 100;
 }
 
+const PORTRAIT_BACKDROP_X_OFFSET_MIN = -45;
+const PORTRAIT_BACKDROP_X_OFFSET_MAX = 45;
+
+function readPortraitBackdropXOffsetFromLs() {
+  try {
+    const n = parseInt(localStorage.getItem(LS_PORTRAIT_BACKDROP_X_OFFSET), 10);
+    if (Number.isFinite(n)) {
+      return Math.max(PORTRAIT_BACKDROP_X_OFFSET_MIN, Math.min(PORTRAIT_BACKDROP_X_OFFSET_MAX, n));
+    }
+  } catch {
+    /* ignore */
+  }
+  return 0;
+}
+
 export const DEFAULT_NARRATIVE = [
   { type: "system", text: "— Connected to Fablestar Expanse —", ts: "" },
   { type: "room_title", text: "Corroded Junction — Sector 7, Depth 2" },
@@ -74,6 +90,7 @@ export function buildSceneNarrativeContext(lines, maxLen = 4000) {
     let t = "";
     switch (l.type) {
       case "raw":
+      case "server_message":
         t = l.text;
         break;
       case "room_title":
@@ -819,7 +836,13 @@ function SceneArtModal({ onClose, lines, sceneGen }) {
   );
 }
 
-export function NarrativePanel({ onContextMenu, lines, sceneGen, portraitBackdropUrl = null }) {
+export function NarrativePanel({
+  onContextMenu,
+  lines,
+  sceneGen,
+  portraitBackdropUrl = null,
+  openSceneGallerySignal = 0,
+}) {
   const { mode, T } = usePlayTheme();
   const scrollRef = useRef(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -832,6 +855,7 @@ export function NarrativePanel({ onContextMenu, lines, sceneGen, portraitBackdro
   const [portraitBackdropOn, setPortraitBackdropOn] = useState(readPortraitBackdropOnFromLs);
   const [portraitBackdropOpacity, setPortraitBackdropOpacity] = useState(readPortraitBackdropOpacityFromLs);
   const [portraitBackdropScale, setPortraitBackdropScale] = useState(readPortraitBackdropScaleFromLs);
+  const [portraitBackdropXOffset, setPortraitBackdropXOffset] = useState(readPortraitBackdropXOffsetFromLs);
 
   const narrativePortraitScrim =
     mode === "dark"
@@ -878,7 +902,26 @@ export function NarrativePanel({ onContextMenu, lines, sceneGen, portraitBackdro
     }
   }, []);
 
+  const onPortraitBackdropXOffsetChange = useCallback((e) => {
+    const v = +e.target.value;
+    const clamped = Math.max(
+      PORTRAIT_BACKDROP_X_OFFSET_MIN,
+      Math.min(PORTRAIT_BACKDROP_X_OFFSET_MAX, Number.isFinite(v) ? v : 0)
+    );
+    setPortraitBackdropXOffset(clamped);
+    try {
+      localStorage.setItem(LS_PORTRAIT_BACKDROP_X_OFFSET, String(clamped));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [lines]);
+  useEffect(() => {
+    if (!sceneGen || !openSceneGallerySignal) return;
+    setGalleryModalKey((k) => k + 1);
+    setGalleryModalOpen(true);
+  }, [openSceneGallerySignal, sceneGen]);
 
   const parseEntities = (text) => {
     const parts = text.split(/(\|[^|]+\|)/g);
@@ -896,6 +939,57 @@ export function NarrativePanel({ onContextMenu, lines, sceneGen, portraitBackdro
     switch (line.type) {
       case "system": return <div key={i} role="status" style={{ ...base, color: T.text.muted, fontStyle: "italic", fontSize: 11 }}><Ts ts={line.ts} />{line.text}</div>;
       case "raw": return <div key={i} style={{ ...base, color: T.text.narrative, fontFamily: T.font.body, fontSize: 13, whiteSpace: "pre-wrap" }}>{line.text}</div>;
+      case "server_message": {
+        const raw = line.text != null ? String(line.text) : "";
+        const m = raw.match(/^\[Server\]\s*(.*)$/is);
+        const body = ((m ? m[1] : raw) || "").trim() || raw.replace(/^\[Server\]\s*/i, "").trim() || raw;
+        return (
+          <div
+            key={i}
+            role="status"
+            aria-live="polite"
+            style={{
+              ...base,
+              margin: "10px 14px",
+              padding: "12px 14px 14px",
+              borderRadius: T.radius.md,
+              borderLeft: `4px solid ${T.text.info}`,
+              background: mode === "dark" ? "rgba(96,165,250,0.14)" : "rgba(37,99,235,0.1)",
+              border: `1px solid ${mode === "dark" ? "rgba(96,165,250,0.42)" : "rgba(37,99,235,0.32)"}`,
+              boxShadow:
+                mode === "dark"
+                  ? "0 0 0 1px rgba(96,165,250,0.06), 0 6px 20px rgba(0,0,0,0.22)"
+                  : "0 2px 10px rgba(37,99,235,0.12)",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: T.font.display,
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: "0.14em",
+                color: T.text.info,
+                marginBottom: 8,
+                textTransform: "uppercase",
+              }}
+            >
+              Server broadcast
+            </div>
+            <div
+              style={{
+                fontFamily: T.font.body,
+                fontSize: 14,
+                fontWeight: 600,
+                lineHeight: 1.55,
+                color: T.text.primary,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {body}
+            </div>
+          </div>
+        );
+      }
       case "room_title": return (
         <div key={i} style={{ padding: "10px 14px 2px", display: "flex", alignItems: "baseline", gap: 10 }}>
           <span style={{ fontFamily: T.font.display, fontSize: 18, fontWeight: 700, color: T.text.accent }}>{line.text.split("—")[0].trim()}</span>
@@ -1061,7 +1155,7 @@ export function NarrativePanel({ onContextMenu, lines, sceneGen, portraitBackdro
                 objectFit: "contain",
                 objectPosition: "right center",
                 opacity: portraitBackdropOpacity / 100,
-                transform: `translateY(-50%) scale(${portraitBackdropScale / 100})`,
+                transform: `translate(${portraitBackdropXOffset}%, -50%) scale(${portraitBackdropScale / 100})`,
                 transformOrigin: "right center",
               }}
             />
@@ -1203,6 +1297,38 @@ export function NarrativePanel({ onContextMenu, lines, sceneGen, portraitBackdro
                 }}
               />
             </label>
+            <label
+              title="Portrait horizontal position"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "0 4px",
+                flex: "1 1 100px",
+                minWidth: 64,
+                maxWidth: 130,
+              }}
+            >
+              <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}>
+                Portrait backdrop horizontal position
+              </span>
+              <span style={{ fontSize: 9, color: T.text.muted, flexShrink: 0, fontFamily: T.font.body }}>↔</span>
+              <input
+                type="range"
+                min={PORTRAIT_BACKDROP_X_OFFSET_MIN}
+                max={PORTRAIT_BACKDROP_X_OFFSET_MAX}
+                step={1}
+                value={portraitBackdropXOffset}
+                onChange={onPortraitBackdropXOffsetChange}
+                aria-label="Portrait backdrop horizontal position"
+                style={{
+                  flex: 1,
+                  minWidth: 40,
+                  height: 4,
+                  accentColor: T.glyph.amber,
+                }}
+              />
+            </label>
           </>
         ) : null}
       </div>
@@ -1217,7 +1343,7 @@ export function CommandInput({ onSubmitCommand }) {
   const [histIdx, setHistIdx] = useState(-1);
   const [suggestions, setSuggestions] = useState([]);
   const inputRef = useRef(null);
-  const CMDS = ["look","examine","inventory","north","south","east","west","up","down","inscribe","attack","cast","say","tell","whisper","get","drop","use","equip","unequip","map","who","score","help","glyphs","delve","rest","quest","journal","stats","keybinds","triggers","config"];
+  const CMDS = ["look","examine","inventory","north","south","east","west","up","down","inscribe","attack","cast","say","tell","whisper","get","drop","use","equip","unequip","map","who","score","prof","cap","bonus","raise","lower","lock","help","glyphs","delve","rest","quest","journal","stats","keybinds","triggers","config"];
   const handleKey = (e) => {
     if (e.key === "Enter" && value.trim()) {
       const cmd = value.trim();

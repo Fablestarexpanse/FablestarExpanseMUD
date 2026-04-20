@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useAdminTheme } from "./AdminThemeContext.jsx";
-
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8001";
+import { API_BASE } from "./apiConfig.js";
 
 /** Matches server comfyui.toml default: 100 pixels ≈ US $1 at list. */
 const PIXELS_PER_USD_REF = 100;
@@ -139,11 +138,23 @@ export default function PlayerAccountsTab({ focusTarget = null }) {
 
   const loadList = useCallback(async () => {
     setErr("");
+    const url = `${API_BASE}/admin/player-accounts`;
     try {
-      const { data } = await axios.get(`${API_BASE}/admin/player-accounts`);
+      const { data } = await axios.get(url);
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
-      setErr(e.response?.data?.detail || e.message || "Failed to load accounts");
+      const detail = e.response?.data?.detail;
+      const detailStr =
+        typeof detail === "string" ? detail : detail != null ? JSON.stringify(detail) : "";
+      const status = e.response?.status;
+      const parts = [
+        detailStr || null,
+        status ? `HTTP ${status}` : null,
+        e.message === "Network Error" || !e.response
+          ? `Cannot reach Nexus at ${API_BASE} (is the server running on the same port as config/server.toml?)`
+          : null,
+      ].filter(Boolean);
+      setErr(parts.join(" — ") || "Failed to load accounts");
       setRows([]);
     }
   }, []);
@@ -434,6 +445,7 @@ function AccountEditForm({ detail, disabled, onSave, onGrantBundlePixels }) {
 
 function CharacterEditCard({ c, disabled, onSave }) {
   const { colors: COLORS } = useAdminTheme();
+  const [statsJson, setStatsJson] = useState(() => JSON.stringify(c.stats ?? {}, null, 2));
   const inp = {
     padding: "8px 10px",
     background: COLORS.bgInput,
@@ -458,7 +470,8 @@ function CharacterEditCard({ c, disabled, onSave }) {
     setPvp(Boolean(c.pvp_enabled));
     setPortraitUrl(c.portrait_url || "");
     setPortraitPrompt(c.portrait_prompt || "");
-  }, [c.id, c.digi_balance, c.reputation, c.room_id, c.pvp_enabled, c.portrait_url, c.portrait_prompt]);
+    setStatsJson(JSON.stringify(c.stats ?? {}, null, 2));
+  }, [c.id, c.digi_balance, c.reputation, c.room_id, c.pvp_enabled, c.portrait_url, c.portrait_prompt, c.stats]);
 
   return (
     <div style={{ marginBottom: 14, padding: 12, background: COLORS.bgInput, borderRadius: 8, border: `1px solid ${COLORS.border}` }}>
@@ -489,17 +502,43 @@ function CharacterEditCard({ c, disabled, onSave }) {
         <div style={{ fontSize: 10, color: COLORS.textMuted, marginBottom: 4 }}>Portrait prompt</div>
         <textarea value={portraitPrompt} onChange={(e) => setPortraitPrompt(e.target.value)} style={{ ...inp, minHeight: 56, resize: "vertical" }} disabled={disabled} />
       </div>
+      <div style={{ marginTop: 8 }}>
+        <div style={{ fontSize: 10, color: COLORS.textMuted, marginBottom: 4 }}>
+          Character stats JSON (legacy + <code style={{ color: COLORS.text }}>conduit</code> proficiency block)
+        </div>
+        <textarea
+          value={statsJson}
+          onChange={(e) => setStatsJson(e.target.value)}
+          style={{ ...inp, minHeight: 120, resize: "vertical", fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}
+          disabled={disabled}
+          spellCheck={false}
+        />
+      </div>
       <button
         type="button"
         disabled={disabled}
-        onClick={() => onSave({
+        onClick={() => {
+          let statsParsed = null;
+          try {
+            statsParsed = JSON.parse(statsJson);
+          } catch {
+            window.alert("Stats JSON is invalid — fix syntax before saving.");
+            return;
+          }
+          if (statsParsed !== null && typeof statsParsed !== "object") {
+            window.alert("Stats JSON must be an object.");
+            return;
+          }
+          onSave({
           digi_balance: parseInt(digi, 10) || 0,
           reputation: parseInt(rep, 10) || 0,
           room_id: room.trim(),
           pvp_enabled: pvp,
           portrait_url: portraitUrl.trim() || null,
           portrait_prompt: portraitPrompt.trim() || null,
-        })}
+          stats: statsParsed,
+        });
+        }}
         style={{
           marginTop: 10,
           padding: "6px 12px",

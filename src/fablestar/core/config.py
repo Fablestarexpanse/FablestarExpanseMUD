@@ -16,6 +16,8 @@ class ServerConfig(BaseModel):
     game_currency_display_name: str = "Digi"
     # Starting in-world balance for each new character (existing rows default 0 until granted in-game).
     starting_digi_balance: int = 100
+    # When True, personal combat uses max(legacy strength/dexterity-derived, proficiency-derived) ratings.
+    proficiency_combat_hybrid: bool = True
     # When True, Nexus admin/content/forge/llm routes require a staff JWT (see /admin/auth/login).
     admin_auth_required: bool = False
     # HS256 secret; prefer env FABLESTAR_ADMIN_JWT_SECRET in production.

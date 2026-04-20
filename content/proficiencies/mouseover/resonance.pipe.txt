@@ -1,0 +1,24 @@
+resonance.thermal.ignition | Ignition | Fire generation, thermal lance, heat projection | FRT:0.1 RFX:0.2 ACU:0.4 RSV:0.3 PRS:0.0
+resonance.thermal.extraction | Extraction | Heat drain, cryo effects, flash-freeze | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+resonance.thermal.thermal_shaping | Thermal Shaping | Walls of flame, heat mirages, thermal barriers | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+resonance.kinetic.force_projection | Force Projection | Repulsion blasts, shockwaves, concussive force | FRT:0.3 RFX:0.0 ACU:0.3 RSV:0.4 PRS:0.0
+resonance.kinetic.binding | Binding | Gravity wells, motion locks, pinning fields | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+resonance.kinetic.acceleration | Acceleration | Projectile boost, speed augmentation, momentum transfer | FRT:0.0 RFX:0.4 ACU:0.3 RSV:0.3 PRS:0.0
+resonance.spatial.warding | Warding | Barrier glyphs, exclusion zones, defensive perimeters | FRT:0.2 RFX:0.0 ACU:0.4 RSV:0.4 PRS:0.0
+resonance.spatial.displacement | Displacement | Short-range teleport, phase shift, positional swap | FRT:0.0 RFX:0.4 ACU:0.3 RSV:0.3 PRS:0.0
+resonance.spatial.folding | Folding | Room compression, passage creation, spatial shortcuts | FRT:0.0 RFX:0.1 ACU:0.5 RSV:0.4 PRS:0.0
+resonance.temporal.dilation | Dilation | Local time slow / haste effects in a limited area | FRT:0.0 RFX:0.1 ACU:0.5 RSV:0.4 PRS:0.0
+resonance.temporal.reversion | Reversion | Undo recent state changes — heal recent damage, restore broken objects | FRT:0.1 RFX:0.0 ACU:0.4 RSV:0.5 PRS:0.0
+resonance.temporal.echo | Echo | After-images, temporal duplicates, delayed action replay | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+resonance.neural.suppression | Suppression | Stun, confusion, sensory overload on targets | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.4 PRS:0.3
+resonance.neural.domination | Domination | Entity control, behavior override, puppeteering | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.4 PRS:0.3
+resonance.neural.communion | Communion | Information extraction, memory reading, empathic sensing | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+resonance.harmonics.amplification | Amplification | Boost other Conduits' glyph output in proximity | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.4 PRS:0.3
+resonance.harmonics.dampening | Dampening | Nullify hostile resonance effects, suppress enemy glyphs | FRT:0.2 RFX:0.0 ACU:0.3 RSV:0.5 PRS:0.0
+resonance.harmonics.synchronization | Synchronization | Multi-Conduit glyph linking — combined attacks, shared shields | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+resonance.inscription.etching | Etching | Physical glyph carving precision — on skin, weapons, surfaces | FRT:0.0 RFX:0.5 ACU:0.3 RSV:0.2 PRS:0.0
+resonance.inscription.substrate_prep | Substrate Prep | Prepare surfaces for inscription — skin treatment, material conditioning | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+resonance.inscription.stabilization | Stabilization | Prevent glyph degradation and corruption over time | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+resonance.attunement.channeling_efficiency | Channeling Efficiency | Reduce resonance cost of glyph activations | FRT:0.2 RFX:0.0 ACU:0.3 RSV:0.5 PRS:0.0
+resonance.attunement.recovery | Recovery | Faster resonance energy regeneration after glyph use | FRT:0.4 RFX:0.0 ACU:0.2 RSV:0.4 PRS:0.0
+resonance.attunement.overload_tolerance | Overload Tolerance | Safely push glyphs past normal limits without self-damage | FRT:0.4 RFX:0.0 ACU:0.2 RSV:0.4 PRS:0.0

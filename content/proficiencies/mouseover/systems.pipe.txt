@@ -1,0 +1,33 @@
+systems.structural.construction | Construction | Build new structures and expand settlements | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+systems.structural.reinforcement | Reinforcement | Strengthen existing buildings and infrastructure | FRT:0.4 RFX:0.2 ACU:0.4 RSV:0.0 PRS:0.0
+systems.structural.demolition | Demolition | Controlled teardown of structures — safe removal | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+systems.structural.architecture | Architecture | Design efficient layouts, load-bearing calculations | FRT:0.0 RFX:0.2 ACU:0.6 RSV:0.2 PRS:0.0
+systems.structural.urban_planning | Urban Planning | City-scale development decisions, zoning, growth management | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+systems.power.generation | Generation | Reactor operation, solar arrays, wind turbines, geothermal | FRT:0.3 RFX:0.2 ACU:0.5 RSV:0.0 PRS:0.0
+systems.power.distribution | Distribution | Grid management, load balancing, power routing | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+systems.power.storage | Storage | Battery banks, capacitor arrays, energy buffering | FRT:0.3 RFX:0.2 ACU:0.5 RSV:0.0 PRS:0.0
+systems.power.emergency | Emergency Power | Backup systems, crisis power rationing, failover protocols | FRT:0.2 RFX:0.0 ACU:0.4 RSV:0.4 PRS:0.0
+systems.life_support.atmosphere | Atmosphere | Air recycling, oxygen generation, gas balance | FRT:0.3 RFX:0.0 ACU:0.5 RSV:0.2 PRS:0.0
+systems.life_support.water_systems | Water Systems | Purification, distribution, waste water treatment | FRT:0.3 RFX:0.2 ACU:0.5 RSV:0.0 PRS:0.0
+systems.life_support.temperature | Temperature | HVAC, climate management, thermal regulation | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+systems.life_support.waste_management | Waste Management | Sanitation, recycling, disposal, contamination control | FRT:0.4 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.0
+systems.computing.programming | Programming | Write and modify software systems | FRT:0.0 RFX:0.2 ACU:0.6 RSV:0.2 PRS:0.0
+systems.computing.network_admin | Network Admin | Maintain communication networks, routers, relays | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+systems.computing.data_recovery | Data Recovery | Retrieve corrupted or ancient data stores | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+systems.computing.security_systems | Security Systems | Firewalls, access control, intrusion detection | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+systems.computing.glyphstream_tech | Glyphstream Tech | VR network maintenance and operation — immersion tank upkeep | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+systems.mechanical.maintenance | Maintenance | Routine equipment upkeep, preventive servicing | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+systems.mechanical.hydraulics | Hydraulics | Fluid power systems — doors, lifts, presses, industrial machinery | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+systems.mechanical.robotics_maintenance | Robotics Maintenance | Repair and reprogram automated systems and service bots | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+systems.mechanical.vehicle_maintenance | Vehicle Maintenance | Ground, air, and ship vehicle routine repair | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+systems.civil.road_systems | Road Systems | Transportation networks on planetary surfaces | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.0 PRS:0.3
+systems.civil.water_infrastructure | Water Infrastructure | Aqueducts, sewage, irrigation at settlement scale | FRT:0.3 RFX:0.0 ACU:0.5 RSV:0.2 PRS:0.0
+systems.civil.communications_grid | Comms Grid | Planetary and local comms infrastructure | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+systems.civil.public_transit | Public Transit | Mass transport systems — trains, trams, shuttle networks | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+systems.defense.fortification | Fortification | Build defensive structures — walls, bunkers, checkpoints | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+systems.defense.turret_systems | Turret Systems | Automated weapon emplacements — targeting, power, maintenance | FRT:0.2 RFX:0.3 ACU:0.5 RSV:0.0 PRS:0.0
+systems.defense.barrier_tech | Barrier Tech | Energy shields, bulkhead reinforcement, blast doors | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+systems.defense.planetary_defense | Planetary Defense | Anti-orbital and anti-invasion systems at settlement scale | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+systems.environmental.contamination_control | Contamination Control | Manage toxic spills, radiation cleanup, chemical containment | FRT:0.4 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.0
+systems.environmental.ecosystem_mgmt | Ecosystem Mgmt | Maintain biodiversity in closed systems, manage habitat balance | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+systems.environmental.terraforming_basics | Terraforming Basics | Modify planetary conditions for habitability — long-term projects | FRT:0.2 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.0

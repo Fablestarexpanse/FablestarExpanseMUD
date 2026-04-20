@@ -4,7 +4,9 @@ from typing import Any, Dict, Optional, Type, TypeVar
 
 import yaml
 from pydantic import BaseModel
-from fablestar.world.models import RoomModel, ZoneModel, EntityTemplate, ItemTemplate
+from fablestar.world.models import RoomModel, EntityTemplate, ItemTemplate
+from fablestar.proficiencies.catalog_loader import load_proficiency_catalog_from_disk
+from fablestar.proficiencies.registry import ProficiencyRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +114,16 @@ class ContentLoader:
                 results.append(tmpl)
         return results
 
+    def get_proficiency_registry(self) -> ProficiencyRegistry:
+        """Load and cache the Conduit proficiency tree (leaves + inferred internal nodes)."""
+        cache_key = self._get_cache_key("proficiency_registry", content_id="all")
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+        doc = load_proficiency_catalog_from_disk(self.content_dir)
+        reg = ProficiencyRegistry(doc.leaves)
+        self._cache[cache_key] = reg
+        return reg
+
     def invalidate(self, file_path: Path):
         """Invalidate cache entries associated with a changed file."""
         # Simple implementation: clear all or try to match path
@@ -119,7 +131,12 @@ class ContentLoader:
         logger.info(f"Invalidating cache for {file_path}")
         
         # For now, we'll just clear the specific type if we can determine it
-        if "rooms" in file_path.parts:
+        if "proficiencies" in file_path.parts:
+            k = self._get_cache_key("proficiency_registry", content_id="all")
+            if k in self._cache:
+                del self._cache[k]
+                logger.info("Evicted proficiency_registry from cache")
+        elif "rooms" in file_path.parts:
             room_id = f"{file_path.parent.parent.name}:{file_path.stem}"
             cache_key = self._get_cache_key("room", room_id)
             if cache_key in self._cache:

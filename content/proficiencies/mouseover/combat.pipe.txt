@@ -1,0 +1,32 @@
+combat.melee.blades | Blades | Mono-edge, vibro-blade, plasma-edge, glyph-etched edged weapons | FRT:0.3 RFX:0.5 ACU:0.2 RSV:0.0 PRS:0.0
+combat.melee.impact | Impact | Stun batons, gravity hammers, shock mauls, kinetic amplifiers | FRT:0.5 RFX:0.3 ACU:0.0 RSV:0.2 PRS:0.0
+combat.melee.polearms | Polearms | Energy glaives, arc pikes, resonance lances, reach weapons | FRT:0.4 RFX:0.4 ACU:0.2 RSV:0.0 PRS:0.0
+combat.melee.unarmed | Unarmed | Neural-enhanced CQC, powered gauntlets, martial techniques | FRT:0.3 RFX:0.4 ACU:0.1 RSV:0.2 PRS:0.0
+combat.ballistic.sidearms | Sidearms | Flechette pistols, caseless handguns, needle guns | FRT:0.2 RFX:0.5 ACU:0.3 RSV:0.0 PRS:0.0
+combat.ballistic.longarms | Longarms | Assault rifles, marksman rifles, scatter guns | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+combat.ballistic.heavy_weapons | Heavy Weapons | Rotary cannons, grenade launchers, rail cannons | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+combat.ballistic.specialty_weapons | Specialty Weapons | Dart guns (tranq/poison), net launchers, taser lines | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+combat.energy_weapons.beam | Beam | Laser rifles, cutting beams, sustained-fire emitters | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+combat.energy_weapons.pulse | Pulse | Plasma bolts, ion bursts, concussion projectors | FRT:0.0 RFX:0.4 ACU:0.3 RSV:0.3 PRS:0.0
+combat.energy_weapons.arc | Arc | Lightning weapons, chain discharge, EMP emitters | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+combat.energy_weapons.resonance_arms | Resonance Arms | Glyph-powered weapons — channels inscribed glyphs into focused weapon output | FRT:0.0 RFX:0.3 ACU:0.3 RSV:0.4 PRS:0.0
+combat.explosives.grenades | Grenades | Frag, flash, EMP, cryo, incendiary throwables | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+combat.explosives.mines_traps | Mines & Traps | Proximity, tripwire, remote-detonated devices | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+combat.explosives.rockets | Rockets | Dumb-fire, guided, and swarm missile launchers | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+combat.explosives.demolitions | Demolitions | Breaching charges, structural charges, shaped explosives | FRT:0.3 RFX:0.0 ACU:0.5 RSV:0.2 PRS:0.0
+combat.defense.parry | Parry | Active weapon deflection, blade locks, redirects | FRT:0.3 RFX:0.5 ACU:0.2 RSV:0.0 PRS:0.0
+combat.defense.evasion | Evasion | Spatial awareness, dodge patterns, rolling, diving | FRT:0.2 RFX:0.5 ACU:0.3 RSV:0.0 PRS:0.0
+combat.defense.armor_systems | Armor Systems | Effective use of light through powered armor, damage angling | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+combat.defense.field_barriers | Field Barriers | Portable shield generators, deployable cover, barricade use | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+combat.tactics.threat_assessment | Threat Assessment | Read enemy patterns, identify weaknesses, assess danger | FRT:0.0 RFX:0.0 ACU:0.5 RSV:0.3 PRS:0.2
+combat.tactics.positioning | Positioning | Flanking, choke points, elevation advantage, cover use | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+combat.tactics.squad_doctrine | Squad Doctrine | Group combat coordination, fire teams, suppression patterns | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+combat.tactics.ambush | Ambush | Surprise attacks, trap-setting for hostiles, kill zones | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+combat.specialist.entity_hunting | Entity Hunting | Techniques specific to labyrinth creatures — weak points, behavior patterns | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+combat.specialist.breaching | Breaching | Forced entry through sealed, defended, or reinforced areas | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+combat.specialist.suppression | Suppression | Area denial, crowd control, pinning fire, intimidation | FRT:0.3 RFX:0.2 ACU:0.2 RSV:0.0 PRS:0.3
+combat.vehicle_combat.mech_piloting | Mech Piloting | Operating utility and combat mech frames | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+combat.vehicle_combat.mech_weapons | Mech Weapons | Mech-mounted weapon systems — autocannons, missile pods, energy arrays | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+combat.vehicle_combat.ground_vehicle | Ground Vehicle | Tanks, IFVs, armed transports — driving and fighting | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+combat.vehicle_combat.atmospheric | Atmospheric | Gunship / fighter dogfighting in planetary atmosphere | FRT:0.0 RFX:0.5 ACU:0.3 RSV:0.2 PRS:0.0
+combat.vehicle_combat.drone_command | Drone Command | Deploying and directing scout, combat, and swarm drones | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0

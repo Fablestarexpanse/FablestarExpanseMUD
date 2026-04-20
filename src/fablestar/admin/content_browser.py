@@ -997,3 +997,44 @@ def save_ship_room(ship_id: str, room_local_id: str, patch: Dict[str, Any]) -> P
     text = yaml.safe_dump(data, default_flow_style=False, allow_unicode=True, sort_keys=False)
     path.write_text(text, encoding="utf-8")
     return path
+
+
+PROFICIENCIES_CATALOG_JSON = Path("content/proficiencies/catalog.json")
+
+
+def read_proficiency_catalog_document() -> Dict[str, Any]:
+    """Return raw ``catalog.json`` (version, expected_leaf_count, leaves) for admin editing."""
+    if not PROFICIENCIES_CATALOG_JSON.is_file():
+        raise FileNotFoundError("proficiency_catalog_missing")
+    raw = json.loads(PROFICIENCIES_CATALOG_JSON.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError("invalid_catalog_root")
+    return raw
+
+
+def write_proficiency_catalog_document(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Validate and atomically write ``content/proficiencies/catalog.json``.
+    ``expected_leaf_count`` is forced to ``len(leaves)`` so it stays consistent.
+    """
+    from fablestar.proficiencies.models import ProficiencyCatalogDocument
+    from fablestar.proficiencies.validation import validate_leaf_definitions
+
+    if not isinstance(raw, dict):
+        raise ValueError("catalog_must_be_object")
+    leaves_in = raw.get("leaves")
+    if not isinstance(leaves_in, list):
+        raise ValueError("leaves_must_be_array")
+    version = int(raw.get("version") or 1)
+    n = len(leaves_in)
+    doc_dict = {"version": version, "expected_leaf_count": n, "leaves": leaves_in}
+    try:
+        doc = ProficiencyCatalogDocument.model_validate(doc_dict)
+    except Exception as e:
+        raise ValueError(f"catalog_schema: {e}") from e
+    ok, errs = validate_leaf_definitions(list(doc.leaves), expected_count=len(doc.leaves))
+    if not ok:
+        raise ValueError("; ".join(errs))
+    payload = doc.model_dump(mode="json")
+    _atomic_write_json(PROFICIENCIES_CATALOG_JSON, payload)
+    return {"ok": True, "leaf_count": len(doc.leaves), "path": str(PROFICIENCIES_CATALOG_JSON.resolve())}

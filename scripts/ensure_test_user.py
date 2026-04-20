@@ -1,9 +1,15 @@
 """
-Ensure standard local play accounts exist (create or reset password).
+Ensure local play accounts exist (create or reset password).
 
-Seeds:
+Default seeds (no arguments):
   - test / test
   - demo / demo  (generic handoff / QA login)
+
+Custom account (e.g. after a fresh DB wiped your user):
+
+  python scripts/ensure_test_user.py Ronan your-new-password
+
+Creates the account if missing, or resets the password if it already exists.
 
 Run from repo root:  python scripts/ensure_test_user.py
 Requires PYTHONPATH=src (or pip install -e .).
@@ -78,13 +84,33 @@ async def ensure_account(session, username: str, password: str, starting_echo: i
 
 
 async def main() -> None:
+    argv = sys.argv[1:]
+    if len(argv) == 0:
+        pairs: tuple[tuple[str, str], ...] = SEED_ACCOUNTS
+    elif len(argv) == 2:
+        u, p = argv[0].strip(), argv[1]
+        if not u or not p:
+            print("Username and password must be non-empty.", file=sys.stderr)
+            sys.exit(2)
+        pairs = ((u, p),)
+    else:
+        print(
+            "Usage:\n"
+            "  python scripts/ensure_test_user.py\n"
+            "      → create/update test+test and demo+demo\n"
+            "  python scripts/ensure_test_user.py <username> <password>\n"
+            "      → create or reset that play account",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     config = load_config(str(_ROOT / "config"))
     db = PostgresState(config.database)
     starting_echo = int(config.comfyui.starting_echo_credits)
     starting_digi = int(config.server.starting_digi_balance)
     try:
         async with db.session_factory() as session:
-            for username, password in SEED_ACCOUNTS:
+            for username, password in pairs:
                 await ensure_account(session, username, password, starting_echo, starting_digi)
     finally:
         await db.engine.dispose()

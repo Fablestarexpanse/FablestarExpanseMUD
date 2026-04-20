@@ -96,6 +96,22 @@ def _safe_player_scene_storage_url(url: Optional[str]) -> bool:
 
 
 def _character_play_dict(character: Character) -> Dict[str, Any]:
+    from fablestar.proficiencies.state_helpers import (
+        ensure_proficiency_block,
+        migrate_legacy_stats,
+        total_proficiency_levels,
+    )
+
+    stats = migrate_legacy_stats(dict(character.stats or {}))
+    ensure_proficiency_block(stats)
+    total_lv = 0
+    try:
+        inst = getattr(app.app_instance, "content_loader", None)
+        if inst is not None:
+            reg = inst.get_proficiency_registry()
+            total_lv = total_proficiency_levels(stats, registry=reg)
+    except Exception:
+        total_lv = total_proficiency_levels(stats)
     return {
         "id": character.id,
         "name": character.name,
@@ -106,6 +122,8 @@ def _character_play_dict(character: Character) -> Dict[str, Any]:
         "digi_balance": int(character.digi_balance),
         "pvp_enabled": bool(character.pvp_enabled),
         "reputation": int(character.reputation),
+        "stats": stats,
+        "resonance_levels_total": total_lv,
     }
 
 
@@ -354,12 +372,16 @@ class FablestarServer:
         registry.reload_module("fablestar.commands.movement")
         registry.reload_module("fablestar.commands.combat")
         registry.reload_module("fablestar.commands.items")
+        registry.reload_module("fablestar.commands.proficiency")
         registry.reload_module("fablestar.commands.admin")
         
         # 2. Register base tick handlers
         self.tick_manager.register(self._on_tick)
         self.tick_manager.register(self.spawner.on_tick)
         self.tick_manager.register(self.persistence.on_tick)
+        from fablestar.proficiencies.tick import proficiency_system_tick
+
+        self.tick_manager.register(proficiency_system_tick)
         
         # 2. Start subsystems
         await self.hot_reloader.start(["content", "src/fablestar/commands", "config", "prompts"])
@@ -944,6 +966,7 @@ class FablestarServer:
         name: str,
         portrait_prompt: str = "",
         portrait_url: str = "",
+        starter_proficiencies: Optional[Dict[str, int]] = None,
     ) -> Dict[str, Any]:
         username = (username or "").strip()
         name = (name or "").strip()
@@ -960,6 +983,28 @@ class FablestarServer:
         pp_in = (portrait_prompt or "").strip() or None
         if pp_in and len(pp_in) > 4000:
             return {"ok": False, "error": "portrait_prompt_too_long"}
+
+        starter_clean: Dict[str, int] = {}
+        if starter_proficiencies:
+            for k, v in starter_proficiencies.items():
+                if not isinstance(k, str):
+                    continue
+                kid = k.strip()
+                if not kid:
+                    continue
+                try:
+                    n = int(v)
+                except (TypeError, ValueError):
+                    return {"ok": False, "error": "invalid_starter_proficiencies"}
+                if n != 0:
+                    starter_clean[kid] = n
+        if starter_clean:
+            from fablestar.proficiencies.starter import validate_starter_allocation
+
+            reg0 = self.content_loader.get_proficiency_registry()
+            ok_st, err_st = validate_starter_allocation(starter_clean, reg0)
+            if not ok_st:
+                return {"ok": False, "error": err_st}
 
         account_id: Optional[int] = None
         async with self.db.session_factory() as db_session:
@@ -1025,6 +1070,20 @@ class FablestarServer:
                 reputation=0,
             )
             db_session.add(character)
+            await db_session.commit()
+            await db_session.refresh(character)
+            from fablestar.proficiencies.starter import apply_starter_to_stats
+            from fablestar.proficiencies.state_helpers import ensure_proficiency_block, migrate_legacy_stats
+
+            merged_stats = migrate_legacy_stats(dict(character.stats or {}))
+            ensure_proficiency_block(merged_stats)
+            if starter_clean:
+                apply_starter_to_stats(
+                    merged_stats,
+                    starter_clean,
+                    self.content_loader.get_proficiency_registry(),
+                )
+            character.stats = merged_stats
             await db_session.commit()
             await db_session.refresh(character)
             payload = _character_play_dict(character)
@@ -1147,10 +1206,37 @@ class FablestarServer:
             # Link session to the authenticated character
             self.session_manager.link_player(session.id, character.name)
 
+            from fablestar.proficiencies.state_helpers import (
+                ensure_proficiency_block,
+                migrate_legacy_stats,
+                total_proficiency_levels,
+            )
+
+            norm_stats = migrate_legacy_stats(dict(character.stats))
+            ensure_proficiency_block(norm_stats)
+            character.stats = norm_stats
+
             # Seed Redis with the character's current state
             await self.redis.set_player_location(character.name, character.room_id)
-            await self.redis.set_player_stats(character.name, character.stats)
+            await self.redis.set_player_stats(character.name, norm_stats)
             await self.redis.set_player_inventory(character.name, character.inventory)
+
+            try:
+                reg = self.content_loader.get_proficiency_registry()
+                total_lv = total_proficiency_levels(norm_stats, registry=reg)
+            except Exception:
+                total_lv = total_proficiency_levels(norm_stats)
+            await session.send(
+                json.dumps(
+                    {
+                        "client_notice": "character_snapshot",
+                        "character_name": character.name,
+                        "stats": norm_stats,
+                        "resonance_levels_total": total_lv,
+                    }
+                )
+                + "\r\n"
+            )
 
             # Initial look
             await self.dispatcher.dispatch(session, "look")

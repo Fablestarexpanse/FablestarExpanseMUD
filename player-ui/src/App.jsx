@@ -12,12 +12,16 @@ import {
   playDeleteCharacter,
   playRefreshSession,
   playGenerateSceneImage,
+  playFetchProficiencyCatalog,
+  playApiBaseUrl,
 } from "./playApi.js";
+import { ChargenProficienciesStep } from "./ChargenProficienciesStep.jsx";
 import FablestarClient from "./mud/FablestarClient.jsx";
 import { GmBadge } from "./GmBadge.jsx";
 import { DEFAULT_NARRATIVE } from "./mud/03-narrative.jsx";
 import { PORTRAIT_ASPECT_RATIO_CSS } from "./portraitProfile.js";
 import { ReputationThermometer } from "./ReputationThermometer.jsx";
+import { FloatingThemeToggle, ThemeToggleButton } from "./ThemeToggleButton.jsx";
 
 /** Account-wide art balance (pixels / echo_credits): one place, not per character. */
 function AccountArtCreditsBar({ echoEconomy, gameCurrencyLabel, onTopUp }) {
@@ -279,7 +283,7 @@ function AuthLanding() {
             style={{
               fontSize: 11,
               color: T.text.muted,
-              lineHeight: 1.5,
+              lineHeight: 1.55,
               margin: "0 0 18px",
               padding: "10px 12px",
               borderRadius: T.radius.md,
@@ -287,10 +291,13 @@ function AuthLanding() {
               background: T.bg.surface,
             }}
           >
-            Local dev: run{" "}
-            <code style={{ fontSize: 10, color: T.text.secondary }}>python scripts/ensure_test_user.py</code>
-            {" "}
-            for <strong style={{ color: T.text.primary }}>demo</strong> / demo and <strong style={{ color: T.text.primary }}>test</strong> / test.
+            <strong style={{ color: T.text.secondary }}>Nexus dev_mode</strong> (auto on first start):{" "}
+            <strong style={{ color: T.text.primary }}>staff</strong> / <code style={{ fontSize: 10 }}>test</code> (GM),{" "}
+            <strong style={{ color: T.text.primary }}>player</strong> / <code style={{ fontSize: 10 }}>test</code>.
+            <br />
+            Optional:{" "}
+            <code style={{ fontSize: 10, color: T.text.secondary }}>python scripts/ensure_test_user.py</code> →{" "}
+            <strong style={{ color: T.text.primary }}>test</strong> / test, <strong style={{ color: T.text.primary }}>demo</strong> / demo.
           </p>
         )}
         <a
@@ -368,13 +375,15 @@ function AuthSignInForm({ onLoggedIn }) {
     setError("");
     setBusy(true);
     try {
-      const res = await playLogin(username, password);
+      const u = username.trim();
+      const p = password.trim();
+      const res = await playLogin(u, p);
       if (!res.ok) {
         setError(res.error === "invalid_credentials" ? "Unknown user or wrong password." : res.error || "Login failed");
         setBusy(false);
         return;
       }
-      onLoggedIn(mapPlayAuthPayload(res), password);
+      onLoggedIn(mapPlayAuthPayload(res), p);
     } catch (err) {
       setError(err.message || "Network error — is the Nexus running?");
     }
@@ -386,6 +395,31 @@ function AuthSignInForm({ onLoggedIn }) {
       <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Exo+2:wght@600;700&family=Oxanium:wght@500;600;700&display=swap" rel="stylesheet" />
       <div style={card}>
         <AuthBrandHeader subtitle="Sign in to continue" />
+        <p style={{ margin: "0 0 16px", fontSize: 12, color: T.text.muted, lineHeight: 1.45 }}>
+          Username and password are case-sensitive. Leading/trailing spaces are ignored.
+        </p>
+        <p style={{ margin: "0 0 14px", fontSize: 10, color: T.text.muted, lineHeight: 1.45, fontFamily: T.font.mono }}>
+          Login API: {playApiBaseUrl()}
+        </p>
+        {import.meta.env.DEV && (
+          <p
+            style={{
+              fontSize: 10,
+              color: T.text.secondary,
+              lineHeight: 1.5,
+              margin: "0 0 14px",
+              padding: "8px 10px",
+              borderRadius: T.radius.md,
+              border: `1px dashed ${T.border.dim}`,
+              background: T.bg.surface,
+            }}
+          >
+            Try <strong>staff</strong> / <code style={{ fontSize: 9 }}>test</code> or <strong>player</strong> /{" "}
+            <code style={{ fontSize: 9 }}>test</code> (created by Nexus dev_mode). If those fail, run{" "}
+            <code style={{ fontSize: 9 }}>python scripts/ensure_test_user.py</code> then use <strong>test</strong> / test or{" "}
+            <strong>demo</strong> / demo.
+          </p>
+        )}
         <form onSubmit={submit}>
           <label style={{ display: "block", fontSize: 10, color: T.text.muted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Username</label>
           <input
@@ -443,19 +477,22 @@ function AuthRegisterForm({ onLoggedIn }) {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
-    if (password !== password2) {
+    const u = username.trim();
+    const p = password.trim();
+    const p2 = password2.trim();
+    if (p !== p2) {
       setError("Passwords do not match.");
       return;
     }
     setBusy(true);
     try {
-      const res = await playRegister(username, password);
+      const res = await playRegister(u, p);
       if (!res.ok) {
         setError(res.error === "username_taken" ? "That name is already taken." : res.error || "Register failed");
         setBusy(false);
         return;
       }
-      onLoggedIn(mapPlayAuthPayload(res), password);
+      onLoggedIn(mapPlayAuthPayload(res), p);
     } catch (err) {
       setError(err.message || "Network error — is the Nexus running?");
     }
@@ -534,9 +571,12 @@ function PlayAuthFlow({ onLoggedIn }) {
     [onLoggedIn]
   );
 
-  if (route === "home") return <AuthLanding />;
-  if (route === "login") return <AuthSignInForm onLoggedIn={finish} />;
-  return <AuthRegisterForm onLoggedIn={finish} />;
+  return (
+    <>
+      <FloatingThemeToggle />
+      {route === "home" ? <AuthLanding /> : route === "login" ? <AuthSignInForm onLoggedIn={finish} /> : <AuthRegisterForm onLoggedIn={finish} />}
+    </>
+  );
 }
 
 function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacters, echoEconomy, mergeEchoFromPlayRes }) {
@@ -561,6 +601,13 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
   const [deleteErr, setDeleteErr] = useState("");
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleteNameConfirm, setDeleteNameConfirm] = useState("");
+  const [profCatalog, setProfCatalog] = useState(null);
+  const [profCatalogErr, setProfCatalogErr] = useState("");
+  const [profCatalogLoading, setProfCatalogLoading] = useState(false);
+  const [starterProf, setStarterProf] = useState({});
+  /** create flow: identity + portrait first, then starter proficiencies, then submit */
+  const [createPhase, setCreatePhase] = useState("identity");
+  const prevViewRef = useRef(view);
 
   const onPixelsHelp = useCallback(() => {
     const lab = echoEconomy?.label || "pixels";
@@ -605,6 +652,38 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
   useEffect(() => {
     if (view === "create") refreshComfy();
   }, [view, refreshComfy]);
+
+  useEffect(() => {
+    if (view === "create" && prevViewRef.current !== "create") {
+      setStarterProf({});
+      setCreatePhase("identity");
+    }
+    prevViewRef.current = view;
+  }, [view]);
+
+  useEffect(() => {
+    if (view !== "create") return;
+    let cancelled = false;
+    setProfCatalogErr("");
+    setProfCatalogLoading(true);
+    playFetchProficiencyCatalog()
+      .then((data) => {
+        if (cancelled) return;
+        if (data && typeof data.budget === "number" && Array.isArray(data.leaves)) setProfCatalog(data);
+        else setProfCatalogErr("Proficiency catalog response was unexpected.");
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setProfCatalogErr(e.message || "Could not load proficiency catalog");
+        setProfCatalog(null);
+      })
+      .finally(() => {
+        if (!cancelled) setProfCatalogLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [view]);
 
   useEffect(() => {
     if (characters.length && selectedId == null) setSelectedId(characters[0].id);
@@ -785,14 +864,43 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
     }
   };
 
+  const goToProficienciesStep = () => {
+    setFormErr("");
+    if (!newName.trim()) {
+      setFormErr("Enter a character name to continue.");
+      return;
+    }
+    setCreatePhase("skills");
+  };
+
   const runCreateCharacter = async (e) => {
     e.preventDefault();
     setFormErr("");
     setCreateBusy(true);
     try {
-      const res = await playCreateCharacter(username, password, newName.trim(), portraitPrompt.trim(), pendingPortraitUrl);
+      const res = await playCreateCharacter(
+        username,
+        password,
+        newName.trim(),
+        portraitPrompt.trim(),
+        pendingPortraitUrl,
+        starterProf
+      );
       if (!res.ok) {
         mergeEchoFromPlayRes?.(res);
+        const err = res.error || "";
+        let starterMsg = "";
+        if (typeof err === "string") {
+          if (err === "starter_budget_exceeded") starterMsg = "Starter proficiency points exceed the allowed total (15).";
+          else if (err === "invalid_proficiency_id") starterMsg = "Invalid proficiency id in your picks.";
+          else if (err === "invalid_starter_proficiencies") starterMsg = "Invalid proficiency levels — use whole numbers.";
+          else if (err.startsWith("unknown_proficiency:"))
+            starterMsg = `Unknown skill id: ${err.slice("unknown_proficiency:".length)}`;
+          else if (err.startsWith("invalid_level:"))
+            starterMsg = `Invalid level for ${err.slice("invalid_level:".length)}.`;
+          else if (err.startsWith("level_out_of_range:"))
+            starterMsg = `Each skill can be at most 5 at creation (${err.slice("level_out_of_range:".length)}).`;
+        }
         const map = {
           invalid_character_name: "Use 2–50 characters: letters, numbers, spaces, _ -",
           character_name_taken: "That character name is already taken.",
@@ -800,7 +908,7 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
           invalid_credentials: "Session expired — sign in again.",
           insufficient_credits: `Not enough ${res.currency_display_name || "pixels"} (need ${res.required ?? "?"}, have ${res.balance ?? "?"}).`,
         };
-        setFormErr(map[res.error] || res.error || "Could not create character");
+        setFormErr(starterMsg || map[res.error] || res.error || "Could not create character");
         return;
       }
       mergeEchoFromPlayRes?.(res);
@@ -809,6 +917,8 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
       setNewName("");
       setPortraitPrompt("");
       setPendingPortraitUrl("");
+      setStarterProf({});
+      setCreatePhase("identity");
       setPostCreatePortraitWarn(
         res.portrait_generation_failed
           ? "Character created, but ComfyUI could not finish the portrait. You can continue playing; ask an admin to check ComfyUI logs."
@@ -823,6 +933,7 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
   };
 
   const canEnter = characters.length > 0 && selectedId != null;
+  const selectedCharacter = selectedId != null ? characters.find((c) => c.id === selectedId) ?? null : null;
   const comfyReady = comfy.ready;
   const comfyLabel = !comfy.ready
     ? "Portrait workflow not ready"
@@ -1040,18 +1151,41 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
           </div>
         </div>
       ) : null}
-      <div style={{ width: "100%", maxWidth: 640 }}>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 1320,
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          gap: 32,
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ flex: "1 1 320px", maxWidth: view === "create" && createPhase === "skills" ? 1080 : 640, minWidth: 0 }}>
         <div style={{ marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
           <div>
             <h2 style={{ fontFamily: T.font.display, fontSize: 18, color: T.text.primary }}>
-              {view === "create" ? "New character" : "Choose a character"}
+              {view === "create"
+                ? createPhase === "identity"
+                  ? "New character"
+                  : "Starting proficiencies"
+                : "Choose a character"}
             </h2>
-            <p style={{ fontSize: 12, color: T.text.muted, marginTop: 4, lineHeight: 1.45, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
+            {view === "create" ? (
+              <p style={{ fontSize: 11, color: T.text.muted, marginTop: 4, lineHeight: 1.45 }}>
+                Step {createPhase === "identity" ? "1" : "2"} of 2 ·{" "}
+                {createPhase === "identity" ? "Identity & portrait" : "Optional conduit ranks"}
+              </p>
+            ) : null}
+            <p style={{ fontSize: 12, color: T.text.muted, marginTop: view === "create" ? 2 : 4, lineHeight: 1.45, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 4 }}>
               Signed in as <span style={{ color: T.text.accent }}>{username}</span>
               {isGm ? <GmBadge style={{ marginLeft: 2 }} /> : null}
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <ThemeToggleButton />
             {view === "create" && (
               <button
                 type="button"
@@ -1091,8 +1225,8 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
           <AccountArtCreditsBar echoEconomy={echoEconomy} gameCurrencyLabel={gameCurrencyLabel} onTopUp={onPixelsHelp} />
         ) : null}
 
-        {view === "create" && (
-          <form onSubmit={runCreateCharacter} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {view === "create" && createPhase === "identity" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div
               style={{
                 display: "flex",
@@ -1119,14 +1253,16 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
                 <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>
                   {comfy.ready
                     ? comfy.reachable
-                      ? "When you create this character, Nexus will generate a portrait via ComfyUI unless you already previewed one below."
+                      ? "When you finish creation, Nexus can generate a portrait via ComfyUI unless you already previewed one below."
                       : comfy.pingError || "Start ComfyUI on the server or check base_url in comfyui.toml."
                     : "Add config/comfyui_area_workflow.json (or set workflow_path in comfyui.toml) and enable comfyui.toml."}
                 </div>
               </div>
             </div>
             <p style={{ fontSize: 12, color: T.text.secondary, lineHeight: 1.45 }}>
-              Choose a name, write a rough portrait prompt (or leave it blank), use <strong style={{ color: T.text.muted }}>Suggest prompt</strong> to have the LLM expand it, then create. The same ComfyUI pipeline as WorldForge renders your portrait when the workflow is enabled.
+              Name your character and set up a portrait prompt (optional). Use{" "}
+              <strong style={{ color: T.text.muted }}>Suggest prompt</strong> for an LLM-polished Comfy line. On the next step you will
+              optionally place starter proficiency ranks — then you submit once to create them in the world.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-start" }}>
               <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1335,21 +1471,89 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
                 )}
               </div>
             </div>
-            {view === "create" && pendingPortraitUrl && !portraitGenerating ? (
+            {pendingPortraitUrl && !portraitGenerating ? (
               <p style={{ fontSize: 10, color: T.text.muted, margin: "-4px 0 0", textAlign: "right" }}>
                 Click the preview to view it full screen
               </p>
             ) : null}
-            {formErr && (
+            {formErr ? (
               <div role="alert" style={{ fontSize: 12, color: T.text.danger }}>
                 {formErr}
               </div>
+            ) : null}
+            <button
+              type="button"
+              disabled={formLocked || !newName.trim()}
+              onClick={goToProficienciesStep}
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: T.radius.md,
+                border: "none",
+                cursor: formLocked ? "wait" : "pointer",
+                background: `linear-gradient(135deg,${T.glyph.violet},${T.glyph.cyan})`,
+                color: "#0a0a0f",
+                fontWeight: 700,
+                fontSize: 12,
+              }}
+            >
+              Continue — starting proficiencies →
+            </button>
+            <p style={{ fontSize: 10, color: T.text.muted, margin: 0, textAlign: "center", lineHeight: 1.45 }}>
+              The skill catalog loads in the background while you work here, so the next screen is ready when you continue.
+            </p>
+            {characters.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setView("pick");
+                  setFormErr("");
+                  setCreatePhase("identity");
+                }}
+                style={{ background: "none", border: "none", color: T.text.muted, fontSize: 11, cursor: "pointer" }}
+              >
+                Cancel — back to list
+              </button>
+            )}
+          </div>
+        )}
+
+        {view === "create" && createPhase === "skills" && (
+          <form onSubmit={runCreateCharacter} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <ChargenProficienciesStep
+              characterName={newName.trim()}
+              portraitUrl={pendingPortraitUrl}
+              portraitBust={portraitPreviewBust}
+              budget={profCatalog?.budget ?? 15}
+              maxPerLeaf={profCatalog?.max_per_leaf ?? 5}
+              leaves={profCatalog?.leaves ?? []}
+              catalogLoading={profCatalogLoading}
+              catalogErr={profCatalogErr}
+              value={starterProf}
+              onChange={setStarterProf}
+              disabled={formLocked}
+              onBack={() => {
+                setFormErr("");
+                setCreatePhase("identity");
+              }}
+            />
+            {formErr ? (
+              <div role="alert" style={{ fontSize: 12, color: T.text.danger, lineHeight: 1.45, maxWidth: 720, alignSelf: "center" }}>
+                {formErr}
+              </div>
+            ) : null}
+            {comfy.ready && comfy.reachable && (
+              <p style={{ fontSize: 10, color: T.text.muted, margin: 0, textAlign: "center", lineHeight: 1.45 }}>
+                Final submit may run ComfyUI for your portrait if you did not preview one — can take about a minute.
+              </p>
             )}
             <button
               type="submit"
-              disabled={formLocked || !newName.trim()}
+              disabled={formLocked || !newName.trim() || createBusy}
               style={{
                 width: "100%",
+                maxWidth: 480,
+                alignSelf: "center",
                 padding: "12px",
                 borderRadius: T.radius.md,
                 border: "none",
@@ -1362,19 +1566,15 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
             >
               {createBusy ? "Creating character…" : "Create character"}
             </button>
-            {comfy.ready && comfy.reachable && (
-              <p style={{ fontSize: 10, color: T.text.muted, margin: "-6px 0 0", textAlign: "center" }}>
-                This may take a minute while ComfyUI renders your portrait.
-              </p>
-            )}
             {characters.length > 0 && (
               <button
                 type="button"
                 onClick={() => {
                   setView("pick");
                   setFormErr("");
+                  setCreatePhase("identity");
                 }}
-                style={{ background: "none", border: "none", color: T.text.muted, fontSize: 11, cursor: "pointer" }}
+                style={{ background: "none", border: "none", color: T.text.muted, fontSize: 11, cursor: "pointer", alignSelf: "center" }}
               >
                 Cancel — back to list
               </button>
@@ -1595,6 +1795,8 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
                   pvpEnabled: Boolean(ch?.pvp_enabled),
                   reputation: typeof ch?.reputation === "number" ? ch.reputation : 0,
                   lastSceneImageUrl: ch?.last_scene_image_url ?? null,
+                  characterStats: ch?.stats ?? null,
+                  resonanceLevelsTotal: typeof ch?.resonance_levels_total === "number" ? ch.resonance_levels_total : null,
                 });
               }}
               style={{
@@ -1615,6 +1817,81 @@ function CharacterChooser({ auth, password, onCancel, onChosen, onUpdateCharacte
             </button>
           </>
         )}
+        </div>
+        {view === "pick" && characters.length > 0 ? (
+          <aside
+            aria-label="Selected character portrait"
+            style={{
+              flex: "0 1 460px",
+              width: "100%",
+              maxWidth: "min(520px, 92vw)",
+              minWidth: 280,
+              position: "sticky",
+              top: 24,
+              alignSelf: "flex-start",
+              padding: "20px 22px",
+              borderRadius: T.radius.xl,
+              border: `1px solid ${T.border.medium}`,
+              background: T.bg.panel,
+              boxShadow: T.shadow.panel,
+              boxSizing: "border-box",
+            }}
+          >
+            <div style={{ fontFamily: T.font.display, fontSize: 13, color: T.text.primary, marginBottom: 4 }}>
+              {selectedCharacter?.name ?? "—"}
+            </div>
+            <div style={{ fontSize: 10, color: T.text.muted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>
+              Portrait preview
+            </div>
+            {selectedCharacter?.portrait_url ? (
+              <div
+                className="fablestar-portrait-stage"
+                style={{
+                  width: "100%",
+                  aspectRatio: PORTRAIT_ASPECT_RATIO_CSS,
+                  borderRadius: T.radius.lg,
+                  border: `1px solid ${T.border.glyph}`,
+                  overflow: "hidden",
+                }}
+              >
+                <div className="fablestar-portrait-aurora fablestar-portrait-aurora--thumb" aria-hidden />
+                <img
+                  src={playMediaUrl(selectedCharacter.portrait_url)}
+                  alt={selectedCharacter.name ? `Portrait: ${selectedCharacter.name}` : "Character portrait"}
+                  className="fablestar-portrait-cutout fablestar-portrait-cutout--hero"
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    objectPosition: "center",
+                    display: "block",
+                  }}
+                />
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  aspectRatio: PORTRAIT_ASPECT_RATIO_CSS,
+                  borderRadius: T.radius.lg,
+                  border: `1px dashed ${T.border.dim}`,
+                  background: T.bg.surface,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: T.text.muted,
+                  fontSize: 12,
+                  textAlign: "center",
+                  padding: 16,
+                  boxSizing: "border-box",
+                }}
+              >
+                No portrait yet for this character.
+              </div>
+            )}
+          </aside>
+        ) : null}
       </div>
     </div>
   );
@@ -1759,10 +2036,10 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [step, playSession]);
+  }, [step, playSession?.username, playSession?.characterId]);
 
   const onChosen = useCallback(
-    ({ characterId, characterName, password, portraitUrl, digiBalance, pvpEnabled, reputation, lastSceneImageUrl }) => {
+    ({ characterId, characterName, password, portraitUrl, digiBalance, pvpEnabled, reputation, lastSceneImageUrl, characterStats, resonanceLevelsTotal }) => {
       passwordRef.current = password;
       setPlaySession({
         username: auth.username,
@@ -1774,6 +2051,8 @@ export default function App() {
         pvpEnabled: typeof pvpEnabled === "boolean" ? pvpEnabled : false,
         reputation: typeof reputation === "number" ? reputation : 0,
         isGm: Boolean(auth.isGm),
+        characterStats: characterStats && typeof characterStats === "object" ? characterStats : null,
+        resonanceLevelsTotal: typeof resonanceLevelsTotal === "number" ? resonanceLevelsTotal : null,
       });
       setPlayerScenePath(lastSceneImageUrl && String(lastSceneImageUrl).trim() ? String(lastSceneImageUrl).trim() : null);
       setPlayerSceneBust((n) => n + 1);
@@ -1827,6 +2106,19 @@ export default function App() {
           setNarrativeLines((prev) => [...prev, { type: "pixel_grant", text: msg }]);
           return;
         }
+        if (j && j.client_notice === "character_snapshot") {
+          setPlaySession((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  characterStats: j.stats && typeof j.stats === "object" ? j.stats : prev.characterStats,
+                  resonanceLevelsTotal:
+                    typeof j.resonance_levels_total === "number" ? j.resonance_levels_total : prev.resonanceLevelsTotal,
+                }
+              : prev
+          );
+          return;
+        }
         if (j && j.client_notice === "staff_account_update") {
           if (typeof j.echo_credits === "number") {
             mergeEchoFromPlayRes(j);
@@ -1850,7 +2142,14 @@ export default function App() {
       }
       const parts = t.split(/\r?\n/).filter((line) => line.length > 0);
       if (parts.length === 0) return;
-      setNarrativeLines((prev) => [...prev, ...parts.map((text) => ({ type: "raw", text }))]);
+      setNarrativeLines((prev) => [
+        ...prev,
+        ...parts.map((text) =>
+          /^\[Server\]/i.test(String(text).trim())
+            ? { type: "server_message", text }
+            : { type: "raw", text }
+        ),
+      ]);
     };
 
     ws.onclose = () => {
@@ -1865,7 +2164,10 @@ export default function App() {
     return () => {
       disconnectWs();
     };
-  }, [step, playSession, disconnectWs, mergeEchoFromPlayRes]);
+    // Important: do not depend on the full `playSession` object. `character_snapshot` and other
+    // updates merge into playSession often; a new object reference would reconnect the socket and
+    // the server would emit initial `look` again — duplicate room blocks / "narrative spam".
+  }, [step, playSession?.username, playSession?.characterId, disconnectWs, mergeEchoFromPlayRes]);
 
   const onSendCommand = useCallback((cmd) => {
     const ws = wsRef.current;
@@ -1984,6 +2286,8 @@ export default function App() {
             pvpEnabled: playSession.pvpEnabled,
             reputation: playSession.reputation ?? 0,
             isGm: playSession.isGm,
+            characterStats: playSession.characterStats ?? null,
+            resonanceLevelsTotal: playSession.resonanceLevelsTotal ?? null,
           }}
           onSignOut={onSignOut}
           narrativeLines={narrativeLines}

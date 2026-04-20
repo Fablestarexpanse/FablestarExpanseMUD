@@ -1,0 +1,25 @@
+astronautics.piloting.small_craft | Small Craft | Fighters, couriers, personal ships, pods | FRT:0.0 RFX:0.5 ACU:0.3 RSV:0.2 PRS:0.0
+astronautics.piloting.medium_vessels | Medium Vessels | Freighters, corvettes, exploration ships | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+astronautics.piloting.large_vessels | Large Vessels | Frigates, bulk haulers, colony ships | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.3
+astronautics.piloting.capital_ships | Capital Ships | Carriers, battleships, station ships — requires full crew | FRT:0.0 RFX:0.0 ACU:0.3 RSV:0.3 PRS:0.4
+astronautics.piloting.docking | Docking | Station and planet approach, landing procedures, berth management | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+astronautics.astrogation.route_calculation | Route Calculation | Plot interplanetary courses, calculate transit times | FRT:0.0 RFX:0.2 ACU:0.6 RSV:0.2 PRS:0.0
+astronautics.astrogation.hazard_avoidance | Hazard Avoidance | Navigate debris fields, anomalies, interdiction zones | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+astronautics.astrogation.fuel_optimization | Fuel Optimization | Maximize range, minimize consumption, efficient burns | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+astronautics.ship_combat.gunnery | Gunnery | Aim and fire ship-scale weapons — cannons, beams | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+astronautics.ship_combat.missile_systems | Missile Systems | Torpedo and missile lock, launch, guidance | FRT:0.0 RFX:0.3 ACU:0.5 RSV:0.2 PRS:0.0
+astronautics.ship_combat.point_defense | Point Defense | Anti-fighter, anti-missile intercept systems | FRT:0.0 RFX:0.5 ACU:0.3 RSV:0.2 PRS:0.0
+astronautics.ship_combat.electronic_warfare | Electronic Warfare | Jamming, sensor spoofing, signal disruption | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+astronautics.ship_combat.tactical_maneuvering | Tactical Maneuvering | Combat positioning, evasion patterns, pursuit, disengagement | FRT:0.0 RFX:0.4 ACU:0.4 RSV:0.2 PRS:0.0
+astronautics.ship_systems.propulsion | Propulsion | Engine maintenance, repair, performance tuning | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+astronautics.ship_systems.life_support_ship | Ship Life Support | Air, water, gravity management aboard vessels | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+astronautics.ship_systems.weapons_maintenance | Weapons Maintenance | Keep ship weapons functional, calibrated, and supplied | FRT:0.2 RFX:0.4 ACU:0.4 RSV:0.0 PRS:0.0
+astronautics.ship_systems.shields | Shields | Ship shield management, recharge cycles, damage response | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+astronautics.ship_systems.sensors | Ship Sensors | Long-range detection, scanning, signature analysis | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+astronautics.eva.hull_work | Hull Work | External repair in vacuum, hull patching, component replacement | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+astronautics.eva.salvage_ops | Salvage Ops | Strip derelicts, recover cargo from wrecks, space retrieval | FRT:0.3 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.0
+astronautics.eva.zero_g_combat | Zero-G Combat | Fighting in space — rare, extremely dangerous | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+astronautics.cargo.loading | Loading | Efficient cargo placement, weight distribution, securing | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0
+astronautics.cargo.hazmat_handling | Hazmat Handling | Dangerous materials transport — explosives, chemicals, bio | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+astronautics.cargo.customs_procedures | Customs Procedures | Legal import/export documentation, tariff compliance | FRT:0.0 RFX:0.0 ACU:0.4 RSV:0.2 PRS:0.4
+astronautics.cargo.contraband | Contraband | Concealing illegal goods, false manifests, compartment design | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.0 PRS:0.3

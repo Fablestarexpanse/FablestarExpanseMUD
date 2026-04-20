@@ -1,0 +1,15 @@
+traversal.navigation.pathfinding | Pathfinding | Optimal route calculation through known and unknown terrain | FRT:0.0 RFX:0.2 ACU:0.5 RSV:0.3 PRS:0.0
+traversal.navigation.orientation | Orientation | Maintain bearings in shifting geometry, resist disorientation | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+traversal.navigation.depth_reading | Depth Reading | Sense current labyrinth depth/sector, gauge proximity to zones | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+traversal.movement.climbing | Climbing | Vertical surfaces, cable traversal, wall scaling | FRT:0.4 RFX:0.4 ACU:0.0 RSV:0.2 PRS:0.0
+traversal.movement.crawling | Crawling | Tight passages, vent systems, low-profile movement | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+traversal.movement.freefall | Freefall | Controlled descent, zero-g maneuvering, drop operations | FRT:0.3 RFX:0.5 ACU:0.0 RSV:0.2 PRS:0.0
+traversal.movement.swimming | Swimming | Flooded sections, coolant channels, submerged environments | FRT:0.4 RFX:0.4 ACU:0.0 RSV:0.2 PRS:0.0
+traversal.labyrinth_sense.shift_prediction | Shift Prediction | Anticipate corridor reconfiguration before it happens | FRT:0.0 RFX:0.1 ACU:0.5 RSV:0.4 PRS:0.0
+traversal.labyrinth_sense.resonance_trail | Resonance Trail | Follow glyph energy signatures left by others | FRT:0.0 RFX:0.2 ACU:0.4 RSV:0.4 PRS:0.0
+traversal.labyrinth_sense.dead_zone_nav | Dead Zone Nav | Navigate areas of null resonance where glyphs fail | FRT:0.3 RFX:0.0 ACU:0.3 RSV:0.4 PRS:0.0
+traversal.survival.resource_mgmt | Resource Mgmt | Oxygen, power cells, supplies — stretch what you carry | FRT:0.3 RFX:0.0 ACU:0.4 RSV:0.3 PRS:0.0
+traversal.survival.hazard_resist | Hazard Resist | Radiation, toxins, pressure variance, extreme temperature | FRT:0.5 RFX:0.0 ACU:0.2 RSV:0.3 PRS:0.0
+traversal.survival.emergency_evac | Emergency Evac | Rapid extraction protocols, escape routes, panic moves | FRT:0.3 RFX:0.4 ACU:0.3 RSV:0.0 PRS:0.0
+traversal.wilderness.tracking | Tracking | Follow creatures, people, or vehicles across terrain | FRT:0.0 RFX:0.3 ACU:0.4 RSV:0.3 PRS:0.0
+traversal.wilderness.terrain_adaptation | Terrain Adaptation | Navigate diverse planetary biomes — jungle, desert, tundra, swamp | FRT:0.4 RFX:0.3 ACU:0.3 RSV:0.0 PRS:0.0

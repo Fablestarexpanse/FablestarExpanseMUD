@@ -32,6 +32,7 @@ NAV_TOOL_IDS = frozenset({
     "settings",
     "team",
     "builder",
+    "skills",
 })
 
 
