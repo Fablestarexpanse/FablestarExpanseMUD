@@ -69,17 +69,17 @@ Set a strong JWT secret when using staff auth: `FABLESTAR_ADMIN_JWT_SECRET` (or 
 
 ### Admin staff (optional)
 
-When `admin_auth_required = true` in `config/server.toml`, the Nexus admin/content/forge/LLM HTTP routes require a **Bearer** token from `POST /admin/auth/login`. Player routes (`/play/*`, `/ws/play`) are unchanged.
+When `admin_auth_required = true` in `config/server.toml`, all admin routes require a valid staff Bearer token. Player routes are unaffected.
 
 1. Run migrations: `python -m alembic upgrade head`
 2. Create the first **head admin**:  
    `python scripts/bootstrap_admin.py --username youradmin --password 'a-strong-password'`
 3. Set `admin_auth_required = true` in `config/server.toml` and restart Nexus.
-4. Sign in via the admin UI. **Head admins** use **Team & access** to add **admin** or **GM** accounts, assign allowed **tools** (sidebar areas), and **zones** (`*` for all, or comma-separated zone ids such as `test_zone`).
+4. Sign in via the admin UI. **Head admins** use **Team & access** to add **admin** or **GM** accounts, assign allowed **tools** (sidebar areas), and **zones** (`*` for all, or comma-separated zone IDs).
 
-Live **team presence** uses WebSocket `/ws/admin` — the admin UI connects automatically and sends the JWT as the first message after the connection opens. `GET /admin/presence` returns the same snapshot over HTTP.
+Live **team presence** is handled automatically by the admin UI over WebSocket.
 
-With `admin_auth_required = false` (opt-in, for trusted-LAN dev only), Nexus uses a synthetic full-access **Developer** context and no JWT is required.
+With `admin_auth_required = false` (opt-in, for trusted-LAN dev only), authentication is skipped entirely — never enable this on a network-accessible host.
 
 ## Running locally
 
@@ -156,17 +156,11 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Nexus admin API (security)
 
-The HTTP/WebSocket **Nexus** exposes the admin REST API and powers the admin UI. **`admin_auth_required = true` is the default** — staff must authenticate via `POST /admin/auth/login` before accessing any admin route. Set `admin_auth_required = false` only for development on a trusted LAN; treat that mode as fully open.
+**`admin_auth_required = true` is the default** — all admin routes require a valid staff token. Set `admin_auth_required = false` only on a fully trusted LAN; treat it as no authentication.
 
-Operator-oriented endpoints used by the **Operations** console include:
+The admin UI covers all operator functions (live sessions, world state, broadcasts, metrics). API endpoint details are in the source rather than documented here to avoid publishing an attack surface map.
 
-- `GET /players` — live sessions plus `room_id` when Redis has a location for the character
-- `POST /admin/sessions/{session_id}/disconnect` — force-close a session
-- `POST /admin/broadcast` — message all **playing** sessions (prefixed with `[Server] `)
-- `GET /world/live` — best-effort Redis aggregates (rooms with players, combat/entity/item key counts)
-- `GET /admin/metrics` — tick/session snapshot; per-command counters are not instrumented yet
-
-Add API keys or OIDC before exposing Nexus on the public internet.
+Do not expose Nexus directly on the public internet — place it behind a reverse proxy with TLS.
 
 ## Philosophy
 
