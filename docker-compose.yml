@@ -16,7 +16,7 @@ services:
     environment:
       POSTGRES_DB: fablestar
       POSTGRES_USER: fablestar
-      POSTGRES_PASSWORD: password  # In production, use environment variables
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-keiYEiw57WGPaq4dHDfJi0NYzM3ZYEdD}
     ports:
       - "5432:5432"
     healthcheck:
