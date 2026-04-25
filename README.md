@@ -51,10 +51,15 @@ cd player-ui && npm install && cd ..
 
 ## Configuration
 
-TOML files in `config/` are merged at startup (see `src/fablestar/core/config.py`). This repo includes:
+TOML files in `config/` are merged at startup (see `src/fablestar/core/config.py`). Live config files are **gitignored** — copy the example files to get started:
 
-- `config/server.toml` — Nexus HTTP/WebSocket port, tick rate, dev flags, and `admin_auth_required` (see below).
-- `config/database.toml` — PostgreSQL connection (aligned with `docker-compose.yml`).
+```bash
+cp config/server.example.toml config/server.toml
+cp config/database.example.toml config/database.toml
+```
+
+- `config/server.toml` — Nexus port, tick rate, dev flags, `admin_auth_required`, JWT secret, and CORS origins.
+- `config/database.toml` — PostgreSQL connection (must match `docker-compose.yml` / your DB credentials).
 
 You can add more files in `config/` (for example `redis.toml`, `llm.toml`) to override Redis and LLM defaults from code.
 
@@ -72,9 +77,9 @@ When `admin_auth_required = true` in `config/server.toml`, the Nexus admin/conte
 3. Set `admin_auth_required = true` in `config/server.toml` and restart Nexus.
 4. Sign in via the admin UI. **Head admins** use **Team & access** to add **admin** or **GM** accounts, assign allowed **tools** (sidebar areas), and **zones** (`*` for all, or comma-separated zone ids such as `test_zone`).
 
-Live **team presence** uses WebSocket `GET /ws/admin?token=<jwt>` (the admin UI connects automatically). `GET /admin/presence` returns the same snapshot over HTTP.
+Live **team presence** uses WebSocket `/ws/admin` — the admin UI connects automatically and sends the JWT as the first message after the connection opens. `GET /admin/presence` returns the same snapshot over HTTP.
 
-With `admin_auth_required = false` (default), Nexus keeps the previous behaviour: a synthetic full-access **Developer** context for local development.
+With `admin_auth_required = false` (opt-in, for trusted-LAN dev only), Nexus uses a synthetic full-access **Developer** context and no JWT is required.
 
 ## Running locally
 
@@ -86,7 +91,7 @@ From the repo root:
 docker compose up -d redis postgres
 ```
 
-The bundled `docker-compose.yml` matches the default DB user/database in `config/database.toml`. Optional: `ollama` service for local models.
+The bundled `docker-compose.yml` matches the DB user/database in `config/database.toml` (copy from `config/database.example.toml`). Optional: `ollama` service for local models.
 
 ### 2. Start the game server (Nexus)
 
@@ -151,7 +156,7 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ## Nexus admin API (security)
 
-The HTTP/WebSocket **Nexus** exposes the admin REST API and powers the admin UI. With **`admin_auth_required = false`**, admin routes are still open aside from the optional staff system above — treat that mode as **development / trusted-LAN only**. With **`admin_auth_required = true`**, staff must authenticate; head admins manage roles and restrictions in the UI.
+The HTTP/WebSocket **Nexus** exposes the admin REST API and powers the admin UI. **`admin_auth_required = true` is the default** — staff must authenticate via `POST /admin/auth/login` before accessing any admin route. Set `admin_auth_required = false` only for development on a trusted LAN; treat that mode as fully open.
 
 Operator-oriented endpoints used by the **Operations** console include:
 
