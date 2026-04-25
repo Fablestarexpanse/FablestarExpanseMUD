@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import tomli
 from pydantic import BaseModel, Field, SecretStr, field_validator
@@ -19,9 +19,13 @@ class ServerConfig(BaseModel):
     # When True, personal combat uses max(legacy strength/dexterity-derived, proficiency-derived) ratings.
     proficiency_combat_hybrid: bool = True
     # When True, Nexus admin/content/forge/llm routes require a staff JWT (see /admin/auth/login).
-    admin_auth_required: bool = False
+    admin_auth_required: bool = True
     # HS256 secret; prefer env FABLESTAR_ADMIN_JWT_SECRET in production.
     admin_jwt_secret: Optional[str] = None
+    # Allowed CORS origins for the admin and player UIs. Defaults to localhost dev ports.
+    cors_origins: List[str] = Field(
+        default_factory=lambda: ["http://localhost:5173", "http://localhost:5174"]
+    )
 
 class DatabaseConfig(BaseModel):
     host: str = "localhost"
