@@ -1,3 +1,5 @@
+"""FablestarServer — owns all subsystems and drives the startup/shutdown lifecycle."""
+
 import asyncio
 import json
 import logging

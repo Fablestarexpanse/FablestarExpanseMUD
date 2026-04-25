@@ -1,3 +1,5 @@
+"""Global server singleton — all command handlers import app_instance from here."""
+
 from typing import Optional
 
 # This will hold the global server instance

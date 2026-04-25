@@ -1,3 +1,5 @@
+"""EntitySpawnManager — per-tick NPC respawn logic and entity kill/loot handling."""
+
 import logging
 import random
 import uuid

@@ -1,3 +1,5 @@
+"""TickManager — drives the 4 Hz game loop with drift compensation."""
+
 import asyncio
 import logging
 import time

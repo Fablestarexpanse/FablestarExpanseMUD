@@ -1,3 +1,5 @@
+"""PromptManager — renders Jinja2 prompt templates from the prompts/ directory."""
+
 import logging
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape

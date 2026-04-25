@@ -1,3 +1,5 @@
+"""Async EventBus — pub/sub for game events (tick, session connect/disconnect, etc.)."""
+
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime

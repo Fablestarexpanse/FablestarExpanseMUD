@@ -1,3 +1,5 @@
+"""TOML config loading — merges all config/*.toml files into a single Config object."""
+
 import os
 from dataclasses import dataclass, field
 from pathlib import Path

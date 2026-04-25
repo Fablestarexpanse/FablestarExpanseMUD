@@ -1,3 +1,5 @@
+"""Admin/session commands — quit, and in-game admin shortcuts."""
+
 from fablestar.commands.registry import command
 from fablestar.network.session import Session
 

@@ -1,3 +1,5 @@
+"""LLMClient — async HTTP client for OpenAI-compatible endpoints (LM Studio, Ollama)."""
+
 import asyncio
 import json
 import logging

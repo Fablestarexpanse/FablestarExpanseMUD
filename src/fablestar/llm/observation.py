@@ -1,3 +1,5 @@
+"""Room observation builder — assembles structured facts from a RoomModel for LLM narration."""
+
 from typing import List, Dict, Any
 from fablestar.world.models import RoomModel
 

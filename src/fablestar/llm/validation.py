@@ -1,3 +1,5 @@
+"""LLM output validator — sanitises generated text before sending to players."""
+
 import re
 import logging
 

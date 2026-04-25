@@ -1,3 +1,5 @@
+"""Item commands — get, drop, inventory, and examine."""
+
 import logging
 
 from fablestar.commands.registry import command

@@ -1,3 +1,5 @@
+"""Entry point: python -m fablestar starts the Nexus server."""
+
 import asyncio
 import sys
 from fablestar.server import run_server

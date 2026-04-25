@@ -1,3 +1,5 @@
+"""HotReloader — watches content/ and commands/ for changes and triggers cache invalidation."""
+
 import asyncio
 import logging
 from pathlib import Path

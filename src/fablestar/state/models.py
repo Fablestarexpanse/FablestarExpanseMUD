@@ -1,3 +1,5 @@
+"""SQLAlchemy ORM models — Account, Character, AdminStaff, AccountSceneImage."""
+
 from datetime import datetime
 from typing import Any, Optional
 

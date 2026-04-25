@@ -1,3 +1,5 @@
+"""RedisState — typed async accessors for all hot game state (locations, stats, entities, items)."""
+
 import json
 import logging
 from typing import Any, Dict, List, Optional, Set

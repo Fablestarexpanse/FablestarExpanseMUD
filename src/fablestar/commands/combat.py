@@ -1,3 +1,5 @@
+"""Combat commands — attack (with proficiency damage and LLM narration) and flee."""
+
 import random
 import logging
 

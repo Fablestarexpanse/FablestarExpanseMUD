@@ -1,3 +1,5 @@
+"""CommandRegistry and @command decorator — registers handlers at import time."""
+
 import importlib
 import inspect
 import logging

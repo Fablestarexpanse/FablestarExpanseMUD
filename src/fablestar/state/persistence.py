@@ -1,3 +1,5 @@
+"""PersistenceManager — flushes Redis player state to Postgres every ~60 s on tick."""
+
 import logging
 from datetime import datetime
 from typing import Dict, List, TYPE_CHECKING

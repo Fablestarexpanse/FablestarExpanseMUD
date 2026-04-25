@@ -1,3 +1,5 @@
+"""PostgresState — async SQLAlchemy engine, session factory, and DeclarativeBase."""
+
 import logging
 from typing import AsyncGenerator, Optional
 

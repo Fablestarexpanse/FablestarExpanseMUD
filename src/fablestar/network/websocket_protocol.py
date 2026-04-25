@@ -1,3 +1,5 @@
+"""WebSocketProtocol — wraps a FastAPI WebSocket to implement the Protocol ABC."""
+
 import asyncio
 from typing import Optional
 from fastapi import WebSocket

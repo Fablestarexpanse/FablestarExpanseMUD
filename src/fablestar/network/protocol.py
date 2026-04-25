@@ -1,3 +1,5 @@
+"""Abstract Protocol transport — concrete implementation is WebSocketProtocol."""
+
 from abc import ABC, abstractmethod
 from typing import Optional
 

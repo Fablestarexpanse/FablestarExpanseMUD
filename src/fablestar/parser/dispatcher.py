@@ -1,3 +1,5 @@
+"""CommandDispatcher — tokenises raw input and routes it to the registered handler."""
+
 import logging
 from typing import List, Optional
 

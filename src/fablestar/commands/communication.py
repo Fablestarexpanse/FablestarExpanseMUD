@@ -1,3 +1,5 @@
+"""Communication commands — say (room broadcast) and similar player-to-player messages."""
+
 from fablestar.commands.registry import command
 from fablestar.network.session import Session
 

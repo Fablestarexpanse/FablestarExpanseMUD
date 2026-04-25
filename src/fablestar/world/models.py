@@ -1,3 +1,5 @@
+"""Pydantic world models — RoomModel, EntityTemplate, ItemTemplate, StarSystemModel, ShipTemplate."""
+
 from typing import Any, Dict, List, Optional, Set
 
 from pydantic import BaseModel, Field

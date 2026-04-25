@@ -1,3 +1,5 @@
+"""Session state machine (CONNECTED → AUTHENTICATING → PLAYING → DISCONNECTING) and SessionManager."""
+
 import logging
 import uuid
 from enum import Enum, auto

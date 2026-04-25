@@ -1,3 +1,5 @@
+"""NexusApp — FastAPI application with all admin REST routes, WebSocket handlers, and middleware."""
+
 import asyncio
 import logging
 import re

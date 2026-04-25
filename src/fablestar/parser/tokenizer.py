@@ -1,3 +1,5 @@
+"""Input tokenizer — splits raw player input into a lowercase token list via shlex."""
+
 import re
 import shlex
 from typing import List

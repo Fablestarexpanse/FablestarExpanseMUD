@@ -1,3 +1,5 @@
+"""Movement commands — cardinal and vertical directions, all delegating to move_to()."""
+
 import random
 
 from fablestar.commands.registry import command

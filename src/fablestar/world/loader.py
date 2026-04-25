@@ -1,3 +1,5 @@
+"""ContentLoader — lazy, cached YAML loader for rooms, entities, items, and proficiency catalog."""
+
 import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Type, TypeVar
