@@ -10,7 +10,12 @@ from fastapi import Body, Depends, FastAPI, Query, Request, WebSocket, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
-from starlette.responses import FileResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 
@@ -28,6 +33,12 @@ from fablestar.admin.world_live import build_world_live_snapshot
 from fablestar.network.websocket_protocol import WebSocketProtocol
 
 logger = logging.getLogger(__name__)
+
+_limiter = Limiter(key_func=get_remote_address)
+
+
+def _rate_limit_exceeded_handler(request: StarletteRequest, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse({"detail": "too_many_requests"}, status_code=429)
 
 
 def get_admin_ctx(request: Request) -> AdminContext:
@@ -91,14 +102,14 @@ class ServerStatus(BaseModel):
 
 class PlayAuthBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
 
 
 class PlayAuthCharactersBody(BaseModel):
     """Re-list characters; optional delete, scene LLM suggest, or scene Comfy generate (same auth as login)."""
 
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     delete_character_id: Optional[int] = None
     suggest_scene: bool = False
     narrative_context: str = ""
@@ -110,7 +121,7 @@ class PlayAuthCharactersBody(BaseModel):
 
 class PlayCreateCharacterBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     name: str
     portrait_prompt: str = ""
     portrait_url: str = ""
@@ -120,45 +131,45 @@ class PlayCreateCharacterBody(BaseModel):
 
 class PlayDeleteCharacterBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     character_id: int = Field(..., ge=1)
 
 
 class PlayPortraitBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     appearance_prompt: str = ""
 
 
 class PlaySuggestPortraitPromptBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     character_name: str = ""
     appearance_notes: str = ""
 
 
 class PlaySceneSuggestBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     narrative_context: str = ""
     room_hint: str = ""
 
 
 class PlaySceneGenerateBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     scene_prompt: str = ""
     character_id: Optional[int] = None
 
 
 class PlaySceneGalleryListBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
 
 
 class PlaySceneApplyGalleryBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     gallery_id: int = Field(..., ge=1)
     character_id: int = Field(..., ge=1)
 
@@ -217,12 +228,12 @@ class LLMSettingsBody(BaseModel):
 
 class StaffLoginBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
 
 
 class StaffCreateBody(BaseModel):
     username: str
-    password: str
+    password: str = Field(..., min_length=8)
     display_name: str = ""
     role: str = "gm"
     permissions: Dict[str, Any] = Field(default_factory=dict)
@@ -233,7 +244,7 @@ class StaffPatchBody(BaseModel):
     role: Optional[str] = None
     permissions: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
-    password: Optional[str] = None
+    password: Optional[str] = Field(default=None, min_length=8)
 
 
 class PlayerAccountPatchBody(BaseModel):
@@ -256,7 +267,7 @@ class PlayerCharacterPatchBody(BaseModel):
 class ConsoleAccessBody(BaseModel):
     """Nexus console login uses the same username as this play account (lowercased)."""
 
-    password: str = Field(..., min_length=4)
+    password: str = Field(..., min_length=8)
     role: str = "gm"
 
 
@@ -336,24 +347,36 @@ class NexusApp:
         self._setup_middleware()
 
     def _setup_middleware(self):
-        # allow_credentials must be False when allow_origins is "*": otherwise actual
-        # responses emit Allow-Origin: * with Allow-Credentials: true (unless the request
-        # carried cookies), which browsers reject — player-ui fetches then fail with
-        # "Failed to fetch". UIs use header auth, not credentialed cookies.
+        cors_origins = list(self.server.config.server.cors_origins or [])
         self.app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=cors_origins,
             allow_credentials=False,
             allow_methods=["*"],
             allow_headers=["*"],
         )
         self.app.add_middleware(NexusAdminAuthMiddleware, server=self.server)
+        self.app.state.limiter = _limiter
+        self.app.add_middleware(SlowAPIMiddleware)
+        self.app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     async def _admin_ws_auth(self, websocket: WebSocket) -> Optional[AdminContext]:
+        """Authenticate via first-message auth envelope: {"type":"auth","token":"<jwt>"}."""
         cfg = self.server.config.server
         if not cfg.admin_auth_required:
             return AdminContext.bypass()
-        token = (websocket.query_params.get("token") or "").strip()
+        try:
+            raw = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
+        except asyncio.TimeoutError:
+            return None
+        except Exception:
+            return None
+        try:
+            import json as _json
+            msg = _json.loads(raw)
+            token = (msg.get("token") or "").strip() if isinstance(msg, dict) else ""
+        except Exception:
+            return None
         if not token:
             return None
         try:
@@ -386,7 +409,8 @@ class NexusApp:
             return {"admin_auth_required": bool(self.server.config.server.admin_auth_required)}
 
         @self.app.post("/admin/auth/login")
-        async def admin_auth_login(body: StaffLoginBody):
+        @_limiter.limit("10/minute")
+        async def admin_auth_login(request: Request, body: StaffLoginBody):
             row = await staff_service.authenticate_staff(self.server, body.username, body.password)
             token = issue_staff_token(self.server, row.id)
             ctx = AdminContext.from_staff(row)
@@ -571,12 +595,14 @@ class NexusApp:
             return FileResponse(path, media_type="image/png")
 
         @self.app.post("/play/auth/login")
-        async def play_auth_login(body: PlayAuthBody):
+        @_limiter.limit("10/minute")
+        async def play_auth_login(request: Request, body: PlayAuthBody):
             """Web player: validate credentials and list characters."""
             return await self.server.play_login(body.username, body.password)
 
         @self.app.post("/play/auth/register")
-        async def play_auth_register(body: PlayAuthBody):
+        @_limiter.limit("5/minute")
+        async def play_auth_register(request: Request, body: PlayAuthBody):
             """Web player: create account (add characters in the UI)."""
             return await self.server.play_register(body.username, body.password)
 
@@ -1511,11 +1537,11 @@ class NexusApp:
 
         @self.app.websocket("/ws/admin")
         async def websocket_admin(websocket: WebSocket):
+            await websocket.accept()
             ctx = await self._admin_ws_auth(websocket)
             if ctx is None:
                 await websocket.close(code=4401)
                 return
-            await websocket.accept()
             conn_id = new_presence_connection_id()
             entry = {
                 "connection_id": conn_id,
@@ -1553,11 +1579,11 @@ class NexusApp:
 
         @self.app.websocket("/ws/logs")
         async def websocket_logs(websocket: WebSocket):
+            await websocket.accept()
             ctx = await self._admin_ws_auth(websocket)
             if ctx is None:
                 await websocket.close(code=4401)
                 return
-            await websocket.accept()
             self._active_sockets.append(websocket)
             try:
                 while True:

@@ -25,15 +25,16 @@ function adminWsBase() {
 }
 
 function adminPresenceWsUrl() {
-  const t = localStorage.getItem(LS_ADMIN_TOKEN);
-  const q = t ? `?token=${encodeURIComponent(t)}` : "";
-  return `${adminWsBase()}/ws/admin${q}`;
+  return `${adminWsBase()}/ws/admin`;
 }
 
 function adminLogsWsUrl() {
+  return `${adminWsBase()}/ws/logs`;
+}
+
+function sendWsAuthToken(ws) {
   const t = localStorage.getItem(LS_ADMIN_TOKEN);
-  const q = t ? `?token=${encodeURIComponent(t)}` : "";
-  return `${adminWsBase()}/ws/logs${q}`;
+  if (t) ws.send(JSON.stringify({ type: "auth", token: t }));
 }
 
 function parseLeadingInt(val) {
@@ -1632,6 +1633,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     const ws = new WebSocket(adminLogsWsUrl());
+    ws.onopen = () => sendWsAuthToken(ws);
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -2925,6 +2927,7 @@ export default function App() {
     let ws;
     try {
       ws = new WebSocket(adminPresenceWsUrl());
+      ws.onopen = () => sendWsAuthToken(ws);
       ws.onmessage = (ev) => {
         try {
           const j = JSON.parse(ev.data);

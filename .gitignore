@@ -30,6 +30,13 @@ ollama_data/
 # Local assistant / IDE
 .claude/
 
+# Live config files (contain credentials — commit *.example.toml instead)
+config/database.toml
+config/server.toml
+config/comfyui.toml
+config/llm.toml
+config/redis.toml
+
 # OS / editor
 .DS_Store
 Thumbs.db

@@ -143,7 +143,14 @@ def jwt_secret_for_server(server: Any) -> str:
         return env
     if cfg.admin_jwt_secret and str(cfg.admin_jwt_secret).strip():
         return str(cfg.admin_jwt_secret).strip()
-    return "dev-insecure-change-me"
+    if cfg.admin_auth_required:
+        raise RuntimeError(
+            "admin_auth_required is true but no JWT secret is configured. "
+            "Set FABLESTAR_ADMIN_JWT_SECRET env var or admin_jwt_secret in server.toml. "
+            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    # dev_mode only — auth is disabled, secret value is never used to validate real tokens
+    return "dev-only-no-auth"
 
 
 def issue_staff_token(server: Any, staff_id: int, ttl_seconds: int = 86400) -> str:

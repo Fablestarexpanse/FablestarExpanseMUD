@@ -1,0 +1,8 @@
+# Copy to database.toml and fill in your credentials.
+# database.toml is gitignored — never commit real passwords.
+host = "localhost"
+port = 5432
+database = "fablestar"
+user = "fablestar"
+password = "CHANGE_ME"
+pool_size = 10
