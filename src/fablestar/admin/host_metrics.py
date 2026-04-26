@@ -11,12 +11,12 @@ import re
 import shutil
 import subprocess
 from io import StringIO
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def _parse_float(val: str) -> Optional[float]:
+def _parse_float(val: str) -> float | None:
     s = val.strip()
     if not s or s.upper() == "N/A" or s == "[N/A]":
         return None
@@ -27,12 +27,12 @@ def _parse_float(val: str) -> Optional[float]:
         return float(m.group(1)) if m else None
 
 
-def _parse_int(val: str) -> Optional[int]:
+def _parse_int(val: str) -> int | None:
     f = _parse_float(val)
     return int(f) if f is not None else None
 
 
-def _query_nvidia_gpus() -> List[Dict[str, Any]]:
+def _query_nvidia_gpus() -> list[dict[str, Any]]:
     exe = shutil.which("nvidia-smi")
     if not exe:
         return []
@@ -55,7 +55,7 @@ def _query_nvidia_gpus() -> List[Dict[str, Any]]:
     if proc.returncode != 0 or not proc.stdout.strip():
         return []
 
-    gpus: List[Dict[str, Any]] = []
+    gpus: list[dict[str, Any]] = []
     for line in proc.stdout.splitlines():
         line = line.strip()
         if not line:
@@ -70,7 +70,7 @@ def _query_nvidia_gpus() -> List[Dict[str, Any]]:
         idx_n = _parse_int(idx)
         mem_u = _parse_float(mem_u_s)
         mem_t = _parse_float(mem_t_s)
-        vram_pct: Optional[float] = None
+        vram_pct: float | None = None
         if mem_u is not None and mem_t is not None and mem_t > 0:
             vram_pct = round(100.0 * mem_u / mem_t, 1)
         util = _parse_int(util_s)
@@ -92,7 +92,7 @@ def _query_nvidia_gpus() -> List[Dict[str, Any]]:
     return gpus
 
 
-def get_host_snapshot() -> Dict[str, Any]:
+def get_host_snapshot() -> dict[str, Any]:
     """Blocking snapshot: call from a thread pool on the async event loop."""
     try:
         import psutil

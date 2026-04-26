@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from fablestar.proficiencies.registry import ProficiencyRegistry
@@ -14,11 +14,11 @@ from fablestar.proficiencies.models import ConduitAttributes, ProficiencyStatsBl
 CONDUIT_KEY = "conduit"
 
 
-def _default_conduit_dict() -> Dict[str, Any]:
+def _default_conduit_dict() -> dict[str, Any]:
     return ProficiencyStatsBlock().model_dump()
 
 
-def ensure_proficiency_block(stats: Dict[str, Any]) -> Dict[str, Any]:
+def ensure_proficiency_block(stats: dict[str, Any]) -> dict[str, Any]:
     """Mutate and return stats with a nested conduit proficiency block."""
     if CONDUIT_KEY not in stats or not isinstance(stats[CONDUIT_KEY], dict):
         stats[CONDUIT_KEY] = _default_conduit_dict()
@@ -31,7 +31,7 @@ def ensure_proficiency_block(stats: Dict[str, Any]) -> Dict[str, Any]:
     return stats
 
 
-def migrate_legacy_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
+def migrate_legacy_stats(stats: dict[str, Any]) -> dict[str, Any]:
     """Map legacy D&D-like keys into conduit_attributes; preserves original keys."""
     out = deepcopy(stats)
     if any(k in out for k in ("strength", "dexterity", "intelligence", "perception")):
@@ -50,16 +50,16 @@ def migrate_legacy_stats(stats: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def get_conduit_block(stats: Dict[str, Any]) -> Dict[str, Any]:
+def get_conduit_block(stats: dict[str, Any]) -> dict[str, Any]:
     ensure_proficiency_block(stats)
     return stats[CONDUIT_KEY]
 
 
 def total_proficiency_levels(
-    stats: Dict[str, Any],
-    leaf_ids: Optional[List[str]] = None,
+    stats: dict[str, Any],
+    leaf_ids: list[str] | None = None,
     *,
-    registry: Optional[ProficiencyRegistry] = None,
+    registry: ProficiencyRegistry | None = None,
 ) -> int:
     """Sum levels for catalog leaves only (internal prefix nodes excluded unless listed)."""
     ensure_proficiency_block(stats)
@@ -77,10 +77,10 @@ def total_proficiency_levels(
 
 
 def combat_attack_defense_from_stats(
-    stats: Dict[str, Any],
+    stats: dict[str, Any],
     *,
     hybrid_legacy: bool = True,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """
     Derive simple attack/defense integers for combat.py.
     Hybrid: uses legacy strength/dexterity when present and hybrid flag True.
@@ -112,4 +112,4 @@ def combat_attack_defense_from_stats(
 
 
 def decay_floor_for_peak(peak: int) -> int:
-    return int(math.floor(0.75 * float(peak)))
+    return math.floor(0.75 * float(peak))

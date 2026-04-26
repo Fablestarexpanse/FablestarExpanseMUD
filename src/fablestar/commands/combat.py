@@ -1,7 +1,7 @@
 """Combat commands — attack (with proficiency damage and LLM narration) and flee."""
 
-import random
 import logging
+import random
 
 from fablestar.commands.registry import command
 from fablestar.network.session import Session

@@ -3,7 +3,8 @@
 import asyncio
 import logging
 import time
-from typing import Callable, List, Coroutine, Any
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ class TickManager:
         self.tick_rate = tick_rate
         self.tick_count = 0
         self.is_running = False
-        self._handlers: List[Callable[[int], Coroutine[Any, Any, None]]] = []
+        self._handlers: list[Callable[[int], Coroutine[Any, Any, None]]] = []
 
     def register(self, handler: Callable[[int], Coroutine[Any, Any, None]]) -> None:
         """Register an async handler to be called each tick."""

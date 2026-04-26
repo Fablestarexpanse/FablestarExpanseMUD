@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import yaml
 
@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 def _merge_leaf_descriptions_overlay(
-    leaves: List[ProficiencyLeafDefinition], prof_dir: Path
-) -> List[ProficiencyLeafDefinition]:
+    leaves: list[ProficiencyLeafDefinition], prof_dir: Path
+) -> list[ProficiencyLeafDefinition]:
     """Merge display name + prose from leaf_descriptions.json (built from mouseover/*.pipe.txt)."""
     path = prof_dir / "leaf_descriptions.json"
     if not path.is_file():
@@ -59,8 +59,8 @@ def _row_to_leaf(domain: str, row: dict[str, Any]) -> ProficiencyLeafDefinition:
     )
 
 
-def leaf_definitions_from_builtin_rows() -> List[ProficiencyLeafDefinition]:
-    out: List[ProficiencyLeafDefinition] = []
+def leaf_definitions_from_builtin_rows() -> list[ProficiencyLeafDefinition]:
+    out: list[ProficiencyLeafDefinition] = []
     for pid, weights in all_builtin_leaf_rows():
         dom = pid.split(".", 1)[0]
         out.append(

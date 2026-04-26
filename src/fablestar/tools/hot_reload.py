@@ -2,11 +2,12 @@
 
 import asyncio
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any
 
+from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileModifiedEvent
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class ReloadHandler(FileSystemEventHandler):
     def __init__(self, callback: Callable[[Path], Any], loop: asyncio.AbstractEventLoop):
         self.callback = callback
         self.loop = loop
-        self._pending_reloads: Dict[Path, asyncio.TimerHandle] = {}
+        self._pending_reloads: dict[Path, asyncio.TimerHandle] = {}
         self.debounce_delay = 0.5  # seconds
 
     def on_modified(self, event):

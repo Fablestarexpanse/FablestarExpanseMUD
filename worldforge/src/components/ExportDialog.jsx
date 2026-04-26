@@ -95,7 +95,7 @@ export default function ExportDialog({ worldRoot, contentRoot, zoneIds, systemId
 
   const doImportConfirm = async () => {
     if (!importPreview?.zip) return;
-    const written = await fs.importBundle(importPreview.zip, worldRoot);
+    const written = await fs.importBundle(importPreview.zip, contentRoot);
     setMsg(`Imported ${written.length} files`);
     setImportPreview(null);
     onClose();

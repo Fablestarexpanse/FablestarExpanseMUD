@@ -5,6 +5,7 @@ import random
 from fablestar.commands.registry import command
 from fablestar.network.session import Session
 
+
 def move_to(direction: str):
     """Helper to create a movement command for a specific direction."""
     async def mover(session: Session, args: list[str]):

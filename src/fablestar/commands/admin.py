@@ -3,6 +3,7 @@
 from fablestar.commands.registry import command
 from fablestar.network.session import Session
 
+
 @command("quit", aliases=["exit", "disconnect"])
 async def quit_cmd(session: Session, args: list[str]):
     """Save and disconnect from the server."""

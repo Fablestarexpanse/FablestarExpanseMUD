@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping
+from typing import Any
 
 # Character creation target (Fablestar Expanse spec); validation for future chargen UIs / admin tools.
 CONDUIT_CHARGEN_POINTS_TOTAL = 65

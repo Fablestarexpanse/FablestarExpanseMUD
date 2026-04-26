@@ -1,10 +1,9 @@
 """Input tokenizer — splits raw player input into a lowercase token list via shlex."""
 
-import re
 import shlex
-from typing import List
 
-def tokenize(input_string: str) -> List[str]:
+
+def tokenize(input_string: str) -> list[str]:
     """
     Split input string into tokens.
     Supports quoted strings for multi-word arguments (e.g. 'say "hello world"').

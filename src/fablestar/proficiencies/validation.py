@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Set, Tuple
+from collections.abc import Iterable
 
 from fablestar.proficiencies.models import ProficiencyLeafDefinition
 
@@ -14,12 +14,12 @@ def _effective_depth(leaf: ProficiencyLeafDefinition) -> int:
 
 
 def validate_leaf_definitions(
-    leaves: List[ProficiencyLeafDefinition],
+    leaves: list[ProficiencyLeafDefinition],
     expected_count: int | None = None,
-) -> Tuple[bool, List[str]]:
+) -> tuple[bool, list[str]]:
     """Return (ok, error_messages)."""
-    errors: List[str] = []
-    seen: Set[str] = set()
+    errors: list[str] = []
+    seen: set[str] = set()
     for leaf in leaves:
         if leaf.id in seen:
             errors.append(f"duplicate leaf id: {leaf.id}")
@@ -40,8 +40,8 @@ def validate_leaf_definitions(
     return (len(errors) == 0, errors)
 
 
-def prefix_closure(leaf_ids: Iterable[str]) -> Set[str]:
-    out: Set[str] = set()
+def prefix_closure(leaf_ids: Iterable[str]) -> set[str]:
+    out: set[str] = set()
     for lid in leaf_ids:
         parts = lid.split(".")
         for i in range(1, len(parts) + 1):

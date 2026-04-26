@@ -1,9 +1,11 @@
 """Room observation builder — assembles structured facts from a RoomModel for LLM narration."""
 
-from typing import List, Dict, Any
+from typing import Any
+
 from fablestar.world.models import RoomModel
 
-def generate_room_observation(room: RoomModel, context: Dict[str, Any] = None) -> str:
+
+def generate_room_observation(room: RoomModel, context: dict[str, Any] | None = None) -> str:
     """
     Converts a RoomModel into a structured fact-block for LLM grounding.
     """

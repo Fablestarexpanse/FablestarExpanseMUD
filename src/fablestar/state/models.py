@@ -1,10 +1,11 @@
 """SQLAlchemy ORM models — Account, Character, AdminStaff, AccountSceneImage."""
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-from sqlalchemy import String, Integer, DateTime, ForeignKey, JSON, Boolean, Text
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from fablestar.state.postgres import Base
 
 
@@ -37,9 +38,9 @@ class Account(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    email: Mapped[Optional[str]] = mapped_column(String(255))
+    email: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    last_login: Mapped[datetime | None] = mapped_column(DateTime)
     # Spendable balance for AI art (portraits / scene art); display label from comfyui.currency_display_name (e.g. pixels).
     echo_credits: Mapped[int] = mapped_column(Integer, default=0)
     # In-game GM crown / staff-visible play account (separate from admin_staff console logins).
@@ -60,10 +61,10 @@ class AccountSceneImage(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     account_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="CASCADE"), index=True)
     image_url: Mapped[str] = mapped_column(String(2048))
-    character_id: Mapped[Optional[int]] = mapped_column(
+    character_id: Mapped[int | None] = mapped_column(
         ForeignKey("characters.id", ondelete="SET NULL"), nullable=True
     )
-    prompt_preview: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    prompt_preview: Mapped[str | None] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     account: Mapped["Account"] = relationship(back_populates="scene_images")
@@ -78,10 +79,10 @@ class Character(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True, index=True)
 
     # Portrait: URL served under Nexus /media/portraits/... when generated locally; optional.
-    portrait_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
-    portrait_prompt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    portrait_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    portrait_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Last ComfyUI scene image this character paid for; served under /media/rooms/ or /media/room-art/.
-    last_scene_image_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
+    last_scene_image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
 
     # World state
     room_id: Mapped[str] = mapped_column(String(255), default="test_zone:entrance")

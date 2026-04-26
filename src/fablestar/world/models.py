@@ -1,8 +1,9 @@
 """Pydantic world models — RoomModel, EntityTemplate, ItemTemplate, StarSystemModel, ShipTemplate."""
 
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from pydantic import BaseModel, Field
+
 
 class ExitModel(BaseModel):
     destination: str
@@ -12,9 +13,9 @@ class ExitModel(BaseModel):
 class FeatureModel(BaseModel):
     id: str
     name: str
-    keywords: List[str]
+    keywords: list[str]
     description: str
-    interaction: Optional[str] = "examine"
+    interaction: str | None = "examine"
 
 class EntitySpawnModel(BaseModel):
     template: str
@@ -32,28 +33,28 @@ class RoomModel(BaseModel):
     zone: str
     type: str
     depth: int = 1
-    group: Optional[str] = None
-    description: Dict[str, str] = Field(default_factory=lambda: {"base": "A featureless room."})
-    exits: Dict[str, ExitModel] = Field(default_factory=dict)
-    features: List[FeatureModel] = Field(default_factory=list)
-    entity_spawns: List[EntitySpawnModel] = Field(default_factory=list)
-    hazards: List[HazardModel] = Field(default_factory=list)
-    tags: Set[str] = Field(default_factory=set)
+    group: str | None = None
+    description: dict[str, str] = Field(default_factory=lambda: {"base": "A featureless room."})
+    exits: dict[str, ExitModel] = Field(default_factory=dict)
+    features: list[FeatureModel] = Field(default_factory=list)
+    entity_spawns: list[EntitySpawnModel] = Field(default_factory=list)
+    hazards: list[HazardModel] = Field(default_factory=list)
+    tags: set[str] = Field(default_factory=set)
 
 class ZoneModel(BaseModel):
     id: str
     name: str
     description: str
-    depth_range: List[int] = Field(default_factory=lambda: [1, 3])
+    depth_range: list[int] = Field(default_factory=lambda: [1, 3])
 
 class EntityTemplate(BaseModel):
     id: str
     name: str
     type: str = "creature"
-    description: Dict[str, str] = Field(default_factory=lambda: {"short": "A creature.", "long": "A creature lurks here."})
-    stats: Dict[str, int] = Field(default_factory=lambda: {"hp": 10, "max_hp": 10, "attack": 3, "defense": 1})
-    tags: Set[str] = Field(default_factory=set)
-    loot: List[str] = Field(default_factory=list)  # item template IDs it may drop
+    description: dict[str, str] = Field(default_factory=lambda: {"short": "A creature.", "long": "A creature lurks here."})
+    stats: dict[str, int] = Field(default_factory=lambda: {"hp": 10, "max_hp": 10, "attack": 3, "defense": 1})
+    tags: set[str] = Field(default_factory=set)
+    loot: list[str] = Field(default_factory=list)  # item template IDs it may drop
 
 class ItemTemplate(BaseModel):
     id: str
@@ -62,7 +63,7 @@ class ItemTemplate(BaseModel):
     description: str = ""
     value: int = 0
     weight: float = 0.0
-    tags: Set[str] = Field(default_factory=set)
+    tags: set[str] = Field(default_factory=set)
 
 
 class StarSystemModel(BaseModel):
@@ -70,12 +71,12 @@ class StarSystemModel(BaseModel):
 
     id: str
     name: str
-    coordinates: Dict[str, float] = Field(default_factory=lambda: {"x": 0.0, "y": 0.0, "z": 0.0})
-    star: Dict[str, str] = Field(default_factory=dict)
+    coordinates: dict[str, float] = Field(default_factory=lambda: {"x": 0.0, "y": 0.0, "z": 0.0})
+    star: dict[str, str] = Field(default_factory=dict)
     faction: str = "neutral"
     security: str = "low"
-    connections: List[Dict[str, Any]] = Field(default_factory=list)
-    bodies: List[Dict[str, Any]] = Field(default_factory=list)
+    connections: list[dict[str, Any]] = Field(default_factory=list)
+    bodies: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ShipTemplate(BaseModel):
@@ -84,7 +85,7 @@ class ShipTemplate(BaseModel):
     id: str
     name: str
     size: str = "small"
-    rooms: List[Dict[str, Any]] = Field(default_factory=list)
+    rooms: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class GlyphEffectModel(BaseModel):
@@ -110,5 +111,5 @@ class GlyphModel(BaseModel):
     inscription: str = ""
     effect: GlyphEffectModel = Field(default_factory=GlyphEffectModel)
     cost: GlyphCostModel = Field(default_factory=GlyphCostModel)
-    prerequisites: List[str] = Field(default_factory=list)
-    tags: Set[str] = Field(default_factory=set)
+    prerequisites: list[str] = Field(default_factory=list)
+    tags: set[str] = Field(default_factory=set)

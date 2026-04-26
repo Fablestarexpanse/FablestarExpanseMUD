@@ -1,15 +1,15 @@
 """CommandRegistry and @command decorator — registers handlers at import time."""
 
 import importlib
-import inspect
 import logging
-from typing import Any, Callable, Dict, List, Optional, Type
+from collections.abc import Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 class Command:
     """Represents a registered game command."""
-    def __init__(self, name: str, handler: Callable, aliases: List[str] = None):
+    def __init__(self, name: str, handler: Callable, aliases: list[str] | None = None):
         self.name = name
         self.handler = handler
         self.aliases = aliases or []
@@ -20,11 +20,11 @@ class CommandRegistry:
     Supports dynamic registration and hot-reloading of command modules.
     """
     def __init__(self):
-        self._commands: Dict[str, Command] = {}
-        self._aliases: Dict[str, str] = {}
-        self._modules: Dict[str, Any] = {}
+        self._commands: dict[str, Command] = {}
+        self._aliases: dict[str, str] = {}
+        self._modules: dict[str, Any] = {}
 
-    def register(self, name: str, handler: Callable, aliases: List[str] = None):
+    def register(self, name: str, handler: Callable, aliases: list[str] | None = None):
         """Register a command and its aliases."""
         cmd = Command(name, handler, aliases)
         self._commands[name] = cmd
@@ -33,7 +33,7 @@ class CommandRegistry:
                 self._aliases[alias] = name
         logger.debug(f"Registered command: {name} (aliases: {aliases})")
 
-    def get(self, name: str) -> Optional[Command]:
+    def get(self, name: str) -> Command | None:
         """Retrieve a command by name or alias."""
         # Check primary name
         if name in self._commands:
@@ -64,7 +64,7 @@ class CommandRegistry:
 # Global registry instance
 registry = CommandRegistry()
 
-def command(name: str, aliases: List[str] = None):
+def command(name: str, aliases: list[str] | None = None):
     """Decorator to register a function as a command."""
     def decorator(func):
         registry.register(name, func, aliases)

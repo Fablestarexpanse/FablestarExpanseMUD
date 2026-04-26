@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from fablestar.proficiencies.models import ProficiencyLeafDefinition
 from fablestar.proficiencies.registry import ProficiencyRegistry
@@ -13,9 +13,9 @@ STARTER_MAX_PER_LEAF = 5
 
 
 def validate_starter_allocation(
-    allocation: Dict[str, int],
+    allocation: dict[str, int],
     registry: ProficiencyRegistry,
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """Return (ok, error_message). Empty allocation is valid (use server defaults only)."""
     if not allocation:
         return True, ""
@@ -39,7 +39,7 @@ def validate_starter_allocation(
 
 
 def _ensure_parent_branch_levels_for_gates(
-    stats: Dict[str, Any], allocation: Dict[str, int], registry: ProficiencyRegistry
+    stats: dict[str, Any], allocation: dict[str, int], registry: ProficiencyRegistry
 ) -> None:
     """
     Depth gate (tier * 5 on immediate parent) must be satisfied for field gains.
@@ -69,7 +69,7 @@ def _ensure_parent_branch_levels_for_gates(
                 prof[parent_id] = row
 
 
-def apply_starter_to_stats(stats: Dict[str, Any], allocation: Dict[str, int], registry: ProficiencyRegistry) -> None:
+def apply_starter_to_stats(stats: dict[str, Any], allocation: dict[str, int], registry: ProficiencyRegistry) -> None:
     """Merge allocation into stats[conduit][proficiencies] (mutates stats)."""
     ensure_proficiency_block(stats)
     prof = stats[CONDUIT_KEY]["proficiencies"]
@@ -86,7 +86,7 @@ def apply_starter_to_stats(stats: Dict[str, Any], allocation: Dict[str, int], re
 def _leaf_detail_blurb(leaf: ProficiencyLeafDefinition, leaf_id: str) -> str:
     """Human-readable explanation when catalog description is empty."""
     path_readable = " > ".join(p.replace("_", " ") for p in leaf_id.split(".") if p)
-    parts: List[str] = [f"Skill path: {path_readable}."]
+    parts: list[str] = [f"Skill path: {path_readable}."]
     if leaf.tags:
         parts.append("Tags: " + ", ".join(leaf.tags[:12]))
     if leaf.stat_weights:
@@ -97,9 +97,9 @@ def _leaf_detail_blurb(leaf: ProficiencyLeafDefinition, leaf_id: str) -> str:
     return " ".join(parts)
 
 
-def catalog_leaves_for_client(registry: ProficiencyRegistry) -> List[Dict[str, Any]]:
+def catalog_leaves_for_client(registry: ProficiencyRegistry) -> list[dict[str, Any]]:
     """Leaf list for chargen picker (includes detail text for UI tooltips)."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for lid in sorted(registry.leaf_ids):
         leaf = registry.get_leaf(lid)
         node = registry.get_node(lid)

@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import httpx
 from openai import AsyncOpenAI
@@ -15,7 +15,7 @@ from fablestar.llm.openai_util import normalize_openai_compatible_base
 logger = logging.getLogger(__name__)
 
 
-def chat_model_is_auto(chat_model: str, model_ids: List[str], backend: str) -> bool:
+def chat_model_is_auto(chat_model: str, model_ids: list[str], backend: str) -> bool:
     """True when Nexus should pick the model from the server list (not a fixed id)."""
     raw = (chat_model or "").strip()
     s = raw.lower()
@@ -29,11 +29,11 @@ def chat_model_is_auto(chat_model: str, model_ids: List[str], backend: str) -> b
 
 
 def infer_detected_chat_model(
-    models: List[Dict[str, Any]],
+    models: list[dict[str, Any]],
     configured_id: str,
     backend: str,
     connected: bool,
-) -> Tuple[Optional[str], Optional[str]]:
+) -> tuple[str | None, str | None]:
     """
     Best-effort id of the model the OpenAI-compatible server is exposing.
 
@@ -84,7 +84,7 @@ class LLMClient:
         self.client = self._build_openai_client()
         self.timeout = config.timeout_seconds
         self._probe_lock = asyncio.Lock()
-        self._status_cache: Optional[Dict[str, Any]] = None
+        self._status_cache: dict[str, Any] | None = None
         self._status_cache_at: float = 0.0
 
     def _openai_base_url(self) -> str:
@@ -128,7 +128,7 @@ class LLMClient:
         d, _ = infer_detected_chat_model(models, "auto", backend, bool(st.get("connected")))
         return d or "local-model"
 
-    async def probe_connection(self, list_timeout: float = 3.0) -> Tuple[bool, Optional[float], Optional[str], List[Dict[str, Any]], Optional[str]]:
+    async def probe_connection(self, list_timeout: float = 3.0) -> tuple[bool, float | None, str | None, list[dict[str, Any]], str | None]:
         """
         Ping the OpenAI-compatible server (models list).
         Uses an explicit GET {base}/models via httpx so the URL is always /v1/models
@@ -138,7 +138,7 @@ class LLMClient:
         root = self._openai_base_url().rstrip("/")
         list_url = f"{root}/models"
         t0 = time.perf_counter()
-        headers: Dict[str, str] = {}
+        headers: dict[str, str] = {}
         key = self._api_key()
         if key and key.strip() and key != "not-needed":
             headers["Authorization"] = f"Bearer {key.strip()}"
@@ -156,7 +156,7 @@ class LLMClient:
                     None,
                 )
             payload = resp.json()
-            models: List[Dict[str, Any]] = []
+            models: list[dict[str, Any]] = []
             data = payload.get("data") if isinstance(payload, dict) else None
             if not isinstance(data, list):
                 return False, latency_ms, "Unexpected /models JSON (missing data[])", [], None
@@ -175,7 +175,7 @@ class LLMClient:
         except json.JSONDecodeError as e:
             return False, None, f"Invalid JSON from {list_url}: {e}", [], None
 
-    async def _build_status_dict(self, list_timeout: float) -> Dict[str, Any]:
+    async def _build_status_dict(self, list_timeout: float) -> dict[str, Any]:
         ok, latency_ms, err, models, hint = await self.probe_connection(list_timeout=list_timeout)
         active = self.config.chat_model
         ids = [str(m["id"]) for m in models if m.get("id")]
@@ -215,7 +215,7 @@ class LLMClient:
             "cached": False,
         }
 
-    async def status_dict(self, list_timeout: float = 3.0, *, bypass_cache: bool = False) -> Dict[str, Any]:
+    async def status_dict(self, list_timeout: float = 3.0, *, bypass_cache: bool = False) -> dict[str, Any]:
         """
         Return reachability + model list. Probes GET /v1/models unless a fresh cache exists
         (default TTL 60s) to avoid hammering LM Studio when many admin endpoints poll.
@@ -265,7 +265,7 @@ class LLMClient:
             result = response.choices[0].message.content
             return result.strip() if result else "[The narration fades into static...]"
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("LLM request timed out.")
             return "[The engine hums, but silence follows...]"
         except Exception as e:

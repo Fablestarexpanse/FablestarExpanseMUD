@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import bcrypt
 from fastapi import HTTPException
@@ -30,7 +30,7 @@ def _verify_password(pw: str, pw_hash: str) -> bool:
         return False
 
 
-def staff_public(row: AdminStaff) -> Dict[str, Any]:
+def staff_public(row: AdminStaff) -> dict[str, Any]:
     perms = row.permissions if isinstance(row.permissions, dict) else {}
     return {
         "id": row.id,
@@ -69,7 +69,7 @@ async def ensure_dev_default_staff(server: Any) -> None:
     )
 
 
-async def find_staff_by_play_username(server: Any, play_username: str) -> Optional[AdminStaff]:
+async def find_staff_by_play_username(server: Any, play_username: str) -> AdminStaff | None:
     u = (play_username or "").strip().lower()
     if not u:
         return None
@@ -84,7 +84,7 @@ async def set_console_access_for_play_account(
     *,
     password: str,
     role: str,
-    permissions: Optional[Dict[str, Any]],
+    permissions: dict[str, Any] | None,
 ) -> AdminStaff:
     """Create or update admin_staff row whose username matches the play account (lowercased)."""
     async with server.db.session_factory() as session:
@@ -101,7 +101,7 @@ async def set_console_access_for_play_account(
     perms = permissions if isinstance(permissions, dict) else _default_console_permissions(rl)
     existing = await find_staff_by_play_username(server, u)
     if existing is not None:
-        patch: Dict[str, Any] = {
+        patch: dict[str, Any] = {
             "password": password,
             "role": rl,
             "is_active": True,
@@ -118,7 +118,7 @@ async def set_console_access_for_play_account(
     )
 
 
-def _default_console_permissions(role: str) -> Dict[str, Any]:
+def _default_console_permissions(role: str) -> dict[str, Any]:
     if role == "head_admin":
         return {}
     if role == "admin":
@@ -160,13 +160,13 @@ async def authenticate_staff(server: Any, username: str, password: str) -> Admin
         return row
 
 
-async def list_staff(server: Any) -> List[AdminStaff]:
+async def list_staff(server: Any) -> list[AdminStaff]:
     async with server.db.session_factory() as session:
         r = await session.execute(select(AdminStaff).order_by(AdminStaff.username))
         return list(r.scalars().all())
 
 
-async def get_staff(server: Any, staff_id: int) -> Optional[AdminStaff]:
+async def get_staff(server: Any, staff_id: int) -> AdminStaff | None:
     async with server.db.session_factory() as session:
         return await session.get(AdminStaff, staff_id)
 
@@ -178,7 +178,7 @@ async def create_staff(
     password: str,
     display_name: str,
     role: str,
-    permissions: Optional[Dict[str, Any]],
+    permissions: dict[str, Any] | None,
 ) -> AdminStaff:
     u = (username or "").strip().lower()
     if not u or not password:
@@ -206,7 +206,7 @@ async def create_staff(
         return row
 
 
-async def apply_staff_patch(server: Any, staff_id: int, patch: Dict[str, Any]) -> AdminStaff:
+async def apply_staff_patch(server: Any, staff_id: int, patch: dict[str, Any]) -> AdminStaff:
     """Merge partial fields; keys omitted in patch are left unchanged."""
     async with server.db.session_factory() as session:
         row = await session.get(AdminStaff, staff_id)

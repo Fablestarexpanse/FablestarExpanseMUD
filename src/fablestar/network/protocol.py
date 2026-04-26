@@ -1,7 +1,7 @@
 """Abstract Protocol transport — concrete implementation is WebSocketProtocol."""
 
 from abc import ABC, abstractmethod
-from typing import Optional
+
 
 class Protocol(ABC):
     """Abstract transport for a player session (WebSocket implementation today)."""
@@ -12,7 +12,7 @@ class Protocol(ABC):
         pass
     
     @abstractmethod
-    async def receive(self) -> Optional[str]:
+    async def receive(self) -> str | None:
         """Receive a message from the client."""
         pass
     

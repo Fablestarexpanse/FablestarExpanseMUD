@@ -6,7 +6,7 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import jwt
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -44,11 +44,11 @@ class AdminContext:
     username: str
     display_name: str
     role: str
-    permissions: Dict[str, Any] = field(default_factory=dict)
+    permissions: dict[str, Any] = field(default_factory=dict)
     bypass_auth: bool = False
 
     @classmethod
-    def bypass(cls) -> "AdminContext":
+    def bypass(cls) -> AdminContext:
         """When admin_auth_required is false — full access for legacy dev installs."""
         return cls(
             staff_id=0,
@@ -60,7 +60,7 @@ class AdminContext:
         )
 
     @classmethod
-    def from_staff(cls, row: "AdminStaff") -> "AdminContext":
+    def from_staff(cls, row: AdminStaff) -> AdminContext:
         perms = row.permissions if isinstance(row.permissions, dict) else {}
         return cls(
             staff_id=row.id,
@@ -74,7 +74,7 @@ class AdminContext:
     def is_head_admin(self) -> bool:
         return self.role == "head_admin"
 
-    def _effective_tools(self) -> Optional[Set[str]]:
+    def _effective_tools(self) -> set[str] | None:
         """None = all tools allowed."""
         if self.bypass_auth or self.role == "head_admin":
             return None
@@ -93,7 +93,7 @@ class AdminContext:
             return True
         return tool_id in allowed
 
-    def _effective_zones(self) -> Optional[Set[str]]:
+    def _effective_zones(self) -> set[str] | None:
         """None = all zones. Empty set = no zone writes."""
         if self.bypass_auth or self.role == "head_admin":
             return None
@@ -117,13 +117,13 @@ class AdminContext:
     def may_write_zone(self, zone_id: str) -> bool:
         return self.may_read_zone(zone_id)
 
-    def allowed_tool_ids(self) -> List[str]:
+    def allowed_tool_ids(self) -> list[str]:
         et = self._effective_tools()
         if et is None:
             return sorted(NAV_TOOL_IDS)
         return sorted(et & NAV_TOOL_IDS) if et else []
 
-    def public_dict(self) -> Dict[str, Any]:
+    def public_dict(self) -> dict[str, Any]:
         et = self._effective_tools()
         return {
             "staff_id": self.staff_id,
@@ -172,7 +172,7 @@ def decode_staff_token(server: Any, token: str) -> int:
     return int(sub)
 
 
-async def load_admin_context_from_id(server: Any, staff_id: int) -> Optional[AdminContext]:
+async def load_admin_context_from_id(server: Any, staff_id: int) -> AdminContext | None:
     from fablestar.state.models import AdminStaff
 
     async with server.db.session_factory() as session:

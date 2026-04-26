@@ -7,32 +7,32 @@ import re
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import bcrypt
 import httpx
 from sqlalchemy import select
 
+from fablestar import app
+from fablestar.admin import player_accounts, staff_service
 from fablestar.admin.llm_persist import save_llm_toml
+from fablestar.admin.nexus import NexusApp
+from fablestar.commands.registry import registry
 from fablestar.core.config import Config, LLMConfig, load_config, resolve_config_asset_path
 from fablestar.core.events import EventBus
 from fablestar.core.tick import TickManager
-from fablestar.network.session import SessionManager, Session
-from fablestar.state.redis_client import RedisState
-from fablestar.state.postgres import PostgresState
-from fablestar.state.persistence import PersistenceManager
-from fablestar.state.models import Account, AccountSceneImage, Character
-from fablestar.world.loader import ContentLoader
-from fablestar.world.spawner import EntitySpawnManager
-from fablestar.admin import player_accounts, staff_service
-from fablestar.admin.nexus import NexusApp
-from fablestar.tools.hot_reload import HotReloader
-from fablestar.parser.dispatcher import CommandDispatcher
-from fablestar.commands.registry import registry
+from fablestar.integration.comfyui_client import generate_portrait_png
 from fablestar.llm.client import LLMClient
 from fablestar.llm.prompts import PromptManager
-from fablestar import app
-from fablestar.integration.comfyui_client import generate_portrait_png
+from fablestar.network.session import Session, SessionManager
+from fablestar.parser.dispatcher import CommandDispatcher
+from fablestar.state.models import Account, AccountSceneImage, Character
+from fablestar.state.persistence import PersistenceManager
+from fablestar.state.postgres import PostgresState
+from fablestar.state.redis_client import RedisState
+from fablestar.tools.hot_reload import HotReloader
+from fablestar.world.loader import ContentLoader
+from fablestar.world.spawner import EntitySpawnManager
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ def _workflow_has_checkpoint_simple_node(workflow_path: Path) -> bool:
 CHAR_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9 _-]{1,49}$")
 
 
-def _safe_player_scene_storage_url(url: Optional[str]) -> bool:
+def _safe_player_scene_storage_url(url: str | None) -> bool:
     """Only allow persisting Nexus-served paths we write under data/ or bundled room-art."""
     u = (url or "").strip()
     if not u.startswith("/media/") or ".." in u or len(u) > 2048:
@@ -97,7 +97,7 @@ def _safe_player_scene_storage_url(url: Optional[str]) -> bool:
     return u.startswith("/media/rooms/") or u.startswith("/media/room-art/")
 
 
-def _character_play_dict(character: Character) -> Dict[str, Any]:
+def _character_play_dict(character: Character) -> dict[str, Any]:
     from fablestar.proficiencies.state_helpers import (
         ensure_proficiency_block,
         migrate_legacy_stats,
@@ -144,7 +144,7 @@ class FablestarServer:
     Main orchestration class for the Fablestar MUD Platform.
     Ties together core systems and manages the server lifecycle.
     """
-    def __init__(self, config: Optional[Config] = None):
+    def __init__(self, config: Config | None = None):
         self.config = config or load_config()
         self.event_bus = EventBus()
         self.tick_manager = TickManager(tick_rate=self.config.server.tick_rate)
@@ -166,11 +166,11 @@ class FablestarServer:
         app.app_instance = self
         
         # Internal state
-        self._main_task: Optional[asyncio.Task] = None
+        self._main_task: asyncio.Task | None = None
         # ISO8601 UTC timestamp of last POST /content/cache/reload (for admin UI)
-        self.last_content_reload_at: Optional[str] = None
+        self.last_content_reload_at: str | None = None
 
-    def _economy_public_fields(self) -> Dict[str, Any]:
+    def _economy_public_fields(self) -> dict[str, Any]:
         c = self.config.comfyui
         s = self.config.server
         return {
@@ -185,7 +185,7 @@ class FablestarServer:
             v = result.scalar_one_or_none()
             return int(v) if v is not None else 0
 
-    async def _echo_debit_for_generation(self, account_id: int, cost: int) -> tuple[bool, Dict[str, Any], int, int]:
+    async def _echo_debit_for_generation(self, account_id: int, cost: int) -> tuple[bool, dict[str, Any], int, int]:
         """
         Debit echo_credits before ComfyUI. Returns:
         (success, error_response_dict_if_failed, balance_after, amount_charged).
@@ -241,7 +241,7 @@ class FablestarServer:
             return "GM"
         return "Staff"
 
-    async def _notify_play_sessions_json_line(self, account_id: int, payload: Dict[str, Any]) -> None:
+    async def _notify_play_sessions_json_line(self, account_id: int, payload: dict[str, Any]) -> None:
         line = json.dumps(payload, separators=(",", ":"))
         from fablestar.network.session import SessionState
 
@@ -287,18 +287,18 @@ class FablestarServer:
         *,
         actor_display_name: str,
         actor_role: str,
-        summary_lines: List[str],
-        echo_credits: Optional[int] = None,
-        echo_credits_added: Optional[int] = None,
-        character_name: Optional[str] = None,
-        play_account_is_gm: Optional[bool] = None,
+        summary_lines: list[str],
+        echo_credits: int | None = None,
+        echo_credits_added: int | None = None,
+        character_name: str | None = None,
+        play_account_is_gm: bool | None = None,
     ) -> None:
         """Tell connected play clients who changed their account/character and what changed."""
         if not summary_lines:
             return
         c = self.config.comfyui
         lab = (c.currency_display_name or "pixels").strip() or "pixels"
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "ok": True,
             "client_notice": "staff_account_update",
             "staff_display_name": (actor_display_name or "Staff").strip() or "Staff",
@@ -329,7 +329,7 @@ class FablestarServer:
         "cache_ttl",
     })
 
-    def update_llm_settings(self, patch: Dict[str, Any], *, persist: bool = True) -> None:
+    def update_llm_settings(self, patch: dict[str, Any], *, persist: bool = True) -> None:
         """Merge LLM fields, rebuild client, optionally write config/llm.toml."""
         data = {k: v for k, v in patch.items() if k in self._LLM_PATCH_KEYS and v is not None}
         if "primary_backend" in data:
@@ -389,7 +389,7 @@ class FablestarServer:
         await self.hot_reloader.start(["content", "src/fablestar/commands", "config", "prompts"])
         
         # 3. Start the Nexus (FastAPI) in the background
-        asyncio.create_task(self.nexus.start())
+        self._main_task = asyncio.create_task(self.nexus.start())
         
         # 4. Start the tick loop
         self._main_task = asyncio.create_task(self.tick_manager.run())
@@ -410,7 +410,7 @@ class FablestarServer:
             
         logger.info("Shutdown complete.")
 
-    async def _authenticate_websocket(self, session: Session) -> Optional[Any]:
+    async def _authenticate_websocket(self, session: Session) -> Any | None:
         """
         WebSocket player: first message must be JSON:
         {"username","password","character_id": optional int}
@@ -428,7 +428,7 @@ class FablestarServer:
         username = (data.get("username") or "").strip()
         password = (data.get("password") or "")
         char_id_raw = data.get("character_id")
-        char_id: Optional[int] = None
+        char_id: int | None = None
         if char_id_raw is not None:
             try:
                 char_id = int(char_id_raw)
@@ -453,7 +453,7 @@ class FablestarServer:
                 .order_by(Character.id)
             )
             characters = list(result.scalars().all())
-            character: Optional[Character] = None
+            character: Character | None = None
             if not characters:
                 await session.send(json.dumps({"ok": False, "error": "no_character"}) + "\r\n")
                 return None
@@ -474,7 +474,7 @@ class FablestarServer:
 
         return _snapshot_from_orm(character)
 
-    async def play_login(self, username: str, password: str) -> Dict[str, Any]:
+    async def play_login(self, username: str, password: str) -> dict[str, Any]:
         """REST: validate credentials and list characters for the web UI."""
         username = (username or "").strip()
         if not username:
@@ -510,7 +510,7 @@ class FablestarServer:
             **eco,
         }
 
-    async def play_register(self, username: str, password: str) -> Dict[str, Any]:
+    async def play_register(self, username: str, password: str) -> dict[str, Any]:
         """REST: create account (characters are added via character creation UI)."""
         username = (username or "").strip()
         if len(username) < 2:
@@ -548,7 +548,7 @@ class FablestarServer:
             **eco,
         }
 
-    async def play_comfyui_status(self) -> Dict[str, Any]:
+    async def play_comfyui_status(self) -> dict[str, Any]:
         c = self.config.comfyui
         portrait_resolved = resolve_config_asset_path(c.workflow_path)
         wf = portrait_resolved.is_file()
@@ -598,7 +598,7 @@ class FablestarServer:
         room_type: str,
         depth: int,
         description_base: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """LM Studio / OpenAI-compatible: short ComfyUI prompt from room fields."""
         prompt = self.prompt_manager.render(
             "forge_area_image_prompt",
@@ -624,7 +624,7 @@ class FablestarServer:
         password: str,
         character_name: str,
         appearance_notes: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """LLM: single-line ComfyUI-style portrait prompt from name and optional notes."""
         username = (username or "").strip()
         if not username:
@@ -668,7 +668,7 @@ class FablestarServer:
         password: str,
         narrative_context: str = "",
         room_hint: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """LLM: ComfyUI-style environment prompt from recent narrative text."""
         username = (username or "").strip()
         if not username:
@@ -713,8 +713,8 @@ class FablestarServer:
         username: str,
         password: str,
         scene_prompt: str,
-        character_id: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        character_id: int | None = None,
+    ) -> dict[str, Any]:
         """ComfyUI area workflow: save PNG under /media/rooms/ (or room-art); optional character_id persists URL for reload."""
         username = (username or "").strip()
         if not username:
@@ -780,7 +780,7 @@ class FablestarServer:
             "cost_charged": charged,
         }
 
-    async def play_list_scene_gallery(self, username: str, password: str) -> Dict[str, Any]:
+    async def play_list_scene_gallery(self, username: str, password: str) -> dict[str, Any]:
         """List ComfyUI scene images recorded for this account (newest first)."""
         username = (username or "").strip()
         if not username:
@@ -820,7 +820,7 @@ class FablestarServer:
         password: str,
         gallery_id: int,
         character_id: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Set the active scene image for a character from a row in this account's gallery."""
         username = (username or "").strip()
         if not username:
@@ -852,7 +852,7 @@ class FablestarServer:
         *,
         zone_id: str = "",
         room_slug: str = "",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """ComfyUI: save PNG; optional zone+slug writes next to room YAML for portable world content."""
         cfg = self.config.comfyui
         area_wp = (cfg.area_workflow_path or "").strip() or cfg.workflow_path
@@ -904,7 +904,7 @@ class FablestarServer:
         dest.write_bytes(png)
         return {"ok": True, "area_image_url": f"/media/rooms/{fname}", "bundled": False}
 
-    async def play_generate_portrait(self, username: str, password: str, appearance_prompt: str) -> Dict[str, Any]:
+    async def play_generate_portrait(self, username: str, password: str, appearance_prompt: str) -> dict[str, Any]:
         username = (username or "").strip()
         if not username:
             return {"ok": False, "error": "username_required"}
@@ -968,8 +968,8 @@ class FablestarServer:
         name: str,
         portrait_prompt: str = "",
         portrait_url: str = "",
-        starter_proficiencies: Optional[Dict[str, int]] = None,
-    ) -> Dict[str, Any]:
+        starter_proficiencies: dict[str, int] | None = None,
+    ) -> dict[str, Any]:
         username = (username or "").strip()
         name = (name or "").strip()
         if not username:
@@ -986,7 +986,7 @@ class FablestarServer:
         if pp_in and len(pp_in) > 4000:
             return {"ok": False, "error": "portrait_prompt_too_long"}
 
-        starter_clean: Dict[str, int] = {}
+        starter_clean: dict[str, int] = {}
         if starter_proficiencies:
             for k, v in starter_proficiencies.items():
                 if not isinstance(k, str):
@@ -1008,7 +1008,7 @@ class FablestarServer:
             if not ok_st:
                 return {"ok": False, "error": err_st}
 
-        account_id: Optional[int] = None
+        account_id: int | None = None
         async with self.db.session_factory() as db_session:
             result = await db_session.execute(
                 select(Account).where(Account.username == username)
@@ -1031,7 +1031,7 @@ class FablestarServer:
 
         p_url = p_url_in
         pp = pp_in
-        portrait_gen_failed: Optional[str] = None
+        portrait_gen_failed: str | None = None
         create_portrait_charged = 0
 
         if not p_url:
@@ -1075,7 +1075,10 @@ class FablestarServer:
             await db_session.commit()
             await db_session.refresh(character)
             from fablestar.proficiencies.starter import apply_starter_to_stats
-            from fablestar.proficiencies.state_helpers import ensure_proficiency_block, migrate_legacy_stats
+            from fablestar.proficiencies.state_helpers import (
+                ensure_proficiency_block,
+                migrate_legacy_stats,
+            )
 
             merged_stats = migrate_legacy_stats(dict(character.stats or {}))
             ensure_proficiency_block(merged_stats)
@@ -1102,7 +1105,7 @@ class FablestarServer:
             acc_row = await db_session.get(Account, account_id)
             if acc_row is not None:
                 is_gm = bool(acc_row.is_gm)
-        out: Dict[str, Any] = {
+        out: dict[str, Any] = {
             "ok": True,
             "character": payload,
             "characters": all_chars,
@@ -1119,7 +1122,7 @@ class FablestarServer:
 
     async def play_delete_character(
         self, username: str, password: str, character_id: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Remove one character if it belongs to the authenticated account."""
         username = (username or "").strip()
         if not username:
@@ -1164,7 +1167,7 @@ class FablestarServer:
             **eco,
         }
 
-    async def play_refresh_characters(self, username: str, password: str) -> Dict[str, Any]:
+    async def play_refresh_characters(self, username: str, password: str) -> dict[str, Any]:
         """Re-list characters after create (same shape as login)."""
         username = (username or "").strip()
         if not username:

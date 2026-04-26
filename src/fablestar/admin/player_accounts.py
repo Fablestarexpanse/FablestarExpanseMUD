@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
@@ -18,7 +18,7 @@ DEV_DEFAULT_PLAY_LOGINS: tuple[tuple[str, str, bool], ...] = (
 )
 
 
-def _character_admin_dict(c: Character) -> Dict[str, Any]:
+def _character_admin_dict(c: Character) -> dict[str, Any]:
     return {
         "id": c.id,
         "name": c.name,
@@ -36,7 +36,7 @@ def _character_admin_dict(c: Character) -> Dict[str, Any]:
     }
 
 
-def _account_summary_dict(a: Account, char_count: int) -> Dict[str, Any]:
+def _account_summary_dict(a: Account, char_count: int) -> dict[str, Any]:
     return {
         "id": a.id,
         "username": a.username,
@@ -50,8 +50,8 @@ def _account_summary_dict(a: Account, char_count: int) -> Dict[str, Any]:
 
 
 async def lookup_characters_by_names(
-    server: Any, names: List[str]
-) -> Dict[str, Dict[str, int]]:
+    server: Any, names: list[str]
+) -> dict[str, dict[str, int]]:
     """Map character name -> {character_id, account_id} for live-session linking."""
     uniq = sorted({n for n in names if n and isinstance(n, str)})
     if not uniq:
@@ -68,11 +68,11 @@ async def lookup_characters_by_names(
         }
 
 
-async def list_accounts_with_counts(server: Any) -> List[Dict[str, Any]]:
+async def list_accounts_with_counts(server: Any) -> list[dict[str, Any]]:
     async with server.db.session_factory() as session:
         result = await session.execute(select(Account).order_by(Account.username))
         accounts = list(result.scalars().all())
-        out: List[Dict[str, Any]] = []
+        out: list[dict[str, Any]] = []
         for a in accounts:
             n = await session.scalar(
                 select(func.count()).select_from(Character).where(Character.account_id == a.id)
@@ -81,7 +81,7 @@ async def list_accounts_with_counts(server: Any) -> List[Dict[str, Any]]:
         return out
 
 
-def _console_access_dict(account_username: str, staff_row: Optional[AdminStaff]) -> Optional[Dict[str, Any]]:
+def _console_access_dict(account_username: str, staff_row: AdminStaff | None) -> dict[str, Any] | None:
     if staff_row is None:
         return None
     return {
@@ -93,7 +93,7 @@ def _console_access_dict(account_username: str, staff_row: Optional[AdminStaff])
     }
 
 
-async def get_account_detail(server: Any, account_id: int) -> Optional[Dict[str, Any]]:
+async def get_account_detail(server: Any, account_id: int) -> dict[str, Any] | None:
     async with server.db.session_factory() as session:
         r = await session.execute(
             select(Account)
@@ -119,17 +119,16 @@ async def get_account_detail(server: Any, account_id: int) -> Optional[Dict[str,
 async def patch_account(
     server: Any,
     account_id: int,
-    patch: Dict[str, Any],
+    patch: dict[str, Any],
     *,
-    actor: Optional[Dict[str, Any]] = None,
-) -> Optional[Dict[str, Any]]:
+    actor: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     async with server.db.session_factory() as session:
         account = await session.get(Account, account_id)
         if account is None:
             return None
         old_ec = int(account.echo_credits)
         old_gm = bool(account.is_gm)
-        old_email = account.email
         if patch.get("echo_credits_add") is not None:
             account.echo_credits = max(0, int(account.echo_credits) + int(patch["echo_credits_add"]))
         elif patch.get("echo_credits") is not None:
@@ -146,7 +145,6 @@ async def patch_account(
         await session.refresh(account)
         new_ec = int(account.echo_credits)
         new_gm = bool(account.is_gm)
-        new_email = account.email
         n = await session.scalar(
             select(func.count()).select_from(Character).where(Character.account_id == account_id)
         )
@@ -156,7 +154,7 @@ async def patch_account(
     c = server.config.comfyui
     lab = (c.currency_display_name or "pixels").strip() or "pixels"
 
-    lines: List[str] = []
+    lines: list[str] = []
     if patch.get("echo_credits_add") is not None or patch.get("echo_credits") is not None:
         if delta > 0:
             lines.append(f"Added {delta} {lab} (balance now {new_ec}).")
@@ -189,10 +187,10 @@ async def patch_character(
     server: Any,
     account_id: int,
     character_id: int,
-    patch: Dict[str, Any],
+    patch: dict[str, Any],
     *,
-    actor: Optional[Dict[str, Any]] = None,
-) -> Optional[Dict[str, Any]]:
+    actor: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
     async with server.db.session_factory() as session:
         char = await session.get(Character, character_id)
         if char is None or char.account_id != account_id:
@@ -215,7 +213,10 @@ async def patch_character(
             pp = patch["portrait_prompt"]
             char.portrait_prompt = pp if isinstance(pp, str) and pp.strip() else None
         if "stats" in patch and isinstance(patch["stats"], dict):
-            from fablestar.proficiencies.state_helpers import ensure_proficiency_block, migrate_legacy_stats
+            from fablestar.proficiencies.state_helpers import (
+                ensure_proficiency_block,
+                migrate_legacy_stats,
+            )
 
             merged = migrate_legacy_stats(dict(patch["stats"]))
             ensure_proficiency_block(merged)
@@ -224,7 +225,7 @@ async def patch_character(
         await session.refresh(char)
         out = _character_admin_dict(char)
 
-    lines: List[str] = []
+    lines: list[str] = []
     if "digi_balance" in patch:
         lines.append(f"Character {char_name}: Digi → {out['digi_balance']}.")
     if "reputation" in patch:

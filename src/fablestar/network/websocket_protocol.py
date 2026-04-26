@@ -1,9 +1,11 @@
 """WebSocketProtocol — wraps a FastAPI WebSocket to implement the Protocol ABC."""
 
 import asyncio
-from typing import Optional
+
 from fastapi import WebSocket
+
 from fablestar.network.protocol import Protocol
+
 
 class WebSocketProtocol(Protocol):
     """
@@ -27,7 +29,7 @@ class WebSocketProtocol(Protocol):
         except Exception:
             self._is_connected = False
 
-    async def receive(self) -> Optional[str]:
+    async def receive(self) -> str | None:
         """Receive a line of text from the web client."""
         if not self._is_connected:
             return None
@@ -47,7 +49,7 @@ class WebSocketProtocol(Protocol):
         self._is_connected = False
         try:
             await self._websocket.close()
-        except:
+        except Exception:
             pass
 
     @property

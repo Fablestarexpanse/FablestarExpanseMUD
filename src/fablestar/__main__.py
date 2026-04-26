@@ -2,7 +2,9 @@
 
 import asyncio
 import sys
+
 from fablestar.server import run_server
+
 
 def main():
     """Main entry point for the fablestar package."""

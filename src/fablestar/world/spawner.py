@@ -3,7 +3,7 @@
 import logging
 import random
 import uuid
-from typing import TYPE_CHECKING, Dict, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from fablestar.server import FablestarServer
@@ -76,7 +76,7 @@ class EntitySpawnManager:
     # Public spawn / despawn API
     # ------------------------------------------------------------------
 
-    async def spawn_entity(self, room_id: str, template_id: str) -> Optional[str]:
+    async def spawn_entity(self, room_id: str, template_id: str) -> str | None:
         """Spawn one entity of the given template into a room. Returns the entity_id."""
         tmpl = self.server.content_loader.get_entity_template(template_id)
         if not tmpl:
@@ -85,7 +85,7 @@ class EntitySpawnManager:
 
         entity_id = f"{template_id}_{uuid.uuid4().hex[:8]}"
         stats = dict(tmpl.stats)
-        state: Dict[str, Any] = {
+        state: dict[str, Any] = {
             "id": entity_id,
             "template": template_id,
             "name": tmpl.name,
@@ -126,7 +126,7 @@ class EntitySpawnManager:
         await self.despawn_entity(entity_id, room_id)
         return dropped
 
-    async def _drop_item(self, room_id: str, template_id: str) -> Optional[str]:
+    async def _drop_item(self, room_id: str, template_id: str) -> str | None:
         tmpl = self.server.content_loader.get_item_template(template_id)
         if not tmpl:
             return None

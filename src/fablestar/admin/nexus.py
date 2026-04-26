@@ -1,25 +1,39 @@
 """NexusApp — FastAPI application with all admin REST routes, WebSocket handlers, and middleware."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import re
-from datetime import datetime, timezone
-from typing import Annotated, Any, Dict, List, Optional
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import TYPE_CHECKING, Annotated, Any
+
+if TYPE_CHECKING:
+    from fablestar.server import FablestarServer
 
 import uvicorn
 import yaml
-from fastapi import Body, Depends, FastAPI, Query, Request, WebSocket, WebSocketDisconnect, HTTPException
-from fastapi.staticfiles import StaticFiles
+from fastapi import (
+    Body,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
-from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
+from sqlalchemy import text
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import FileResponse, JSONResponse
-from pydantic import BaseModel, Field
-from sqlalchemy import text
 
 from fablestar.admin import content_browser, player_accounts, staff_service
 from fablestar.admin.admin_security import (
@@ -50,7 +64,7 @@ def get_admin_ctx(request: Request) -> AdminContext:
     return ctx
 
 
-def _admin_actor_payload(ctx: AdminContext) -> Optional[Dict[str, Any]]:
+def _admin_actor_payload(ctx: AdminContext) -> dict[str, Any] | None:
     if ctx.bypass_auth:
         return None
     return {
@@ -112,13 +126,13 @@ class PlayAuthCharactersBody(BaseModel):
 
     username: str
     password: str = Field(..., min_length=8)
-    delete_character_id: Optional[int] = None
+    delete_character_id: int | None = None
     suggest_scene: bool = False
     narrative_context: str = ""
     room_hint: str = ""
     generate_scene: bool = False
     scene_prompt: str = ""
-    character_id: Optional[int] = None
+    character_id: int | None = None
 
 
 class PlayCreateCharacterBody(BaseModel):
@@ -128,7 +142,7 @@ class PlayCreateCharacterBody(BaseModel):
     portrait_prompt: str = ""
     portrait_url: str = ""
     # Optional chargen: leaf_id -> levels, sum <= 15, each <= 5 (see /play/proficiencies/catalog).
-    starter_proficiencies: Optional[Dict[str, Any]] = None
+    starter_proficiencies: dict[str, Any] | None = None
 
 
 class PlayDeleteCharacterBody(BaseModel):
@@ -161,7 +175,7 @@ class PlaySceneGenerateBody(BaseModel):
     username: str
     password: str = Field(..., min_length=8)
     scene_prompt: str = ""
-    character_id: Optional[int] = None
+    character_id: int | None = None
 
 
 class PlaySceneGalleryListBody(BaseModel):
@@ -188,7 +202,7 @@ class ForgeInjection(BaseModel):
 class ForgeGenericRequest(BaseModel):
     category: str
     seed: str
-    context: Dict[str, Any] = {}
+    context: dict[str, Any] = {}
 
 
 class ForgeAreaImagePromptRequest(BaseModel):
@@ -218,14 +232,14 @@ class AdminBroadcastBody(BaseModel):
 
 
 class LLMSettingsBody(BaseModel):
-    primary_backend: Optional[str] = None
-    lm_studio_url: Optional[str] = None
-    lm_studio_key: Optional[str] = None
-    ollama_url: Optional[str] = None
-    timeout_seconds: Optional[float] = None
-    chat_model: Optional[str] = None
-    temperature: Optional[float] = None
-    cache_ttl: Optional[int] = None
+    primary_backend: str | None = None
+    lm_studio_url: str | None = None
+    lm_studio_key: str | None = None
+    ollama_url: str | None = None
+    timeout_seconds: float | None = None
+    chat_model: str | None = None
+    temperature: float | None = None
+    cache_ttl: int | None = None
 
 
 class StaffLoginBody(BaseModel):
@@ -238,32 +252,32 @@ class StaffCreateBody(BaseModel):
     password: str = Field(..., min_length=8)
     display_name: str = ""
     role: str = "gm"
-    permissions: Dict[str, Any] = Field(default_factory=dict)
+    permissions: dict[str, Any] = Field(default_factory=dict)
 
 
 class StaffPatchBody(BaseModel):
-    display_name: Optional[str] = None
-    role: Optional[str] = None
-    permissions: Optional[Dict[str, Any]] = None
-    is_active: Optional[bool] = None
-    password: Optional[str] = Field(default=None, min_length=8)
+    display_name: str | None = None
+    role: str | None = None
+    permissions: dict[str, Any] | None = None
+    is_active: bool | None = None
+    password: str | None = Field(default=None, min_length=8)
 
 
 class PlayerAccountPatchBody(BaseModel):
-    echo_credits: Optional[int] = None
-    echo_credits_add: Optional[int] = None
-    is_gm: Optional[bool] = None
-    email: Optional[str] = None
+    echo_credits: int | None = None
+    echo_credits_add: int | None = None
+    is_gm: bool | None = None
+    email: str | None = None
 
 
 class PlayerCharacterPatchBody(BaseModel):
-    digi_balance: Optional[int] = None
-    pvp_enabled: Optional[bool] = None
-    reputation: Optional[int] = None
-    room_id: Optional[str] = None
-    portrait_url: Optional[str] = None
-    portrait_prompt: Optional[str] = None
-    stats: Optional[Dict[str, Any]] = None
+    digi_balance: int | None = None
+    pvp_enabled: bool | None = None
+    reputation: int | None = None
+    room_id: str | None = None
+    portrait_url: str | None = None
+    portrait_prompt: str | None = None
+    stats: dict[str, Any] | None = None
 
 
 class ConsoleAccessBody(BaseModel):
@@ -276,12 +290,12 @@ class ConsoleAccessBody(BaseModel):
 class RoomJsonBody(BaseModel):
     """Full or partial room document merged into existing YAML."""
 
-    room: Dict[str, Any] = Field(default_factory=dict)
+    room: dict[str, Any] = Field(default_factory=dict)
 
 
 class CreateRoomBody(BaseModel):
     slug: str
-    room: Dict[str, Any] = Field(default_factory=dict)
+    room: dict[str, Any] = Field(default_factory=dict)
 
 
 class CreateZoneBody(BaseModel):
@@ -290,7 +304,7 @@ class CreateZoneBody(BaseModel):
 
 
 class ZonePositionsBody(BaseModel):
-    positions: Dict[str, Dict[str, float]] = Field(default_factory=dict)
+    positions: dict[str, dict[str, float]] = Field(default_factory=dict)
 
 
 class CreateSystemBody(BaseModel):
@@ -309,7 +323,7 @@ class CreateSystemBody(BaseModel):
 class SystemDocumentBody(BaseModel):
     """Full YAML root, e.g. {\"system\": {...}}."""
 
-    document: Dict[str, Any]
+    document: dict[str, Any]
 
 
 class CreateShipBody(BaseModel):
@@ -318,7 +332,7 @@ class CreateShipBody(BaseModel):
     size: str = "small"
 
 
-def _llm_public_config(cfg) -> Dict[str, Any]:
+def _llm_public_config(cfg) -> dict[str, Any]:
     llm = cfg.llm
     key = llm.lm_studio_key or ""
     return {
@@ -338,12 +352,12 @@ class NexusApp:
     FastAPI-based administration server (The Nexus).
     Provides the backend for the World Administration Console.
     """
-    def __init__(self, server: "FablestarServer"):
+    def __init__(self, server: FablestarServer):
         self.server = server
         self.app = FastAPI(title="Fablestar Nexus API")
-        self._active_sockets: List[WebSocket] = []
-        self._admin_ws_sockets: List[WebSocket] = []
-        self._admin_presence: Dict[str, Dict[str, Any]] = {}
+        self._active_sockets: list[WebSocket] = []
+        self._admin_ws_sockets: list[WebSocket] = []
+        self._admin_presence: dict[str, dict[str, Any]] = {}
         self._presence_lock = asyncio.Lock()
         self._setup_routes()
         self._setup_middleware()
@@ -362,14 +376,14 @@ class NexusApp:
         self.app.add_middleware(SlowAPIMiddleware)
         self.app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-    async def _admin_ws_auth(self, websocket: WebSocket) -> Optional[AdminContext]:
+    async def _admin_ws_auth(self, websocket: WebSocket) -> AdminContext | None:
         """Authenticate via first-message auth envelope: {"type":"auth","token":"<jwt>"}."""
         cfg = self.server.config.server
         if not cfg.admin_auth_required:
             return AdminContext.bypass()
         try:
             raw = await asyncio.wait_for(websocket.receive_text(), timeout=10.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
         except Exception:
             return None
@@ -387,7 +401,7 @@ class NexusApp:
             return None
         return await load_admin_context_from_id(self.server, sid)
 
-    async def _presence_snapshot_dict(self) -> Dict[str, Any]:
+    async def _presence_snapshot_dict(self) -> dict[str, Any]:
         async with self._presence_lock:
             online = list(self._admin_presence.values())
         online.sort(key=lambda x: (x.get("display_name") or "").lower())
@@ -395,7 +409,7 @@ class NexusApp:
 
     async def broadcast_admin_presence(self) -> None:
         payload = await self._presence_snapshot_dict()
-        dead: List[WebSocket] = []
+        dead: list[WebSocket] = []
         for ws in self._admin_ws_sockets:
             try:
                 await ws.send_json(payload)
@@ -660,7 +674,7 @@ class NexusApp:
             """Create a new character for the account."""
             starter = body.starter_proficiencies
             if isinstance(starter, dict):
-                coerced: Dict[str, Any] = {str(k): v for k, v in starter.items()}
+                coerced: dict[str, Any] = {str(k): v for k, v in starter.items()}
             else:
                 coerced = {}
             return await self.server.play_create_character(
@@ -837,7 +851,7 @@ class NexusApp:
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.clear_cache()
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "created", "id": zid, "path": str(rooms_path)}
 
         @self.app.get("/content/zones/{zone_id}/rooms")
@@ -882,14 +896,14 @@ class NexusApp:
         @self.app.put("/content/proficiencies/catalog")
         async def content_proficiencies_catalog_put(
             _ctx: Annotated[AdminContext, Depends(require_any_tool("content", "skills"))],
-            body: Dict[str, Any] = Body(...),
+            body: dict[str, Any] = Body(...),
         ):
             try:
                 out = content_browser.write_proficiency_catalog_document(body)
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.invalidate(Path("content/proficiencies/catalog.json").resolve())
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return out
 
         @self.app.get("/content/room/{zone_id}/{room_slug}/yaml")
@@ -911,7 +925,7 @@ class NexusApp:
         ):
             self.server.content_loader.clear_cache()
             self.server.prompt_manager.reload()
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "ok", "message": "Content and prompt caches cleared."}
 
         @self.app.get("/server/info")
@@ -964,7 +978,7 @@ class NexusApp:
         ):
             return _llm_public_config(self.server.config)
 
-        async def _compose_llm_status(*, refresh: bool) -> Dict[str, Any]:
+        async def _compose_llm_status(*, refresh: bool) -> dict[str, Any]:
             snap = _llm_public_config(self.server.config)
             probe = await self.server.llm_client.status_dict(bypass_cache=refresh)
             snap.update(
@@ -1116,9 +1130,9 @@ class NexusApp:
                 file_path = zone_dir / f"{room_filename}.yaml"
                 
                 # 2. Write to disk
-                with open(file_path, "w", encoding="utf-8") as f:
-                    # We use the raw YAML from the LLM or re-serialize
-                    f.write(injection.yaml_content)
+                await asyncio.to_thread(
+                    file_path.write_text, injection.yaml_content, "utf-8"
+                )
                 
                 logger.info(f"Forge: Injected room {injection.id} to {file_path}")
                 return {"status": "success", "path": str(file_path)}
@@ -1286,7 +1300,7 @@ class NexusApp:
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.invalidate(path)
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "saved", "path": str(path)}
 
         @self.app.post("/content/zones/{zone_id}/rooms")
@@ -1307,7 +1321,7 @@ class NexusApp:
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.invalidate(path)
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "created", "path": str(path), "slug": slug}
 
         @self.app.delete("/content/zones/{zone_id}/rooms/{room_slug}")
@@ -1326,7 +1340,7 @@ class NexusApp:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             path = Path("content/world/zones") / zone_id / "rooms" / f"{room_slug}.yaml"
             self.server.content_loader.invalidate(path)
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "deleted", "slug": room_slug}
 
         @self.app.get("/content/galaxy")
@@ -1380,7 +1394,7 @@ class NexusApp:
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.clear_cache()
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "created", "path": str(path), "id": sid}
 
         @self.app.put("/content/systems/{system_id}")
@@ -1397,7 +1411,7 @@ class NexusApp:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.invalidate(path)
             self.server.content_loader.invalidate(content_browser.GALAXY_FILE)
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "saved", "path": str(path)}
 
         @self.app.post("/content/ships/create")
@@ -1415,7 +1429,7 @@ class NexusApp:
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.clear_cache()
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "created", "path": str(path), "id": sid}
 
         @self.app.get("/content/ships")
@@ -1445,7 +1459,7 @@ class NexusApp:
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e)) from e
             self.server.content_loader.clear_cache()
-            self.server.last_content_reload_at = datetime.now(timezone.utc).isoformat()
+            self.server.last_content_reload_at = datetime.now(UTC).isoformat()
             return {"status": "saved", "path": str(path)}
 
         # ---- Live World State --------------------------------------------------
@@ -1551,7 +1565,7 @@ class NexusApp:
                 "username": ctx.username,
                 "display_name": ctx.display_name,
                 "role": ctx.role,
-                "since": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                "since": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             }
             async with self._presence_lock:
                 self._admin_presence[conn_id] = entry

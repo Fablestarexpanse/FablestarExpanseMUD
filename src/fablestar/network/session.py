@@ -3,7 +3,6 @@
 import logging
 import uuid
 from enum import Enum, auto
-from typing import Dict, Optional
 
 from fablestar.network.protocol import Protocol
 
@@ -24,7 +23,7 @@ class Session:
         self.id = session_id
         self.protocol = protocol
         self.state = SessionState.CONNECTED
-        self.player_id: Optional[str] = None
+        self.player_id: str | None = None
         self.last_activity = 0.0 # Will be updated with monotonic time
 
     async def send(self, message: str):
@@ -47,8 +46,8 @@ class Session:
 class SessionManager:
     """Manages all active player sessions."""
     def __init__(self):
-        self.sessions: Dict[str, Session] = {}
-        self.player_to_session: Dict[str, str] = {}
+        self.sessions: dict[str, Session] = {}
+        self.player_to_session: dict[str, str] = {}
 
     async def create_session(self, protocol: Protocol) -> Session:
         """Create and track a new session."""
@@ -69,7 +68,7 @@ class SessionManager:
             del self.sessions[session_id]
             logger.info(f"Session destroyed: {session_id}")
 
-    def get_session_by_player(self, player_id: str) -> Optional[Session]:
+    def get_session_by_player(self, player_id: str) -> Session | None:
         """Find an active session for a specific player ID."""
         session_id = self.player_to_session.get(player_id)
         if session_id:
@@ -84,7 +83,7 @@ class SessionManager:
             session.state = SessionState.PLAYING
             self.player_to_session[player_id] = session_id
 
-    async def broadcast(self, message: str, exclude: Optional[set[str]] = None):
+    async def broadcast(self, message: str, exclude: set[str] | None = None):
         """Send a message to all playing sessions."""
         exclude = exclude or set()
         for session in self.sessions.values():

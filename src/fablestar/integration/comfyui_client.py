@@ -8,7 +8,7 @@ import logging
 import secrets
 import uuid
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import httpx
 
@@ -17,7 +17,7 @@ from fablestar.core.config import ComfyUIConfig, resolve_config_asset_path
 logger = logging.getLogger(__name__)
 
 
-def _load_workflow(path: Path) -> Dict[str, Any]:
+def _load_workflow(path: Path) -> dict[str, Any]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("workflow_not_object")
@@ -25,14 +25,14 @@ def _load_workflow(path: Path) -> Dict[str, Any]:
     return {k: v for k, v in raw.items() if not str(k).startswith("_")}
 
 
-def _strip_node_meta_for_api(workflow: Dict[str, Any]) -> None:
+def _strip_node_meta_for_api(workflow: dict[str, Any]) -> None:
     """Remove per-node _meta (UI metadata); ComfyUI /prompt often rejects unknown node keys."""
     for node in workflow.values():
         if isinstance(node, dict) and "_meta" in node:
             del node["_meta"]
 
 
-def _inject_positive_prompt(workflow: Dict[str, Any], node_id: str, text: str) -> None:
+def _inject_positive_prompt(workflow: dict[str, Any], node_id: str, text: str) -> None:
     node = workflow.get(node_id)
     if not isinstance(node, dict):
         raise ValueError(f"missing_node:{node_id}")
@@ -46,7 +46,7 @@ def _random_comfy_seed() -> int:
     return secrets.randbelow(2**32)
 
 
-def _scramble_seeds_in_workflow(workflow: Dict[str, Any]) -> None:
+def _scramble_seeds_in_workflow(workflow: dict[str, Any]) -> None:
     """New random image each run (workflow JSON often ships with fixed KSampler seeds)."""
     for node in workflow.values():
         if not isinstance(node, dict):
@@ -63,7 +63,7 @@ def _scramble_seeds_in_workflow(workflow: Dict[str, Any]) -> None:
             inputs["seed"] = _random_comfy_seed()
 
 
-def _get_history_entry(history: Any, prompt_id: str) -> Optional[Dict[str, Any]]:
+def _get_history_entry(history: Any, prompt_id: str) -> dict[str, Any] | None:
     if not isinstance(history, dict) or not history:
         return None
     if prompt_id in history:
@@ -75,7 +75,7 @@ def _get_history_entry(history: Any, prompt_id: str) -> Optional[Dict[str, Any]]
     return None
 
 
-def _history_entry_failed(entry: Dict[str, Any]) -> Optional[str]:
+def _history_entry_failed(entry: dict[str, Any]) -> str | None:
     st = entry.get("status")
     if not isinstance(st, dict):
         return None
@@ -89,7 +89,7 @@ def _history_entry_failed(entry: Dict[str, Any]) -> Optional[str]:
         msgs = st.get("messages")
         if isinstance(msgs, list):
             for m in msgs:
-                if isinstance(m, (list, tuple)) and len(m) >= 2:
+                if isinstance(m, list | tuple) and len(m) >= 2:
                     parts.append(str(m[1]))
                 elif isinstance(m, str):
                     parts.append(m)
@@ -98,14 +98,14 @@ def _history_entry_failed(entry: Dict[str, Any]) -> Optional[str]:
 
 
 def _pick_image_output_block(
-    outputs: Dict[str, Any], output_node_id: str
-) -> Optional[Tuple[Dict[str, Any], str]]:
+    outputs: dict[str, Any], output_node_id: str
+) -> tuple[dict[str, Any], str] | None:
     """Return (block, node_id) for SaveImage / image output; prefer configured node id."""
     pref = outputs.get(output_node_id)
     if isinstance(pref, dict) and pref.get("images"):
         return pref, output_node_id
     best_n = -1
-    best_block: Optional[Dict[str, Any]] = None
+    best_block: dict[str, Any] | None = None
     best_id = ""
     for nid, block in outputs.items():
         if not isinstance(block, dict):
@@ -125,7 +125,7 @@ def _pick_image_output_block(
     return None
 
 
-def _apply_checkpoint_override(workflow: Dict[str, Any], ckpt_name: str) -> None:
+def _apply_checkpoint_override(workflow: dict[str, Any], ckpt_name: str) -> None:
     name = (ckpt_name or "").strip()
     if not name:
         return
@@ -139,7 +139,7 @@ def _apply_checkpoint_override(workflow: Dict[str, Any], ckpt_name: str) -> None
             inputs["ckpt_name"] = name
 
 
-def _workflow_has_checkpoint_loader_simple(workflow: Dict[str, Any]) -> bool:
+def _workflow_has_checkpoint_loader_simple(workflow: dict[str, Any]) -> bool:
     for v in workflow.values():
         if isinstance(v, dict) and v.get("class_type") == "CheckpointLoaderSimple":
             return True
@@ -226,7 +226,7 @@ async def _list_checkpoints_from_comfy(client: httpx.AsyncClient, base: str) -> 
 
 
 def _resolve_checkpoint_for_workflow(
-    workflow: Dict[str, Any],
+    workflow: dict[str, Any],
     cfg: ComfyUIConfig,
     available: list[str],
 ) -> None:
@@ -317,7 +317,7 @@ async def generate_comfy_png(
     cfg: ComfyUIConfig,
     user_prompt: str,
     kind: str = "portrait",
-) -> Tuple[bytes, str]:
+) -> tuple[bytes, str]:
     """
     Run ComfyUI once; return (png_bytes, empty_error_string).
     kind: "portrait" | "area"
@@ -365,8 +365,8 @@ async def generate_comfy_png(
 
         loop = asyncio.get_running_loop()
         deadline = loop.time() + cfg.timeout_seconds
-        last_outputs: Dict[str, Any] = {}
-        picked: Optional[Tuple[Dict[str, Any], str]] = None
+        last_outputs: dict[str, Any] = {}
+        picked: tuple[dict[str, Any], str] | None = None
         while loop.time() < deadline:
             try:
                 hr = await client.get(f"{base}/history/{prompt_id}")
@@ -433,7 +433,7 @@ async def generate_comfy_png(
 async def generate_portrait_png(
     cfg: ComfyUIConfig,
     appearance_prompt: str,
-) -> Tuple[bytes, str]:
+) -> tuple[bytes, str]:
     """Portrait workflow (backwards-compatible name)."""
     return await generate_comfy_png(cfg, appearance_prompt, kind="portrait")
 

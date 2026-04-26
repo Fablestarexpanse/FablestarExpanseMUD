@@ -80,8 +80,9 @@ async def take(session: Session, args: list[str]):
 @command("drop", aliases=["discard"])
 async def drop(session: Session, args: list[str]):
     """Drop an item from your inventory. Usage: drop <item>"""
-    from fablestar.app import app_instance
     import uuid
+
+    from fablestar.app import app_instance
 
     if not args:
         await session.send("Drop what? Usage: drop <item>")

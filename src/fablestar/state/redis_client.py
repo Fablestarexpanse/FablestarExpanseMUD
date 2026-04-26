@@ -2,9 +2,10 @@
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import redis.asyncio as redis
+
 from fablestar.core.config import RedisConfig
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class RedisState:
 
     def __init__(self, config: RedisConfig):
         self.config = config
-        self.client: Optional[redis.Redis] = None
+        self.client: redis.Redis | None = None
 
     async def connect(self):
         """Establish connection to the Redis server."""
@@ -59,7 +60,7 @@ class RedisState:
     def _get_key(self, prefix_key: str, **kwargs: Any) -> str:
         return self.KEY_PREFIXES[prefix_key].format(**kwargs)
 
-    async def get_player_location(self, player_id: str) -> Optional[str]:
+    async def get_player_location(self, player_id: str) -> str | None:
         key = self._get_key("player_location", id=player_id)
         return await self.client.get(key)
 
@@ -74,7 +75,7 @@ class RedisState:
         await self.client.set(key, room_id)
         await self.add_player_to_room(player_id, room_id)
 
-    async def get_room_players(self, room_id: str) -> Set[str]:
+    async def get_room_players(self, room_id: str) -> set[str]:
         key = self._get_key("room_players", id=room_id)
         return await self.client.smembers(key)
 
@@ -88,40 +89,40 @@ class RedisState:
 
     # --- Player Stats Methods ---
 
-    async def get_player_stats(self, player_id: str) -> Dict[str, Any]:
+    async def get_player_stats(self, player_id: str) -> dict[str, Any]:
         key = self._get_key("player_stats", id=player_id)
         raw = await self.client.get(key)
         if raw is None:
             return {}
         return json.loads(raw)
 
-    async def set_player_stats(self, player_id: str, stats: Dict[str, Any]):
+    async def set_player_stats(self, player_id: str, stats: dict[str, Any]):
         key = self._get_key("player_stats", id=player_id)
         await self.client.set(key, json.dumps(stats))
 
     # --- Player Inventory Methods ---
 
-    async def get_player_inventory(self, player_id: str) -> List[Any]:
+    async def get_player_inventory(self, player_id: str) -> list[Any]:
         key = self._get_key("player_inventory", id=player_id)
         raw = await self.client.get(key)
         if raw is None:
             return []
         return json.loads(raw)
 
-    async def set_player_inventory(self, player_id: str, inventory: List[Any]):
+    async def set_player_inventory(self, player_id: str, inventory: list[Any]):
         key = self._get_key("player_inventory", id=player_id)
         await self.client.set(key, json.dumps(inventory))
 
     # --- Entity State Methods ---
 
-    async def get_entity_state(self, entity_id: str) -> Optional[Dict[str, Any]]:
+    async def get_entity_state(self, entity_id: str) -> dict[str, Any] | None:
         key = self._get_key("entity_state", id=entity_id)
         raw = await self.client.get(key)
         if raw is None:
             return None
         return json.loads(raw)
 
-    async def set_entity_state(self, entity_id: str, state: Dict[str, Any]):
+    async def set_entity_state(self, entity_id: str, state: dict[str, Any]):
         key = self._get_key("entity_state", id=entity_id)
         await self.client.set(key, json.dumps(state))
 
@@ -129,7 +130,7 @@ class RedisState:
         key = self._get_key("entity_state", id=entity_id)
         await self.client.delete(key)
 
-    async def get_room_entities(self, room_id: str) -> Set[str]:
+    async def get_room_entities(self, room_id: str) -> set[str]:
         key = self._get_key("room_entities", id=room_id)
         return await self.client.smembers(key)
 
@@ -143,14 +144,14 @@ class RedisState:
 
     # --- Floor Item State Methods ---
 
-    async def get_item_state(self, item_id: str) -> Optional[Dict[str, Any]]:
+    async def get_item_state(self, item_id: str) -> dict[str, Any] | None:
         key = self._get_key("item_state", id=item_id)
         raw = await self.client.get(key)
         if raw is None:
             return None
         return json.loads(raw)
 
-    async def set_item_state(self, item_id: str, state: Dict[str, Any]):
+    async def set_item_state(self, item_id: str, state: dict[str, Any]):
         key = self._get_key("item_state", id=item_id)
         await self.client.set(key, json.dumps(state))
 
@@ -158,7 +159,7 @@ class RedisState:
         key = self._get_key("item_state", id=item_id)
         await self.client.delete(key)
 
-    async def get_room_items(self, room_id: str) -> Set[str]:
+    async def get_room_items(self, room_id: str) -> set[str]:
         key = self._get_key("room_items", id=room_id)
         return await self.client.smembers(key)
 

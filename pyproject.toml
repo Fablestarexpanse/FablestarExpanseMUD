@@ -39,7 +39,40 @@ build-backend = "setuptools.build_meta"
 line-length = 100
 target-version = "py311"
 
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # pyflakes (undefined names, unused imports)
+    "I",      # isort (import ordering)
+    "UP",     # pyupgrade (modern Python syntax)
+    "B",      # flake8-bugbear (common bugs/design issues)
+    "C4",     # flake8-comprehensions (simplify list/dict/set)
+    "ASYNC",  # flake8-async (async best practices)
+    "RUF",    # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "B008",   # do not perform function calls in argument defaults (FastAPI depends on it)
+    "B904",   # raise from inside except — not always practical
+    "RUF012", # mutable class variables — SQLAlchemy patterns trigger this
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["fablestar"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
 [tool.mypy]
 python_version = "3.11"
-strict = true
 ignore_missing_imports = true
+# Start with basic checks; tighten gradually as type coverage improves
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = ["fablestar.admin.*", "fablestar.commands.*"]
+# These modules use dynamic patterns (registry, app_instance) that mypy struggles with
+ignore_errors = true

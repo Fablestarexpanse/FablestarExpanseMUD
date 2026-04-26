@@ -1,12 +1,12 @@
 """TOML config loading — merges all config/*.toml files into a single Config object."""
 
 import os
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import tomli
 from pydantic import BaseModel, Field, SecretStr, field_validator
+
 
 class ServerConfig(BaseModel):
     """Players connect via WebSocket on `websocket_port` (Nexus /play). Telnet is not used."""
@@ -23,9 +23,9 @@ class ServerConfig(BaseModel):
     # When True, Nexus admin/content/forge/llm routes require a staff JWT (see /admin/auth/login).
     admin_auth_required: bool = True
     # HS256 secret; prefer env FABLESTAR_ADMIN_JWT_SECRET in production.
-    admin_jwt_secret: Optional[str] = None
+    admin_jwt_secret: str | None = None
     # Allowed CORS origins for the admin and player UIs. Defaults to localhost dev ports.
-    cors_origins: List[str] = Field(
+    cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:5173", "http://localhost:5174"]
     )
 
@@ -34,14 +34,14 @@ class DatabaseConfig(BaseModel):
     port: int = 5432
     database: str = "fablestar"
     user: str = "fablestar"
-    password: Optional[str] = None
+    password: str | None = None
     pool_size: int = 10
 
 class RedisConfig(BaseModel):
     host: str = "localhost"
     port: int = 6379
     db: int = 0
-    password: Optional[str] = None
+    password: str | None = None
 
 class ComfyUIConfig(BaseModel):
     """Optional ComfyUI HTTP API for character portraits and room area art."""
@@ -76,7 +76,7 @@ class LLMConfig(BaseModel):
     lm_studio_url: str = "http://localhost:1234/v1"
     lm_studio_key: str = "not-needed"
     ollama_url: str = "http://localhost:11434/v1"
-    anthropic_key: Optional[SecretStr] = None
+    anthropic_key: SecretStr | None = None
     timeout_seconds: float = 10.0
     cache_ttl: int = 3600
     # OpenAI-compatible chat id, or "auto" / "*" / "" to use the loaded model (first listed).
@@ -100,7 +100,7 @@ class Config(BaseModel):
 def load_config(config_dir: str = "config") -> Config:
     """Load configuration from TOML files in the specified directory."""
     config_path = Path(config_dir)
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
 
     # Load all .toml files in the config directory
     if config_path.exists():

@@ -1,10 +1,11 @@
 """PostgresState — async SQLAlchemy engine, session factory, and DeclarativeBase."""
 
 import logging
-from typing import AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+
 from fablestar.core.config import DatabaseConfig
 
 logger = logging.getLogger(__name__)

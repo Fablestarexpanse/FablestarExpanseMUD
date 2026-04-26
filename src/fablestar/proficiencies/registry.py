@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
 from fablestar.proficiencies.models import ProficiencyLeafDefinition, ProficiencyNode
 from fablestar.proficiencies.validation import _effective_depth, prefix_closure
 
@@ -16,12 +14,12 @@ def _display_name(leaf_id: str, explicit: str) -> str:
 
 
 class ProficiencyRegistry:
-    def __init__(self, leaves: List[ProficiencyLeafDefinition]):
-        self.leaves: Dict[str, ProficiencyLeafDefinition] = {x.id: x for x in leaves}
-        self.nodes: Dict[str, ProficiencyNode] = {}
+    def __init__(self, leaves: list[ProficiencyLeafDefinition]):
+        self.leaves: dict[str, ProficiencyLeafDefinition] = {x.id: x for x in leaves}
+        self.nodes: dict[str, ProficiencyNode] = {}
         self._build_nodes(leaves)
 
-    def _build_nodes(self, leaves: List[ProficiencyLeafDefinition]) -> None:
+    def _build_nodes(self, leaves: list[ProficiencyLeafDefinition]) -> None:
         leaf_ids = [x.id for x in leaves]
         all_ids = sorted(prefix_closure(leaf_ids))
         leaf_set = set(leaf_ids)
@@ -30,7 +28,7 @@ class ProficiencyRegistry:
             parts = nid.split(".")
             domain = parts[0]
             is_leaf = nid in leaf_set
-            parent_id: Optional[str] = ".".join(parts[:-1]) if len(parts) > 1 else None
+            parent_id: str | None = ".".join(parts[:-1]) if len(parts) > 1 else None
             if is_leaf:
                 src = self.leaves[nid]
                 depth = _effective_depth(src)
@@ -58,14 +56,14 @@ class ProficiencyRegistry:
                 tags=tags,
             )
 
-    def get_leaf(self, leaf_id: str) -> Optional[ProficiencyLeafDefinition]:
+    def get_leaf(self, leaf_id: str) -> ProficiencyLeafDefinition | None:
         return self.leaves.get(leaf_id)
 
-    def get_node(self, node_id: str) -> Optional[ProficiencyNode]:
+    def get_node(self, node_id: str) -> ProficiencyNode | None:
         return self.nodes.get(node_id)
 
     @property
-    def leaf_ids(self) -> List[str]:
+    def leaf_ids(self) -> list[str]:
         return sorted(self.leaves.keys())
 
     def total_level_cap(self) -> int:

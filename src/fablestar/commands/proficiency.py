@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import List
 
 from fablestar.commands.registry import command
 from fablestar.network.session import Session
@@ -15,10 +14,10 @@ from fablestar.proficiencies.state_helpers import (
 )
 
 
-def _top_leaves(stats: dict, registry, limit: int = 8) -> List[tuple[str, int]]:
+def _top_leaves(stats: dict, registry, limit: int = 8) -> list[tuple[str, int]]:
     ensure_proficiency_block(stats)
     prof = stats[CONDUIT_KEY]["proficiencies"]
-    scored: List[tuple[str, int]] = []
+    scored: list[tuple[str, int]] = []
     for lid in registry.leaf_ids:
         row = prof.get(lid) or {}
         lv = int(row.get("level", 0))
@@ -79,7 +78,7 @@ async def prof_cmd(session: Session, args: list[str]):
     ensure_proficiency_block(stats)
     prof = stats[CONDUIT_KEY]["proficiencies"]
     reg = app_instance.content_loader.get_proficiency_registry()
-    rows: List[str] = []
+    rows: list[str] = []
     for lid in sorted(reg.leaf_ids):
         row = prof.get(lid) or {}
         lv = int(row.get("level", 0))

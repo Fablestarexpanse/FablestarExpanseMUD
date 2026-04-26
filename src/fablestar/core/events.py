@@ -1,9 +1,10 @@
 """Async EventBus — pub/sub for game events (tick, session connect/disconnect, etc.)."""
 
 import asyncio
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Type, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T", bound="Event")
 
@@ -18,10 +19,10 @@ class EventBus:
     Allows decoupling of engine components.
     """
     def __init__(self) -> None:
-        self._subscribers: Dict[Type[Event], List[Callable[[Any], asyncio.Future[None] | None]]] = {}
-        self._global_subscribers: List[Callable[[Event], asyncio.Future[None] | None]] = []
+        self._subscribers: dict[type[Event], list[Callable[[Any], asyncio.Future[None] | None]]] = {}
+        self._global_subscribers: list[Callable[[Event], asyncio.Future[None] | None]] = []
 
-    def subscribe(self, event_type: Type[T], handler: Callable[[T], Any]) -> None:
+    def subscribe(self, event_type: type[T], handler: Callable[[T], Any]) -> None:
         """Subscribe a handler to a specific event type."""
         if event_type not in self._subscribers:
             self._subscribers[event_type] = []

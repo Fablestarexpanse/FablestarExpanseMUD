@@ -2,13 +2,14 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, TypeVar
 
 import yaml
 from pydantic import BaseModel
-from fablestar.world.models import RoomModel, EntityTemplate, ItemTemplate
+
 from fablestar.proficiencies.catalog_loader import load_proficiency_catalog_from_disk
 from fablestar.proficiencies.registry import ProficiencyRegistry
+from fablestar.world.models import EntityTemplate, ItemTemplate, RoomModel
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +22,18 @@ class ContentLoader:
     """
     def __init__(self, content_dir: str = "content"):
         self.content_dir = Path(content_dir)
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
         
     def _get_cache_key(self, content_type: str, content_id: str) -> str:
         return f"{content_type}:{content_id}"
 
-    def load_yaml(self, file_path: Path, model_class: Type[T]) -> T:
+    def load_yaml(self, file_path: Path, model_class: type[T]) -> T:
         """Load and validate a single YAML file."""
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
             return model_class(**data)
 
-    def get_room(self, room_id: str) -> Optional[RoomModel]:
+    def get_room(self, room_id: str) -> RoomModel | None:
         """Get a room from cache or load it from disk."""
         cache_key = self._get_cache_key("room", room_id)
         if cache_key in self._cache:
@@ -58,7 +59,7 @@ class ContentLoader:
             logger.error(f"Error loading room {room_id}: {e}")
             return None
 
-    def get_entity_template(self, entity_id: str) -> Optional[EntityTemplate]:
+    def get_entity_template(self, entity_id: str) -> EntityTemplate | None:
         """Load and cache an entity template from content/world/entities/{id}.yaml."""
         cache_key = self._get_cache_key("entity", entity_id)
         if cache_key in self._cache:
@@ -75,7 +76,7 @@ class ContentLoader:
             logger.error(f"Error loading entity template {entity_id}: {e}")
             return None
 
-    def get_item_template(self, item_id: str) -> Optional[ItemTemplate]:
+    def get_item_template(self, item_id: str) -> ItemTemplate | None:
         """Load and cache an item template from content/world/items/{id}.yaml."""
         cache_key = self._get_cache_key("item", item_id)
         if cache_key in self._cache:

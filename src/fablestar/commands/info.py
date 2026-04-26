@@ -1,9 +1,10 @@
 """Info commands — look (with optional LLM narration) and help."""
 
 from fablestar.commands.registry import command
-from fablestar.network.session import Session
 from fablestar.llm.observation import generate_room_observation
 from fablestar.llm.validation import validator
+from fablestar.network.session import Session
+
 
 @command("look", aliases=["l"])
 async def look(session: Session, args: list[str]):

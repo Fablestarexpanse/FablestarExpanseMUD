@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ async def _count_keys(client, match: str) -> int:
     return n
 
 
-async def build_world_live_snapshot(redis_client) -> Dict[str, Any]:
+async def build_world_live_snapshot(redis_client) -> dict[str, Any]:
     """
     Scan Redis for keys matching FableStar conventions. May be expensive on large DBs;
     intended for local / low-scale ops.
@@ -31,7 +31,7 @@ async def build_world_live_snapshot(redis_client) -> Dict[str, Any]:
             "note": "Redis client not initialized",
         }
 
-    rooms_detail: List[Dict[str, Any]] = []
+    rooms_detail: list[dict[str, Any]] = []
     rooms_with_players = 0
     try:
         async for key in redis_client.scan_iter(match="room:*:players", count=256):

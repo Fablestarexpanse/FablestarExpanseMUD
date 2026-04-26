@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -15,14 +15,14 @@ class ProficiencyLeafDefinition(BaseModel):
     name: str = Field(default="", description="Display name; defaults derived in loader if empty")
     description: str = ""
     domain: str = Field(..., min_length=1, description="Top-level domain id, e.g. combat")
-    stat_weights: Dict[str, float] = Field(default_factory=dict)
+    stat_weights: dict[str, float] = Field(default_factory=dict)
     tree_depth: int = Field(
         default=0,
         ge=0,
         le=4,
-        description="0=auto from id segment count (clamped 1–4); else explicit tier for gating",
+        description="0=auto from id segment count (clamped 1-4); else explicit tier for gating",
     )
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
 
     @field_validator("id")
     @classmethod
@@ -34,9 +34,9 @@ class ProficiencyLeafDefinition(BaseModel):
 
     @field_validator("stat_weights")
     @classmethod
-    def _weights(cls, v: Dict[str, float]) -> Dict[str, float]:
+    def _weights(cls, v: dict[str, float]) -> dict[str, float]:
         allowed = {"FRT", "RFX", "ACU", "RSV", "PRS"}
-        out: Dict[str, float] = {}
+        out: dict[str, float] = {}
         for k, x in (v or {}).items():
             ku = str(k).upper()
             if ku not in allowed:
@@ -52,8 +52,8 @@ class ProficiencyCatalogDocument(BaseModel):
     """Root document for content/proficiencies/catalog.json (or merged shards)."""
 
     version: int = 1
-    expected_leaf_count: Optional[int] = None
-    leaves: List[ProficiencyLeafDefinition] = Field(default_factory=list)
+    expected_leaf_count: int | None = None
+    leaves: list[ProficiencyLeafDefinition] = Field(default_factory=list)
 
 
 class ProficiencyNode(BaseModel):
@@ -65,17 +65,17 @@ class ProficiencyNode(BaseModel):
     name: str
     description: str = ""
     tree_depth: int = Field(ge=1, le=4)
-    stat_weights: Dict[str, float] = Field(default_factory=dict)
-    children: List[str] = Field(default_factory=list)
-    parent_id: Optional[str] = None
-    tags: List[str] = Field(default_factory=list)
+    stat_weights: dict[str, float] = Field(default_factory=dict)
+    children: list[str] = Field(default_factory=list)
+    parent_id: str | None = None
+    tags: list[str] = Field(default_factory=list)
 
 
 class ConduitAttributes(BaseModel):
     """
     Five core Conduit stats (stored on character).
 
-    Design target (Fablestar Expanse): 65 points at chargen, each 8–23, default 13/13/13/13/13.
+    Design target (Fablestar Expanse): 65 points at chargen, each 8-23, default 13/13/13/13/13.
     Stored values may differ for legacy rows; see fablestar.proficiencies.bonus.validate_chargen_conduit_allocation
     for strict chargen validation when the UI/API enforces that flow.
     """
@@ -100,11 +100,11 @@ class ProficiencyStatsBlock(BaseModel):
 
     version: int = 1
     conduit_attributes: ConduitAttributes = Field(default_factory=ConduitAttributes)
-    proficiencies: Dict[str, Dict[str, Any]] = Field(
+    proficiencies: dict[str, dict[str, Any]] = Field(
         default_factory=dict,
         description="Map proficiency id -> {level, state, peak}",
     )
-    archive_domain_spent: Dict[str, int] = Field(
+    archive_domain_spent: dict[str, int] = Field(
         default_factory=dict,
         description="Optional tallies for archive study domain caps (period reset server-side later)",
     )

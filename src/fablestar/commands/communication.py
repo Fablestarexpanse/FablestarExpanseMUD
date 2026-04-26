@@ -3,6 +3,7 @@
 from fablestar.commands.registry import command
 from fablestar.network.session import Session
 
+
 @command("say")
 async def say(session: Session, args: list[str]):
     """Speak to everyone in your current room."""
