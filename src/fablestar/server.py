@@ -166,7 +166,8 @@ class FablestarServer:
         app.app_instance = self
         
         # Internal state
-        self._main_task: asyncio.Task | None = None
+        self._nexus_task: asyncio.Task | None = None
+        self._tick_task: asyncio.Task | None = None
         # ISO8601 UTC timestamp of last POST /content/cache/reload (for admin UI)
         self.last_content_reload_at: str | None = None
 
@@ -378,7 +379,6 @@ class FablestarServer:
         registry.reload_module("fablestar.commands.admin")
         
         # 2. Register base tick handlers
-        self.tick_manager.register(self._on_tick)
         self.tick_manager.register(self.spawner.on_tick)
         self.tick_manager.register(self.persistence.on_tick)
         from fablestar.proficiencies.tick import proficiency_system_tick
@@ -389,10 +389,10 @@ class FablestarServer:
         await self.hot_reloader.start(["content", "src/fablestar/commands", "config", "prompts"])
         
         # 3. Start the Nexus (FastAPI) in the background
-        self._main_task = asyncio.create_task(self.nexus.start())
-        
+        self._nexus_task = asyncio.create_task(self.nexus.start())
+
         # 4. Start the tick loop
-        self._main_task = asyncio.create_task(self.tick_manager.run())
+        self._tick_task = asyncio.create_task(self.tick_manager.run())
         
         logger.info("Startup complete. Server is running.")
 
@@ -405,8 +405,13 @@ class FablestarServer:
         await self.redis.disconnect()
         await self.db.close()
 
-        if self._main_task:
-            await self._main_task
+        for task in (self._tick_task, self._nexus_task):
+            if task and not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
             
         logger.info("Shutdown complete.")
 
@@ -1286,11 +1291,6 @@ class FablestarServer:
                 registry.reload_module(module_path)
             except ValueError:
                 logger.error(f"Could not determine module path for {path}")
-
-    async def _on_tick(self, tick_count: int):
-        """Core logic to run every tick."""
-        # This will eventually trigger world updates, combat processing, etc.
-        pass
 
 async def run_server():
     """Entry point for running the server in an event loop."""
